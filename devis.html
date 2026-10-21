@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Devis à valider · Cedyan Energy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --vert:#0d3a16; --vert-2:#1d5a2a; --soleil:#fbbb10; --papier:#f4f6f1; --carte:#ffffff;
+  --encre:#16241a; --encre-2:#56665b; --trait:#d9e3da; --alerte:#b45309; --alerte-fond:#fff4e0; --ok:#15803d; --rouge:#b91c1c;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --papier:#0f1a12; --carte:#16241a; --encre:#e8efe9; --encre-2:#a5b7aa; --trait:#2a3d2f; --alerte-fond:#3a2a10; --alerte:#f59e0b; --ok:#4ade80; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --papier:#0f1a12; --carte:#16241a; --encre:#e8efe9; --encre-2:#a5b7aa; --trait:#2a3d2f; --alerte-fond:#3a2a10; --alerte:#f59e0b; --ok:#4ade80; color-scheme:dark; }
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--papier);color:var(--encre);font:16px/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--soleil);outline-offset:2px}
+.barre{background:var(--vert);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 20px 12px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+.barre h1{margin:0;font-size:18px;font-weight:700}
+.barre a{color:#fff;opacity:.85;text-decoration:none;font-size:14px}
+.barre .esp{flex:1}
+.etat{font-size:13px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12)}
+.etat.err{background:var(--rouge)}
+main{max-width:980px;margin:0 auto;padding:20px 16px 140px}
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:14px;padding:18px}
+.puces{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.puce{border:1px solid var(--trait);background:var(--carte);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
+.puce[aria-pressed="true"]{background:var(--vert);border-color:var(--vert);color:#fff}
+.liste{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;text-align:left;width:100%;background:var(--carte);border:1px solid var(--trait);border-radius:12px;padding:14px 16px}
+.item:hover{border-color:var(--vert-2)}
+.item b{font-size:16px}
+.item .tot{font-weight:700;font-variant-numeric:tabular-nums;font-size:17px}
+.meta{font-size:13px;color:var(--encre-2)}
+.badge{display:inline-block;font-size:12px;font-weight:600;border-radius:6px;padding:2px 7px;margin-right:6px;background:var(--papier);color:var(--encre-2)}
+.badge.alerte{background:var(--alerte-fond);color:var(--alerte)}
+.badge.ok{background:rgba(21,128,61,.12);color:var(--ok)}
+.vide{padding:30px;text-align:center;color:var(--encre-2)}
+.entete{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start}
+.entete h2{margin:0 0 4px;font-size:22px}
+.grille{display:inline-flex;border:1px solid var(--trait);border-radius:10px;overflow:hidden}
+.grille button{border:0;background:transparent;padding:8px 14px;font-weight:600;font-size:14px}
+.grille button[aria-pressed="true"]{background:var(--vert);color:#fff}
+.avert{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--alerte-fond);color:var(--alerte);font-size:14px;font-weight:500}
+details.origine{margin-top:12px;border-top:1px solid var(--trait);padding-top:10px}
+details.origine summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--encre-2)}
+details.origine p{margin:8px 0;white-space:pre-wrap;font-size:14px}
+.lignes{margin-top:16px;display:grid;gap:6px}
+.lg{display:grid;grid-template-columns:minmax(0,1fr) 128px 120px 104px 36px;gap:10px;align-items:center;background:var(--carte);border:1px solid var(--trait);border-radius:12px;padding:10px 12px}
+.lg.douteuse{border-left:5px solid var(--alerte)}
+.lg .nom input{width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:6px 8px;font-weight:600}
+.lg .nom input:hover,.lg .nom input:focus{border-color:var(--trait);background:var(--papier)}
+.lg .ref{font-size:12px;color:var(--encre-2);padding:0 8px}
+.raison{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--alerte);background:var(--alerte-fond);border-radius:8px;padding:6px 10px}
+.raison button{border:1px solid currentColor;background:transparent;color:inherit;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:600}
+.qte{display:flex;align-items:center;border:1px solid var(--trait);border-radius:9px;overflow:hidden}
+.qte button{width:34px;height:36px;border:0;background:var(--papier);font-size:18px}
+.qte input{width:100%;text-align:center;border:0;background:transparent;height:36px;font-variant-numeric:tabular-nums}
+.pu{position:relative}
+.pu input{width:100%;border:1px solid var(--trait);border-radius:9px;height:38px;padding:0 24px 0 10px;text-align:right;background:transparent;font-variant-numeric:tabular-nums}
+.pu input.manuel{border-color:var(--soleil)}
+.pu::after{content:"€";position:absolute;right:9px;top:9px;color:var(--encre-2);font-size:14px}
+.mt{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.suppr{width:34px;height:34px;border-radius:8px;border:1px solid var(--trait);background:transparent;color:var(--encre-2);font-size:16px}
+.suppr:hover{color:var(--rouge);border-color:var(--rouge)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 128px 120px 104px 36px;gap:10px;padding:0 13px;font-size:12px;color:var(--encre-2);margin-top:18px}
+.cols span:nth-child(n+3){text-align:right}
+.ajout{position:relative;margin-top:10px;display:flex;gap:8px}
+.ajout input{flex:1;border:1px dashed var(--vert-2);border-radius:12px;padding:12px 14px;background:var(--carte)}
+.ajout .libre{border:1px solid var(--trait);background:var(--carte);border-radius:12px;padding:0 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.resultats{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--carte);border:1px solid var(--trait);border-radius:12px;box-shadow:0 14px 34px -14px rgba(13,58,22,.35);max-height:320px;overflow:auto;z-index:15}
+.resultats button{display:grid;grid-template-columns:1fr auto;gap:2px 12px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--trait);background:transparent;padding:10px 14px}
+.resultats button:hover,.resultats button.actif{background:var(--papier)}
+.resultats .px{font-variant-numeric:tabular-nums;font-weight:600}
+.pied{position:fixed;left:0;right:0;bottom:0;background:var(--vert);color:#fff;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));z-index:20}
+.pied .in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pied .total{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.pied .total small{display:block;font-size:12px;font-weight:500;opacity:.75;letter-spacing:0}
+.pied .esp{flex:1}
+.btn{border:0;border-radius:999px;padding:12px 20px;font-weight:700;font-size:15px}
+.btn.jaune{background:var(--soleil);color:#16241a}
+.btn.clair{background:rgba(255,255,255,.14);color:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.pied .pourquoi{font-size:13px;opacity:.85;width:100%;text-align:right}
+.connexion{max-width:380px;margin:60px auto}
+.connexion h2{margin:0 0 6px}
+.connexion input{width:100%;border:1px solid var(--trait);border-radius:10px;padding:12px;margin:6px 0;background:var(--carte)}
+.connexion .btn{width:100%;margin-top:8px;background:var(--vert);color:#fff}
+.lien{background:none;border:0;color:var(--vert-2);text-decoration:underline;padding:0;font-size:14px}
+@media (max-width:720px){
+  .cols{display:none}
+  .lg{grid-template-columns:1fr 1fr;gap:8px}
+  .lg .nom{grid-column:1 / -1}
+  .lg .mt{grid-column:1}
+  .lg .suppr{justify-self:end;grid-column:2;grid-row:auto}
+  .entete{grid-template-columns:1fr}
+  .pied .total{font-size:22px}
+  .ajout{flex-direction:column}
+  .ajout .libre{padding:12px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="barre">
+  <h1>Devis</h1>
+  <a href="dashboard.html">Tableau de bord</a>
+  <span class="esp"></span>
+  <span class="etat" id="etat" hidden></span>
+</header>
+<main id="app"><p class="vide">Chargement…</p></main>
+<footer class="pied" id="pied" hidden></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+"use strict";
+const SUPABASE_URL = "https://uotqqkhraqxtlssgavlm.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvdHFxa2hyYXF4dGxzc2dhdmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDI1NTAsImV4cCI6MjEwNjgxODU1MH0.61NliFrPeWNilEmXPayAONTIVF49tmq3arjgdzSwPpM";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const app = document.getElementById("app"), pied = document.getElementById("pied"), etat = document.getElementById("etat");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const euro = (n) => (Number(n) || 0).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+const arrondi = (n) => Math.round((Number(n) || 0) * 100) / 100;
+const dateFr = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) : "";
+const nombre = (v) => { const n = parseFloat(String(v).replace(/\s/g, "").replace(",", ".")); return Number.isFinite(n) ? n : null; };
+
+let session = null, catalogue = [], catIndex = new Map();
+let filtre = "brouillon";
+let D = null; // devis ouvert : { devis, lignes, demande, compte }
+
+function afficherEtat(txt, erreur) {
+  etat.hidden = !txt; etat.textContent = txt || ""; etat.classList.toggle("err", !!erreur);
+  if (txt && !erreur) { clearTimeout(afficherEtat.t); afficherEtat.t = setTimeout(() => (etat.hidden = true), 1800); }
+}
+async function ecrire(promesse) {
+  afficherEtat("Enregistrement…");
+  const { error } = await promesse;
+  if (error) { afficherEtat("Erreur : " + error.message, true); throw error; }
+  afficherEtat("Enregistré");
+}
+
+/* ---------- Connexion ---------- */
+function ecranConnexion(msg) {
+  pied.hidden = true;
+  app.innerHTML = `<form class="carte connexion" id="fco">
+    <h2>Connexion</h2><p class="meta">Utilisez le même accès que le tableau de bord.</p>
+    ${msg ? `<p class="avert">${esc(msg)}</p>` : ""}
+    <label class="meta" for="em">E-mail</label><input id="em" type="email" autocomplete="email" required>
+    <label class="meta" for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password">
+    <button class="btn" type="submit">Se connecter</button>
+    <p class="meta" style="margin-top:12px">Pas de mot de passe ? <button class="lien" type="button" id="lienmagique">Recevoir un lien de connexion par e-mail</button></p>
+  </form>`;
+  const em = document.getElementById("em");
+  document.getElementById("fco").onsubmit = async (e) => {
+    e.preventDefault();
+    const { error } = await sb.auth.signInWithPassword({ email: em.value.trim(), password: document.getElementById("mdp").value });
+    if (error) return ecranConnexion("Connexion impossible : vérifiez l'e-mail et le mot de passe.");
+    demarrer();
+  };
+  document.getElementById("lienmagique").onclick = async () => {
+    if (!em.value) return em.focus();
+    const { error } = await sb.auth.signInWithOtp({ email: em.value.trim(), options: { emailRedirectTo: location.href, shouldCreateUser: false } });
+    ecranConnexion(error ? "Envoi impossible : cet e-mail n'a pas d'accès." : "Lien envoyé. Ouvrez-le depuis votre boîte mail.");
+  };
+}
+
+/* ---------- Catalogue ---------- */
+async function chargerCatalogue() {
+  if (catalogue.length) return;
+  const { data, error } = await sb.from("produits").select("id,nom,marque,ref,actif,tarifs(prix,prix_public)").order("ordre").limit(2000);
+  if (error) throw error;
+  catalogue = (data || []).map((p) => {
+    const t = Array.isArray(p.tarifs) ? p.tarifs[0] : p.tarifs;
+    return { id: p.id, nom: p.nom, marque: p.marque, ref: p.ref, actif: p.actif, prix: t?.prix != null ? +t.prix : null, prix_public: t?.prix_public != null ? +t.prix_public : null,
+      cle: [p.marque, p.nom, p.ref, p.id].join(" ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") };
+  });
+  catIndex = new Map(catalogue.map((p) => [p.id, p]));
+}
+const libelleDe = (p) => [p.marque, p.nom].filter(Boolean).join(" ") + (p.ref ? ` (${p.ref})` : "");
+const prixSelon = (p, grille) => p ? (grille === "pro" ? p.prix : p.prix_public) : null;
+
+/* ---------- Liste ---------- */
+async function ecranListe() {
+  D = null; pied.hidden = true; history.replaceState(null, "", location.pathname);
+  app.innerHTML = `<div class="puces" role="group" aria-label="Filtrer">
+    ${[["brouillon", "À valider"], ["valide", "Validés"], ["tous", "Tous"]].map(([k, l]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${l}</button>`).join("")}
+  </div><div class="liste" id="liste"><p class="vide">Chargement…</p></div>`;
+  app.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; ecranListe(); }));
+  let q = sb.from("devis").select("id,created_at,statut,grille,total_ttc,demande:demandes(id,contact,statut,type),devis_lignes(a_verifier)").order("created_at", { ascending: false }).limit(200);
+  if (filtre !== "tous") q = q.eq("statut", filtre);
+  const { data, error } = await q;
+  const liste = document.getElementById("liste");
+  if (error) return (liste.innerHTML = `<p class="avert">Lecture impossible : ${esc(error.message)}</p>`);
+  if (!data.length) return (liste.innerHTML = `<p class="vide">${filtre === "brouillon" ? "Aucun devis à valider. Les nouvelles demandes du site arrivent ici toutes seules." : "Aucun devis ici pour l'instant."}</p>`);
+  liste.innerHTML = data.map((d) => {
+    const c = d.demande?.contact || {};
+    const doutes = (d.devis_lignes || []).filter((l) => l.a_verifier).length;
+    return `<button class="item" data-id="${d.id}">
+      <span><b>${esc(c.entreprise || c.nom || c.telephone || "Client")}</b>${c.entreprise && c.nom ? ` <span class="meta">${esc(c.nom)}</span>` : ""}</span>
+      <span class="tot">${euro(d.total_ttc)}</span>
+      <span class="meta">${dateFr(d.created_at)} · ${(d.devis_lignes || []).length} ligne(s)</span>
+      <span>${d.grille === "pro" ? `<span class="badge">Prix pros</span>` : `<span class="badge">Prix publics</span>`}${doutes ? `<span class="badge alerte">${doutes} à vérifier</span>` : ""}${d.demande?.statut === "attente_kbis" ? `<span class="badge alerte">Kbis à valider</span>` : ""}${d.statut === "valide" ? `<span class="badge ok">Validé</span>` : ""}</span>
+    </button>`;
+  }).join("");
+  liste.querySelectorAll("[data-id]").forEach((b) => (b.onclick = () => ouvrir(b.dataset.id)));
+}
+
+/* ---------- Édition ---------- */
+async function ouvrir(id) {
+  app.innerHTML = `<p class="vide">Chargement du devis…</p>`;
+  await chargerCatalogue();
+  const { data: devis, error } = await sb.from("devis").select("*, demande:demandes(*)").eq("id", id).maybeSingle();
+  if (error || !devis) { app.innerHTML = `<p class="avert">Devis introuvable. Il a peut-être été régénéré.</p><p><button class="lien" id="ret">Revenir à la liste</button></p>`; document.getElementById("ret").onclick = ecranListe; return; }
+  const { data: lignes } = await sb.from("devis_lignes").select("*").eq("devis_id", id).order("ordre");
+  let compte = null;
+  if (devis.demande?.compte_pro_id) compte = (await sb.from("comptes_pro").select("id,statut,entreprise").eq("id", devis.demande.compte_pro_id).maybeSingle()).data;
+  D = { devis, lignes: lignes || [], demande: devis.demande || {}, compte };
+  history.replaceState(null, "", "?d=" + id);
+  rendre();
+}
+
+const verrouille = () => D.devis.statut !== "brouillon";
+const totalDevis = () => arrondi(D.lignes.reduce((s, l) => s + (Number(l.prix_unitaire) || 0) * (Number(l.quantite) || 0) * (1 - (Number(l.remise_pct) || 0) / 100), 0));
+function blocages() {
+  const r = [];
+  if (D.compte?.statut === "en_attente") r.push("le Kbis du pro n'est pas encore validé");
+  const doutes = D.lignes.filter((l) => l.a_verifier).length;
+  if (doutes) r.push(`${doutes} ligne${doutes > 1 ? "s" : ""} à vérifier`);
+  if (D.lignes.some((l) => l.prix_unitaire == null)) r.push("un prix est manquant");
+  if (!D.lignes.length) r.push("le devis est vide");
+  return r;
+}
+
+function rendre() {
+  const { devis, demande } = D, c = demande.contact || {}, fige = verrouille();
+  const panier = Array.isArray(demande.panier) && demande.panier.length ? demande.panier.map((x) => `${x.q} × ${x.nom}`).join("\n") : "";
+  const avertissements = [
+    D.compte?.statut === "en_attente" ? `Ce pro attend la validation de son Kbis. Validez son compte dans le <a href="dashboard.html">tableau de bord</a> pour pouvoir valider ce devis.` : null,
+    D.compte?.statut === "refuse" && devis.grille === "pro" ? `Le compte de ce pro a été refusé : passez le devis en prix publics.` : null,
+    devis.note && !/Kbis/.test(devis.note) ? esc(devis.note) : null,
+  ].filter(Boolean);
+  app.innerHTML = `
+  <p><button class="lien" id="retour">← Tous les devis</button></p>
+  <section class="carte">
+    <div class="entete">
+      <div>
+        <h2>${esc(c.entreprise || c.nom || "Client")}</h2>
+        <div class="meta">${[c.entreprise ? c.nom : null, c.telephone, c.email, c.commune].filter(Boolean).map(esc).join(" · ")}</div>
+        <div class="meta">Demande du ${dateFr(demande.created_at)}${demande.pour_quand ? `, pour : ${esc(demande.pour_quand)}` : ""} · Valable jusqu'au ${dateFr(devis.valide_jusqu)}</div>
+      </div>
+      <div class="grille" role="group" aria-label="Grille de prix">
+        <button data-grille="pro" aria-pressed="${devis.grille === "pro"}" ${fige ? "disabled" : ""}>Prix pros</button>
+        <button data-grille="public" aria-pressed="${devis.grille === "public"}" ${fige ? "disabled" : ""}>Prix publics</button>
+      </div>
+    </div>
+    ${avertissements.map((a) => `<p class="avert">${a}</p>`).join("")}
+    ${demande.message || panier ? `<details class="origine" ${D.lignes.some((l) => l.a_verifier) ? "open" : ""}><summary>Demande d'origine</summary>${panier ? `<p><b>Panier :</b>\n${esc(panier)}</p>` : ""}${demande.message ? `<p><b>Message :</b>\n${esc(demande.message)}</p>` : ""}</details>` : ""}
+  </section>
+  <div class="cols" aria-hidden="true"><span>Produit</span><span>Quantité</span><span>Prix unitaire</span><span>Total</span><span></span></div>
+  <div class="lignes" id="lignes">${D.lignes.map(ligneHtml).join("") || `<p class="vide">Aucune ligne. Ajoutez des produits ci-dessous.</p>`}</div>
+  ${fige ? "" : `<div class="ajout"><input id="cherche" type="search" placeholder="Ajouter un produit : tapez un nom, une marque ou une référence" autocomplete="off" aria-label="Ajouter un produit"><button class="libre" id="libre">Ligne libre</button><div class="resultats" id="res" hidden></div></div>`}`;
+  document.getElementById("retour").onclick = ecranListe;
+  app.querySelectorAll("[data-grille]").forEach((b) => (b.onclick = () => changerGrille(b.dataset.grille)));
+  brancherLignes();
+  if (!fige) brancherAjout();
+  rendrePied();
+}
+
+function ligneHtml(l) {
+  const fige = verrouille(), p = l.produit_id ? catIndex.get(l.produit_id) : null;
+  const mt = (Number(l.prix_unitaire) || 0) * (Number(l.quantite) || 0) * (1 - (Number(l.remise_pct) || 0) / 100);
+  return `<div class="lg ${l.a_verifier ? "douteuse" : ""}" data-l="${l.id}">
+    <div class="nom"><input value="${esc(l.libelle)}" data-champ="libelle" aria-label="Désignation" ${fige ? "disabled" : ""}>
+      <div class="ref">${p ? (p.ref && !String(l.libelle).includes(p.ref) ? esc(p.ref) : "Catalogue") : "Ligne libre"}${l.remise_pct > 0 ? ` · remise ${l.remise_pct} %` : ""}</div></div>
+    <div class="qte"><button data-q="-1" aria-label="Retirer 1" ${fige ? "disabled" : ""}>−</button><input inputmode="numeric" value="${l.quantite}" data-champ="quantite" aria-label="Quantité" ${fige ? "disabled" : ""}><button data-q="1" aria-label="Ajouter 1" ${fige ? "disabled" : ""}>+</button></div>
+    <div class="pu"><input inputmode="decimal" value="${l.prix_unitaire != null ? String(l.prix_unitaire).replace(".", ",") : ""}" placeholder="Prix" data-champ="prix_unitaire" class="${l.prix_manuel ? "manuel" : ""}" title="${l.prix_manuel ? "Prix modifié à la main" : "Prix de la grille"}" aria-label="Prix unitaire" ${fige ? "disabled" : ""}></div>
+    <div class="mt">${euro(mt)}</div>
+    <button class="suppr" data-suppr aria-label="Supprimer la ligne" ${fige ? "disabled" : ""}>✕</button>
+    ${l.a_verifier ? `<div class="raison"><span>${esc(l.raison || "À vérifier")}${l.texte_origine ? ` (demandé : « ${esc(l.texte_origine)} »)` : ""}</span>${fige ? "" : `${!l.produit_id ? `<button data-choisir>Choisir le produit</button>` : ""}<button data-okligne>C'est bon</button>`}</div>` : ""}
+  </div>`;
+}
+
+function brancherLignes() {
+  app.querySelectorAll(".lg").forEach((el) => {
+    const id = el.dataset.l, l = D.lignes.find((x) => x.id === id);
+    el.querySelectorAll("[data-q]").forEach((b) => (b.onclick = () => majLigne(l, { quantite: Math.max(1, (Number(l.quantite) || 1) + +b.dataset.q) })));
+    el.querySelectorAll("input[data-champ]").forEach((inp) => (inp.onchange = () => {
+      const ch = inp.dataset.champ;
+      if (ch === "libelle") return majLigne(l, { libelle: inp.value.trim() || l.libelle });
+      if (ch === "quantite") { const n = nombre(inp.value); return majLigne(l, { quantite: n && n > 0 ? Math.round(n) : l.quantite }); }
+      if (ch === "prix_unitaire") {
+        const n = nombre(inp.value);
+        const maj = { prix_unitaire: n != null && n >= 0 ? arrondi(n) : null, prix_manuel: true };
+        if (maj.prix_unitaire != null && /[Pp]rix .*manquant/.test(l.raison || "")) { maj.a_verifier = false; maj.raison = null; }
+        return majLigne(l, maj);
+      }
+    }));
+    el.querySelector("[data-suppr]")?.addEventListener("click", () => supprimerLigne(l));
+    el.querySelector("[data-okligne]")?.addEventListener("click", () => majLigne(l, { a_verifier: false, raison: null }));
+    el.querySelector("[data-choisir]")?.addEventListener("click", () => { const c = document.getElementById("cherche"); D.remplacer = l.id; c.placeholder = "Choisissez le produit pour « " + l.libelle + " »"; c.value = (l.texte_origine || l.libelle || "").slice(0, 40); c.focus(); c.dispatchEvent(new Event("input")); });
+  });
+}
+
+async function majLigne(l, champs) {
+  Object.assign(l, champs);
+  rendre();
+  await ecrire(sb.from("devis_lignes").update(champs).eq("id", l.id));
+  await majTotal();
+}
+async function supprimerLigne(l) {
+  D.lignes = D.lignes.filter((x) => x !== l);
+  rendre();
+  await ecrire(sb.from("devis_lignes").delete().eq("id", l.id));
+  await majTotal();
+}
+async function majTotal() {
+  D.devis.total_ttc = totalDevis();
+  await ecrire(sb.from("devis").update({ total_ttc: D.devis.total_ttc, updated_at: new Date().toISOString() }).eq("id", D.devis.id));
+  rendrePied();
+}
+
+async function changerGrille(g) {
+  if (g === D.devis.grille) return;
+  D.devis.grille = g;
+  const majs = [];
+  for (const l of D.lignes) {
+    if (!l.produit_id || l.prix_manuel) continue;
+    const prix = prixSelon(catIndex.get(l.produit_id), g);
+    const champs = { prix_unitaire: prix };
+    if (prix == null) { champs.a_verifier = true; champs.raison = g === "pro" ? "Prix pro manquant" : "Prix public manquant : à saisir"; }
+    else if (/[Pp]rix .*manquant/.test(l.raison || "")) { champs.a_verifier = false; champs.raison = null; }
+    Object.assign(l, champs);
+    majs.push(sb.from("devis_lignes").update(champs).eq("id", l.id));
+  }
+  rendre();
+  await ecrire(sb.from("devis").update({ grille: g }).eq("id", D.devis.id));
+  await Promise.all(majs);
+  await majTotal();
+}
+
+function brancherAjout() {
+  const inp = document.getElementById("cherche"), res = document.getElementById("res");
+  let choix = [], actif = 0;
+  const montrer = () => {
+    const q = inp.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (q.length < 2) { res.hidden = true; return; }
+    const mots = q.split(/\s+/);
+    choix = catalogue.filter((p) => mots.every((m) => p.cle.includes(m))).sort((a, b) => (b.actif - a.actif)).slice(0, 12);
+    actif = 0;
+    res.hidden = false;
+    res.innerHTML = choix.length ? choix.map((p, i) => {
+      const px = prixSelon(p, D.devis.grille);
+      return `<button data-i="${i}" class="${i === 0 ? "actif" : ""}"><span><b>${esc([p.marque, p.nom].filter(Boolean).join(" "))}</b><br><span class="meta">${esc(p.ref || p.id)}${p.actif ? "" : " · retiré du site"}</span></span><span class="px">${px != null ? euro(px) : `<span class="meta">sans prix</span>`}</span></button>`;
+    }).join("") : `<p class="vide" style="padding:14px">Aucun produit trouvé. Utilisez « Ligne libre ».</p>`;
+    res.querySelectorAll("[data-i]").forEach((b) => (b.onmousedown = (e) => { e.preventDefault(); prendre(choix[+b.dataset.i]); }));
+  };
+  inp.oninput = montrer;
+  inp.onkeydown = (e) => {
+    if (res.hidden || !choix.length) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); actif = (actif + (e.key === "ArrowDown" ? 1 : choix.length - 1)) % choix.length; res.querySelectorAll("[data-i]").forEach((b, i) => b.classList.toggle("actif", i === actif)); }
+    if (e.key === "Enter") { e.preventDefault(); prendre(choix[actif]); }
+    if (e.key === "Escape") { res.hidden = true; D.remplacer = null; }
+  };
+  inp.onblur = () => setTimeout(() => (res.hidden = true), 150);
+  document.getElementById("libre").onclick = () => ajouterLigne({ produit_id: null, libelle: "Nouvelle ligne", quantite: 1, prix_unitaire: null, prix_manuel: true, a_verifier: true, raison: "Ligne libre : saisissez la désignation et le prix" });
+
+  async function prendre(p) {
+    const prix = prixSelon(p, D.devis.grille);
+    const champs = { produit_id: p.id, libelle: libelleDe(p), prix_unitaire: prix, prix_manuel: false,
+      a_verifier: prix == null, raison: prix == null ? (D.devis.grille === "pro" ? "Prix pro manquant" : "Prix public manquant : à saisir") : null };
+    const rid = D.remplacer; D.remplacer = null;
+    if (rid) { const l = D.lignes.find((x) => x.id === rid); if (l) return majLigne(l, champs); }
+    const exist = D.lignes.find((x) => x.produit_id === p.id);
+    if (exist) return majLigne(exist, { quantite: (Number(exist.quantite) || 0) + 1 });
+    await ajouterLigne({ ...champs, quantite: 1 });
+    setTimeout(() => document.getElementById("cherche")?.focus(), 0);
+  }
+}
+
+async function ajouterLigne(champs) {
+  const ordre = D.lignes.length ? Math.max(...D.lignes.map((l) => l.ordre || 0)) + 1 : 0;
+  afficherEtat("Enregistrement…");
+  const { data, error } = await sb.from("devis_lignes").insert({ ...champs, devis_id: D.devis.id, ordre }).select("*").single();
+  if (error) return afficherEtat("Erreur : " + error.message, true);
+  D.lignes.push(data);
+  rendre();
+  await majTotal();
+}
+
+function rendrePied() {
+  if (!D) { pied.hidden = true; return; }
+  pied.hidden = false;
+  const bl = blocages(), fige = verrouille();
+  pied.innerHTML = `<div class="in">
+    <div class="total"><small>Total TTC</small>${euro(totalDevis())}</div>
+    <span class="esp"></span>
+    ${fige ? `<span class="meta" style="color:#fff">Validé le ${dateFr(D.devis.valide_le)}${D.devis.valide_par ? " par " + esc(D.devis.valide_par) : ""}</span><button class="btn clair" id="rouvrir">Modifier à nouveau</button>`
+      : `<button class="btn clair" id="regen">Refaire le brouillon</button><button class="btn jaune" id="valider" ${bl.length ? "disabled" : ""}>Valider le devis</button>`}
+    ${!fige && bl.length ? `<div class="pourquoi">Avant de valider : ${esc(bl.join(", "))}.</div>` : ""}
+  </div>`;
+  document.getElementById("valider")?.addEventListener("click", valider);
+  document.getElementById("regen")?.addEventListener("click", regenerer);
+  document.getElementById("rouvrir")?.addEventListener("click", rouvrir);
+}
+
+async function valider() {
+  if (blocages().length) return;
+  const { data: { user } } = await sb.auth.getUser();
+  Object.assign(D.devis, { statut: "valide", valide_le: new Date().toISOString(), valide_par: user?.email || null });
+  await ecrire(sb.from("devis").update({ statut: "valide", valide_le: D.devis.valide_le, valide_par: D.devis.valide_par, total_ttc: totalDevis() }).eq("id", D.devis.id));
+  await sb.from("demandes").update({ statut: "en_cours", updated_at: new Date().toISOString() }).eq("id", D.demande.id);
+  rendre();
+}
+async function rouvrir() {
+  D.devis.statut = "brouillon";
+  await ecrire(sb.from("devis").update({ statut: "brouillon", valide_le: null, valide_par: null }).eq("id", D.devis.id));
+  await sb.from("demandes").update({ statut: "a_valider" }).eq("id", D.demande.id);
+  rendre();
+}
+async function regenerer() {
+  if (!confirm("Refaire le brouillon depuis la demande d'origine ? Vos modifications sur ce devis seront perdues.")) return;
+  afficherEtat("Préparation du brouillon…");
+  const { data, error } = await sb.functions.invoke("devis", { body: { action: "generer", demande_id: D.demande.id, forcer: true } });
+  if (error || !data?.devis_id) return afficherEtat("Erreur : " + (data?.ignore || data?.erreur || error?.message || "brouillon non créé"), true);
+  afficherEtat("Brouillon refait");
+  ouvrir(data.devis_id);
+}
+
+/* ---------- Démarrage ---------- */
+async function demarrer() {
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  if (!session) return ecranConnexion();
+  const { data: equipe, error } = await sb.from("staff").select("email").limit(1);
+  if (error || !equipe?.length) { await sb.auth.signOut(); return ecranConnexion("Ce compte n'a pas accès aux devis."); }
+  const id = new URLSearchParams(location.search).get("d");
+  if (id) ouvrir(id); else ecranListe();
+}
+sb.auth.onAuthStateChange((evt) => { if (evt === "SIGNED_IN" && !session) demarrer(); });
+demarrer().catch((e) => { app.innerHTML = `<p class="avert">Erreur au chargement : ${esc(e.message || e)}</p>`; });
+})();
+</script>
+</body>
+</html>
