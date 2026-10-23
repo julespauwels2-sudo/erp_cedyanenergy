@@ -123,15 +123,71 @@ details.origine p{margin:8px 0;white-space:pre-wrap;font-size:14px}
   .ajout .libre{padding:12px}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+/* ===== Habillage aux couleurs du site Cedyan Energy ===== */
+:root{--vert-site:#218034;--vert-fonce:#14551f;--nuit-site:#0d3a16;--bleu-site:#2b4b9b;--menthe:#9fcda1;--menthe-pale:#e7f3e7;--ombre:0 18px 40px -22px rgba(20,60,30,.35);--r-l:22px;--r-xl:32px}
+html,body{background:#f3f6f2}
+.hero-qg{position:relative;isolation:isolate;overflow:hidden;color:#fff;background:radial-gradient(ellipse at 78% 0%,#1d4a28,#08170d 72%);padding:calc(14px + env(safe-area-inset-top,0px)) 0 28px}
+.hero-qg::after{content:"";position:absolute;right:-120px;top:-160px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(251,187,16,.38),rgba(251,187,16,0) 65%);z-index:-1;pointer-events:none}
+.hero-qg__in{max-width:1000px;margin:0 auto;padding:0 18px}
+.hero-qg__haut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hero-qg__logo{width:150px;height:auto;display:block}
+.hero-qg__haut nav{display:flex;gap:6px;flex-wrap:wrap}
+.hero-qg__haut nav a{color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.hero-qg__haut nav a:hover{background:rgba(255,255,255,.1)}
+.hero-qg__haut .esp{flex:1}
+.hero-qg .etat{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+.hero-qg .etat.err{background:#b42318}
+.hero-qg__titre{margin:26px 0 0;max-width:640px}
+.hero-qg__kicker{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:rgba(159,205,161,.16);color:#c8e6c9;font-weight:700;font-size:.88rem}
+.hero-qg__kicker::before{content:"";width:8px;height:8px;border-radius:50%;background:#fbbb10;box-shadow:0 0 0 4px rgba(251,187,16,.25)}
+.hero-qg h1{margin:0;font-size:clamp(1.9rem,4vw,2.8rem);font-weight:900;letter-spacing:-.035em;line-height:1.05}
+.hero-qg__sous{margin:10px 0 0;color:#cfe3d2;font-size:1.02rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:24px}
+.kpi{display:grid;gap:2px;text-align:left;background:#fff;color:#16241a;border:0;border-radius:var(--r-l);padding:16px 18px;box-shadow:0 20px 40px -24px rgba(0,0,0,.6);cursor:pointer;transition:transform .2s,box-shadow .2s;font:inherit}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 24px 44px -22px rgba(0,0,0,.65)}
+.kpi span{font-size:.85rem;color:#56665b;font-weight:600;display:flex;align-items:center;gap:8px}
+.kpi span::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--k,#218034)}
+.kpi b{font-size:2rem;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.kpi small{font-size:.82rem;color:#56665b}
+.kpi.chaud b{color:#9a5b00}
+body.edition .hero-qg__titre,body.edition .kpis{display:none}
+body.edition .hero-qg{padding-bottom:14px}
+.embed .hero-qg{display:none}
+main{padding-top:24px}
+/* Boutons comme sur le site */
+.btn{min-height:46px;padding:0 22px;border-radius:999px;font-weight:700;transition:transform .2s,box-shadow .2s,background-color .2s}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn.vert{background:var(--vert-site);border-color:var(--vert-site);color:#fff;box-shadow:0 12px 24px -14px rgba(33,128,52,.7)}
+.btn.jaune{background:#fbbb10;border-color:#fbbb10;color:#16241a;box-shadow:0 12px 24px -14px rgba(251,187,16,.9)}
+/* Filtres et onglets */
+.puce,.onglet{border:0;background:#fff;box-shadow:inset 0 0 0 1.5px #dfe7e0;color:#14551f;font-weight:700;border-radius:999px;padding:9px 16px;transition:background-color .2s}
+.puce:hover,.onglet:hover{background:#e7f3e7}
+.puce[aria-pressed="true"],.onglet[aria-selected="true"]{background:#14551f;color:#fff;box-shadow:none}
+/* Cartes */
+.carte,.groupe{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.item{border-radius:var(--r-l);border:1px solid #e3ebe4;box-shadow:0 10px 26px -22px rgba(20,60,30,.45);position:relative;overflow:hidden;padding-left:24px;transition:transform .2s,box-shadow .2s}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc,#dfe7e0)}
+.item:hover{transform:translateY(-2px);box-shadow:var(--ombre);border-color:#9fcda1}
+.item[data-st="brouillon"]{--acc:#fbbb10}.item[data-st="valide"]{--acc:#8b5cf6}.item[data-st="envoye"]{--acc:#2b4b9b}.item[data-st="accepte"]{--acc:#218034}.item[data-st="refuse"],.item[data-st="expire"]{--acc:#b9c4bb}
+.item .tot{font-size:1.15rem;font-weight:900;color:#14551f}
+.badge{border-radius:999px;padding:3px 10px;background:#e7f3e7;color:#14551f;font-weight:700}
+.badge.alerte{background:#fff4d6;color:#9a5b00}
+.badge.ok{background:#14551f;color:#fff}
+.tab{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.tab th{background:#e7f3e7;color:#14551f}
+.ligne,.lg{border-radius:18px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
+.pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
 </style>
 </head>
 <body>
-<header class="barre">
-  <h1>Devis</h1>
-  <a href="/" id="lien-qg" hidden>← QG</a>
-  <a href="dashboard.html" id="lien-dash">Tableau de bord</a>
-  <span class="esp"></span>
-  <span class="etat" id="etat" hidden></span>
+<header class="hero-qg" id="hero">
+  <div class="hero-qg__in">
+    <div class="hero-qg__haut"><img class="hero-qg__logo" src="logo-cedyan.png" alt="Cedyan Energy" width="150" height="45"><nav><a href="/" id="lien-qg" hidden>← QG</a><a href="dashboard.html" id="lien-dash">Tableau de bord</a></nav><span class="esp"></span><span class="etat" id="etat" hidden></span></div>
+    <div class="hero-qg__titre"><p class="hero-qg__kicker">Devis</p><h1>Vos devis, prêts en quelques clics</h1><p class="hero-qg__sous">Les demandes du site arrivent déjà préparées : vérifiez, validez, envoyez.</p></div>
+    <div class="kpis" id="kpis"></div>
+  </div>
 </header>
 <main id="app"><p class="vide">Chargement…</p></main>
 <footer class="pied" id="pied" hidden></footer>
@@ -218,12 +274,28 @@ const prixSelon = (p, grille) => p ? (grille === "pro" ? p.prix : p.prix_public)
 /* ---------- Liste ---------- */
 const relancesBadge = (d) => { const n = [d.relance1_le, d.relance2_le, d.relance_exp_le].filter(Boolean).length; return n ? `<span class="badge">Relancé ${n} fois</span>` : ""; };
 const STATUT_BADGE = { valide: `<span class="badge ok">Validé</span>`, envoye: `<span class="badge ok">Envoyé</span>`, accepte: `<span class="badge ok">✓ Accepté</span>`, refuse: `<span class="badge alerte">Refusé</span>`, expire: `<span class="badge">Expiré</span>` };
+// Les chiffres du haut : ce qu'il y a à faire et ce qui est signé ce mois
+async function chiffres() {
+  const zone = document.getElementById("kpis"); if (!zone) return;
+  const { data } = await sb.from("devis").select("statut,total_ttc,accepte_le,a_appeler").limit(2000);
+  const l = data || [], mois = new Date(); mois.setDate(1); mois.setHours(0, 0, 0, 0);
+  const n = (st) => l.filter((d) => d.statut === st);
+  const signes = l.filter((d) => d.statut === "accepte" && d.accepte_le && new Date(d.accepte_le) >= mois);
+  const appeler = l.filter((d) => d.statut === "envoye" && d.a_appeler).length;
+  const k = [
+    ["brouillon", "À valider", n("brouillon").length, "#fbbb10", "préparés automatiquement"],
+    ["valide", "À envoyer", n("valide").length, "#8b5cf6", "validés, pas encore partis"],
+    ["envoye", "Chez le client", n("envoye").length, "#2b4b9b", appeler ? `dont ${appeler} à appeler` : "relances automatiques"],
+    ["accepte", "Signés ce mois", signes.length, "#218034", euro(signes.reduce((a, d) => a + (+d.total_ttc || 0), 0))],
+  ];
+  zone.innerHTML = k.map(([f, t, v, c, s], i) => `<button class="kpi ${i < 2 && v ? "chaud" : ""}" style="--k:${c}" data-kf="${f}"><span>${t}</span><b>${v}</b><small>${esc(s)}</small></button>`).join("");
+  zone.querySelectorAll("[data-kf]").forEach((b) => (b.onclick = () => { filtre = b.dataset.kf; ecranListe(); }));
+}
 async function ecranListe() {
-  D = null; pied.hidden = true; history.replaceState(null, "", adresse(""));
-  app.innerHTML = `<div class="tetliste"><h2>Devis</h2><button class="btn vert" id="nouveau">Faire un devis</button></div>
-  <div class="puces" role="group" aria-label="Filtrer">
+  D = null; pied.hidden = true; history.replaceState(null, "", adresse("")); document.body.classList.remove("edition"); chiffres();
+  app.innerHTML = `<div class="tetliste"><div class="puces" role="group" aria-label="Filtrer">
     ${[["brouillon", "À valider"], ["appeler", "À appeler"], ["valide", "Validés"], ["envoye", "Envoyés"], ["accepte", "Acceptés"], ["tous", "Tous"]].map(([k, l]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${l}</button>`).join("")}
-  </div><div class="liste" id="liste"><p class="vide">Chargement…</p></div>`;
+  </div><button class="btn jaune" id="nouveau">+ Faire un devis</button></div><div class="liste" id="liste"><p class="vide">Chargement…</p></div>`;
   app.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; ecranListe(); }));
   document.getElementById("nouveau").onclick = ecranNouveau;
   let q = sb.from("devis").select("id,created_at,statut,grille,total_ttc,source,numero,vu_le,a_appeler,relance1_le,relance2_le,relance_exp_le,demande:demandes(id,contact,statut,type),devis_lignes(a_verifier)").order("created_at", { ascending: false }).limit(200);
@@ -236,7 +308,7 @@ async function ecranListe() {
   liste.innerHTML = data.map((d) => {
     const c = d.demande?.contact || {};
     const doutes = (d.devis_lignes || []).filter((l) => l.a_verifier).length;
-    return `<button class="item" data-id="${d.id}">
+    return `<button class="item" data-id="${d.id}" data-st="${d.statut}">
       <span><b>${esc(c.entreprise || c.nom || c.telephone || "Client")}</b>${c.entreprise && c.nom ? ` <span class="meta">${esc(c.nom)}</span>` : ""}</span>
       <span class="tot">${euro(d.total_ttc)}</span>
       <span class="meta">${d.numero ? esc(d.numero) + " · " : ""}${dateFr(d.created_at)} · ${(d.devis_lignes || []).length} ligne(s) · ${d.source === "manuel" ? "fait par l'équipe" : "demande du site"}</span>
@@ -249,6 +321,7 @@ async function ecranListe() {
 /* ---------- Nouveau devis fait par l'équipe ---------- */
 let comptesPro = null;
 async function ecranNouveau() {
+  document.body.classList.add("edition");
   D = null; pied.hidden = true; history.replaceState(null, "", adresse("nouveau"));
   let profil = "particulier", compteId = null;
   app.innerHTML = `<p><button class="lien" id="retour">← Tous les devis</button></p>
@@ -323,6 +396,7 @@ async function ecranNouveau() {
 
 /* ---------- Édition ---------- */
 async function ouvrir(id) {
+  document.body.classList.add("edition");
   app.innerHTML = `<p class="vide">Chargement du devis…</p>`;
   await chargerCatalogue();
   const { data: devis, error } = await sb.from("devis").select("*, demande:demandes(*)").eq("id", id).maybeSingle();

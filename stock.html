@@ -38,6 +38,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 60px}
 .puce{border:1.5px solid var(--trait);background:var(--carte);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer}
 .puce[aria-pressed="true"]{background:var(--nuit);border-color:var(--nuit);color:#fff}
 .tab{width:100%;border-collapse:collapse;background:var(--carte);border:1px solid var(--trait);border-radius:18px;overflow:hidden}
+.tab th.n{text-align:right}
 .tab th{text-align:left;font-size:12px;color:var(--encre-2);font-weight:600;padding:10px 12px;border-bottom:1.5px solid var(--trait);background:#fafcf9}
 .tab td{padding:10px 12px;border-bottom:1px solid var(--trait);vertical-align:middle}
 .tab tr.clic{cursor:pointer}
@@ -65,10 +66,72 @@ main{max-width:1000px;margin:0 auto;padding:18px 16px 60px}
 .connexion input{width:100%;border:1.5px solid var(--trait);border-radius:12px;padding:12px;margin:6px 0;background:#fff}
 .connexion .btn{width:100%;margin-top:8px}
 @media (max-width:640px){.tab .cache-mobile{display:none}.ligne{grid-template-columns:1fr 90px 34px}}
+/* ===== Habillage aux couleurs du site Cedyan Energy ===== */
+:root{--vert-site:#218034;--vert-fonce:#14551f;--nuit-site:#0d3a16;--bleu-site:#2b4b9b;--menthe:#9fcda1;--menthe-pale:#e7f3e7;--ombre:0 18px 40px -22px rgba(20,60,30,.35);--r-l:22px;--r-xl:32px}
+html,body{background:#f3f6f2}
+.hero-qg{position:relative;isolation:isolate;overflow:hidden;color:#fff;background:radial-gradient(ellipse at 78% 0%,#1d4a28,#08170d 72%);padding:calc(14px + env(safe-area-inset-top,0px)) 0 28px}
+.hero-qg::after{content:"";position:absolute;right:-120px;top:-160px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(251,187,16,.38),rgba(251,187,16,0) 65%);z-index:-1;pointer-events:none}
+.hero-qg__in{max-width:1000px;margin:0 auto;padding:0 18px}
+.hero-qg__haut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hero-qg__logo{width:150px;height:auto;display:block}
+.hero-qg__haut nav{display:flex;gap:6px;flex-wrap:wrap}
+.hero-qg__haut nav a{color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.hero-qg__haut nav a:hover{background:rgba(255,255,255,.1)}
+.hero-qg__haut .esp{flex:1}
+.hero-qg .etat{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+.hero-qg .etat.err{background:#b42318}
+.hero-qg__titre{margin:26px 0 0;max-width:640px}
+.hero-qg__kicker{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:rgba(159,205,161,.16);color:#c8e6c9;font-weight:700;font-size:.88rem}
+.hero-qg__kicker::before{content:"";width:8px;height:8px;border-radius:50%;background:#fbbb10;box-shadow:0 0 0 4px rgba(251,187,16,.25)}
+.hero-qg h1{margin:0;font-size:clamp(1.9rem,4vw,2.8rem);font-weight:900;letter-spacing:-.035em;line-height:1.05}
+.hero-qg__sous{margin:10px 0 0;color:#cfe3d2;font-size:1.02rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:24px}
+.kpi{display:grid;gap:2px;text-align:left;background:#fff;color:#16241a;border:0;border-radius:var(--r-l);padding:16px 18px;box-shadow:0 20px 40px -24px rgba(0,0,0,.6);cursor:pointer;transition:transform .2s,box-shadow .2s;font:inherit}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 24px 44px -22px rgba(0,0,0,.65)}
+.kpi span{font-size:.85rem;color:#56665b;font-weight:600;display:flex;align-items:center;gap:8px}
+.kpi span::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--k,#218034)}
+.kpi b{font-size:2rem;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.kpi small{font-size:.82rem;color:#56665b}
+.kpi.chaud b{color:#9a5b00}
+body.edition .hero-qg__titre,body.edition .kpis{display:none}
+body.edition .hero-qg{padding-bottom:14px}
+.embed .hero-qg{display:none}
+main{padding-top:24px}
+/* Boutons comme sur le site */
+.btn{min-height:46px;padding:0 22px;border-radius:999px;font-weight:700;transition:transform .2s,box-shadow .2s,background-color .2s}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn.vert{background:var(--vert-site);border-color:var(--vert-site);color:#fff;box-shadow:0 12px 24px -14px rgba(33,128,52,.7)}
+.btn.jaune{background:#fbbb10;border-color:#fbbb10;color:#16241a;box-shadow:0 12px 24px -14px rgba(251,187,16,.9)}
+/* Filtres et onglets */
+.puce,.onglet{border:0;background:#fff;box-shadow:inset 0 0 0 1.5px #dfe7e0;color:#14551f;font-weight:700;border-radius:999px;padding:9px 16px;transition:background-color .2s}
+.puce:hover,.onglet:hover{background:#e7f3e7}
+.puce[aria-pressed="true"],.onglet[aria-selected="true"]{background:#14551f;color:#fff;box-shadow:none}
+/* Cartes */
+.carte,.groupe{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.item{border-radius:var(--r-l);border:1px solid #e3ebe4;box-shadow:0 10px 26px -22px rgba(20,60,30,.45);position:relative;overflow:hidden;padding-left:24px;transition:transform .2s,box-shadow .2s}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc,#dfe7e0)}
+.item:hover{transform:translateY(-2px);box-shadow:var(--ombre);border-color:#9fcda1}
+.item[data-st="brouillon"]{--acc:#fbbb10}.item[data-st="valide"]{--acc:#8b5cf6}.item[data-st="envoye"]{--acc:#2b4b9b}.item[data-st="accepte"]{--acc:#218034}.item[data-st="refuse"],.item[data-st="expire"]{--acc:#b9c4bb}
+.item .tot{font-size:1.15rem;font-weight:900;color:#14551f}
+.badge{border-radius:999px;padding:3px 10px;background:#e7f3e7;color:#14551f;font-weight:700}
+.badge.alerte{background:#fff4d6;color:#9a5b00}
+.badge.ok{background:#14551f;color:#fff}
+.tab{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.tab th{background:#e7f3e7;color:#14551f}
+.ligne,.lg{border-radius:18px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
+.pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
 </style>
 </head>
 <body>
-<header class="barre"><a href="/">← QG</a><h1>Stock</h1><span class="esp"></span><span class="etat" id="etat" hidden></span></header>
+<header class="hero-qg">
+  <div class="hero-qg__in">
+    <div class="hero-qg__haut"><img class="hero-qg__logo" src="logo-cedyan.png" alt="Cedyan Energy" width="150" height="45"><nav><a href="/">← QG</a><a href="devis.html">Devis</a></nav><span class="esp"></span><span class="etat" id="etat" hidden></span></div>
+    <div class="hero-qg__titre"><p class="hero-qg__kicker">Stock commun Cedyan et ENR Pose</p><h1>Votre stock, en un coup d'œil</h1><p class="hero-qg__sous">Ce qui est là, ce qui est réservé, ce qu'il faut commander.</p></div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
 <main id="app"><p class="vide">Chargement…</p></main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -98,6 +161,15 @@ const alertes = () => L.articles.filter((x) => x.en_alerte && (x.seuil_alerte !=
 
 function rendre() {
   const nA = alertes().length;
+  const unites = (f) => L.articles.reduce((a, x) => a + (+x[f] || 0), 0);
+  const k = [
+    ["stock", "Références", L.articles.length, "#218034", "en stock dans Dolibarr"],
+    ["stock", "Pièces disponibles", Math.round(unites("disponible")).toLocaleString("fr-FR"), "#2b4b9b", Math.round(unites("reserve")).toLocaleString("fr-FR") + " réservées pour des clients"],
+    ["commandes", "Sous le seuil", nA, "#fbbb10", nA ? "à commander" : "rien à commander"],
+    ["reception", "Livraisons à valider", L.receptions.length, "#8b5cf6", "lues sur les bons"],
+  ];
+  document.getElementById("kpis").innerHTML = k.map(([o, t, v, c, s]) => `<button class="kpi ${(o === "commandes" || o === "reception") && +v ? "chaud" : ""}" style="--k:${c}" data-ko="${o}"><span>${t}</span><b>${v}</b><small>${esc(s)}</small></button>`).join("");
+  document.querySelectorAll("[data-ko]").forEach((b) => (b.onclick = () => { onglet = b.dataset.ko; history.replaceState(null, "", "?v=" + onglet); rendre(); }));
   app.innerHTML = `<div class="onglets" role="tablist">
     ${[["stock", "Stock"], ["reception", "Réception", L.receptions.length], ["commandes", "À commander", nA], ["mouvements", "Mouvements"]].map(([k, l, n]) => `<button class="onglet" role="tab" data-o="${k}" aria-selected="${onglet === k}">${l}${n ? `<b>${n}</b>` : ""}</button>`).join("")}
   </div><div id="zone"></div>`;
@@ -121,7 +193,7 @@ function vueStock() {
     <label class="btn petit">Réimporter<input type="file" id="imp" accept=".csv,.xlsx,.xls" hidden></label></div>
     <p class="meta" id="impinfo"></p>
     <table class="tab"><thead><tr><th>Produit</th><th class="n">Réel</th><th class="n cache-mobile">Réservé</th><th class="n">Disponible</th><th class="n cache-mobile">Seuil</th></tr></thead>
-    <tbody>${liste.slice(0, 400).map((a) => `<tr class="clic ${a.en_alerte ? "alerte" : ""}" data-r="${esc(a.ref)}"><td><b>${esc(a.libelle)}</b> ${a.en_alerte ? `<span class="badge">À commander</span>` : ""}<div class="ref">${esc(a.ref)}${a.fournisseur ? " · " + esc(a.fournisseur) : ""}</div>
+    <tbody>${liste.slice(0, 400).map((a) => `<tr class="clic ${a.en_alerte ? "alerte" : ""}" data-r="${esc(a.ref)}"><td><b>${esc(a.libelle)}</b> ${a.en_alerte ? `<span class="badge alerte">À commander</span>` : ""}<div class="ref">${esc(a.ref)}${a.fournisseur ? " · " + esc(a.fournisseur) : ""}</div>
       ${ouvert === a.ref ? `<div class="edit"><label>Quantité réelle<input id="e-q" inputmode="decimal" value="${nb(a.reel)}"></label><label>Seuil d'alerte<input id="e-s" inputmode="decimal" value="${a.seuil_alerte ?? ""}"></label><label>Stock désiré<input id="e-d" inputmode="decimal" value="${a.stock_desire ?? ""}"></label><label>Fournisseur<input id="e-f" value="${esc(a.fournisseur || "")}"></label><label>Délai (jours)<input id="e-j" inputmode="numeric" value="${a.delai_jours ?? ""}"></label><button class="btn vert petit" id="e-ok">Enregistrer</button></div>` : ""}</td>
       <td class="n">${nb(a.reel)}</td><td class="n cache-mobile">${a.reserve ? nb(a.reserve) : "–"}</td><td class="n dispo">${nb(a.disponible)}</td><td class="n cache-mobile">${a.seuil_alerte ?? "–"}</td></tr>`).join("") || `<tr><td colspan="5" class="vide">Aucun produit.</td></tr>`}</tbody></table>
     ${liste.length > 400 ? `<p class="meta">400 premiers résultats affichés : précisez la recherche.</p>` : ""}`;
