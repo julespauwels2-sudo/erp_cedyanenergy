@@ -352,12 +352,14 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1,1,1,-1,0.1,300);
-const OFFSET = V3(24,22,24);
+const camera = new THREE.PerspectiveCamera(30,1,1,900);   // vraie perspective : la ville prend de la profondeur
+let BASE=42;                                                  // distance de la caméra pour le zoom 1
+const OFFSET = V3(24,19,24);
+scene.fog = new THREE.Fog(0x101c2e, 95, 230);   // la ville se fond au loin
 const hemi = new THREE.HemisphereLight(0xEAF4FF, 0xB9A88A, 0.75); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xFFF4DE, 0.95);
 sun.position.set(12,24,8); sun.castShadow = true; sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:70}); sun.shadow.bias = -0.0008;
+Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:70}); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.04;   // pas de stries sur les sols
 scene.add(sun);
 
 const mats={}, geos={};
@@ -487,18 +489,56 @@ function maison(p,x,z,finie,k){
   box(p,.36,.3,.04,0xBFE3F2,x-.35,.52,z+W/2+.01);                           // fenêtre
   box(p,.03,.7,.03,0x334155,x-W/2-.2,.12,z+W/2+.1); box(p,.32,.2,.02,0x22C55E,x-W/2-.03,.6,z+W/2+.1);   // drapeau vert
 }
-// Emplacements autour du magasin : rangées successives (derrière, à gauche, à droite, devant), de plus en plus loin
-function emplacements(n){
-  const L=[], pas=3.4;
-  for(let r=0; L.length<n && r<6; r++){
-    const dx=16.6+r*3.6, dz=14.4+r*3.6;
-    const xs=[], zs=[];
-    for(let x=-dx+pas; x<=dx-pas+.01; x+=pas) xs.push(x);
-    for(let z=-dz+pas; z<=dz-pas+.01; z+=pas) zs.push(z);
-    xs.forEach((x)=>L.push([x,-dz])); zs.forEach((z)=>L.push([-dx,z])); zs.forEach((z)=>L.push([dx,z])); xs.forEach((x)=>L.push([x,dz]));
+// Plan de la ville : le QG au centre, des rues en damier autour. Chaque îlot est découpé en parcelles.
+const RUES_X=[-43.2,-29.2,-15.2,15.2,29.2,43.2], RUES_Z=[-40.2,-26.2,-12.2,12.2,26.2,40.2], LARG=3;
+const PARCELLES=(()=>{ const L=[];
+  for(let i=0;i<5;i++) for(let j=0;j<5;j++){ if(i===2&&j===2) continue;          // îlot central = le magasin
+    const x0=RUES_X[i]+LARG/2+.8, x1=RUES_X[i+1]-LARG/2-.8, z0=RUES_Z[j]+LARG/2+.8, z1=RUES_Z[j+1]-LARG/2-.8;
+    const nx=Math.max(1,Math.floor((x1-x0)/5.4)), nz=Math.max(1,Math.floor((z1-z0)/5.4));
+    for(let a=0;a<nx;a++) for(let b=0;b<nz;b++) L.push([x0+(a+.5)*(x1-x0)/nx, z0+(b+.5)*(z1-z0)/nz]); }
+  // Les plus proches du QG d'abord (légère priorité à l'arrière, pour ne jamais cacher le magasin)
+  return L.sort((p,q)=>(Math.hypot(...p)+(p[0]+p[1])*.12)-(Math.hypot(...q)+(q[0]+q[1])*.12));
+})();
+function emplacements(n){ return PARCELLES.slice(0,n); }
+
+const ville=grp(scene);
+(function construireVille(){
+  const E=50;
+  box(ville,2*E+20,.04,2*E+20,0xC9E2BF,0,-.06,0);                                       // sol
+  // Îlots : trottoir clair + pelouse
+  for(let i=0;i<5;i++) for(let j=0;j<5;j++){
+    const x0=RUES_X[i]+LARG/2, x1=RUES_X[i+1]-LARG/2, z0=RUES_Z[j]+LARG/2, z1=RUES_Z[j+1]-LARG/2;
+    box(ville,x1-x0,.1,z1-z0,0xE4E9E1,(x0+x1)/2,-.04,(z0+z1)/2);
+    if(i===2&&j===2) continue;
+    box(ville,x1-x0-1.2,.03,z1-z0-1.2,0xBCDCAE,(x0+x1)/2,.06,(z0+z1)/2);
+    [[x0+.6,z0+.6],[x1-.6,z0+.6],[x0+.6,z1-.6],[x1-.6,z1-.6]].forEach(([x,z])=>{ cyl(ville,.09,.6,0x7A5A40,x,.06,z,6); const f=new THREE.Mesh(new THREE.IcosahedronGeometry(.55,0),mat(0x3E9B5A)); f.position.set(x,.95,z); f.castShadow=true; ville.add(f); });
   }
-  return L.slice(0,n);
-}
+  // Rues (asphalte) et lignes blanches
+  RUES_X.forEach((x)=>box(ville,LARG,.04,2*E,0x5B6370,x,-.02,0));
+  RUES_Z.forEach((z)=>box(ville,2*E,.04,LARG,0x5B6370,0,-.02,z));
+  RUES_X.forEach((x)=>{ for(let z=-E+1;z<E;z+=3) if(!RUES_Z.some((r)=>Math.abs(r-z)<2.2)) box(ville,.12,.02,1.3,0xF5F5F0,x,.02,z); });
+  RUES_Z.forEach((z)=>{ for(let x=-E+1;x<E;x+=3) if(!RUES_X.some((r)=>Math.abs(r-x)<2.2)) box(ville,1.3,.02,.12,0xF5F5F0,x,.02,z); });
+  // Lampadaires autour du QG
+  [[-15.2,-12.2],[15.2,-12.2],[-15.2,12.2],[15.2,12.2]].forEach(([x,z])=>{ const dx=Math.sign(x)*-2.2, dz=Math.sign(z)*-2.2; box(ville,.1,2.2,.1,0x334155,x+dx,.02,z+dz); box(ville,.4,.1,.25,0xFDE68A,x+dx,2.2,z+dz); });
+})();
+
+// Voitures : elles roulent sur les rues autour du QG et sur deux avenues
+const voitures=[];
+function voiture(couleur){ const g=new THREE.Group();
+  box(g,1.9,.42,.95,couleur,0,.18,0); box(g,1.05,.36,.85,0x2E3A4A,-.1,.6,0); box(g,1.07,.04,.87,couleur,-.1,.96,0);
+  [[-.62,-.48],[.62,-.48],[-.62,.48],[.62,.48]].forEach(([x,z])=>box(g,.38,.3,.1,0x16181d,x,.04,z));
+  ville.add(g); return g; }
+function boucle(pts){ const seg=[]; let tot=0; for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length], l=Math.hypot(b[0]-a[0],b[1]-a[1]); seg.push({a,b,l,d:tot}); tot+=l; } return {seg,tot}; }
+const TOUR_EXT=boucle([[-15.9,-12.9],[15.9,-12.9],[15.9,12.9],[-15.9,12.9]]), TOUR_INT=boucle([[-14.5,11.5],[14.5,11.5],[14.5,-11.5],[-14.5,-11.5]]);
+const AVENUE_X=boucle([[29.9,-48],[29.9,48],[28.5,48],[28.5,-48]]), AVENUE_Z=boucle([[-48,26.9],[48,26.9],[48,25.5],[-48,25.5]]);
+[[TOUR_EXT,0,0xE63946],[TOUR_EXT,.35,0x3B82F6],[TOUR_EXT,.7,0xF5F5F5],[TOUR_INT,.15,0xFBBB10],[TOUR_INT,.6,0x22A06B],[AVENUE_X,0,0x8B5CF6],[AVENUE_X,.5,0xF97316],[AVENUE_Z,.25,0x0EA5E9]]
+  .forEach(([chemin,depart,c],k)=>voitures.push({g:voiture(c), chemin, s:depart*chemin.tot, v:4.2+(k%3)*.9}));
+function placerVoiture(o){ const C=o.chemin; o.s=(o.s+C.tot)%C.tot; const sg=C.seg.find((x)=>o.s>=x.d&&o.s<x.d+x.l)||C.seg[0];
+  const f=(o.s-sg.d)/sg.l, x=sg.a[0]+(sg.b[0]-sg.a[0])*f, z=sg.a[1]+(sg.b[1]-sg.a[1])*f;
+  o.g.position.set(x,0,z); o.g.rotation.y=-Math.atan2(sg.b[1]-sg.a[1],sg.b[0]-sg.a[0]); }
+function bougerVoitures(dt){ voitures.forEach((o)=>{ o.s+=o.v*dt*(S.cyclone?.3:1); placerVoiture(o); }); }
+voitures.forEach(placerVoiture);
+
 /* --- Petits personnages --- */
 const smats={}, sgeos={}, buddies=[];
 const smat=c=>smats[c]||(smats[c]=new THREE.MeshStandardMaterial({color:c,roughness:.5}));
@@ -594,27 +634,17 @@ function rebuild(){
   g=grp(Z.enr.dyn,'prevus'); DATA.pose.slice(0,4).forEach((p,i)=>{ const x=1.6+i*.7; box(g,.03,.55,.03,0x334155,x,1.95,2.6); box(g,.28,.17,.02,0x0E9C8F,x+.15,2.3,2.6); });
   // Gyrophare au-dessus de la caisse SAV : une demande urgente attend
   if(savUrgent().length){ const gb=grp(Z.enr.dyn,'sav'); const bc=box(gb,.16,.22,.16,null,1.6,.71,7.2,new THREE.MeshStandardMaterial({color:0xF97316,emissive:0xF97316,emissiveIntensity:.8})); beacons.push(bc); }
-  // Quartier : la ville s'étend autour du magasin, rangée après rangée (une maison par chantier, 60 au maximum)
-  const maisons=DATA.chantiers.slice(-60), pos=emplacements(maisons.length), gq=Z.quartier.dyn;
+  // Quartier : chaque chantier construit une maison sur la parcelle libre la plus proche du QG (60 au maximum)
+  const maisons=DATA.chantiers.slice(-(PARCELLES.length-1)), pos=emplacements(maisons.length+1), gq=Z.quartier.dyn, gm=grp(gq,'quartier');
   let etendue=0;
-  if(maisons.length){
-    const rangs=Math.ceil(Math.max(...pos.map(([x,z])=>Math.max(Math.abs(x)-16.6,Math.abs(z)-14.4)))/3.6)+1;
-    const ex=16.6+(rangs-1)*3.6+2.4, ez=14.4+(rangs-1)*3.6+2.4; etendue=Math.max(ex,ez*1.15);
-    box(gq,ex*2,.04,ez*2,0xD5E8CF,0,-.02,0);                                // pelouse de la ville
-    const R1=13.3, R2=10.9, larg=1.5;                                        // route qui fait le tour du magasin
-    box(gq,2*(R1+larg),.03,larg,0x8A939E,0,.02,-(R2+larg/2)-.6); box(gq,2*(R1+larg),.03,larg,0x8A939E,0,.02,(R2+larg/2)+.6);
-    box(gq,larg,.03,2*(R2+larg+.6),0x8A939E,-(R1+larg/2),.02,0); box(gq,larg,.03,2*(R2+larg+.6),0x8A939E,(R1+larg/2),.02,0);
-    const gm=grp(gq,'quartier');
-    maisons.forEach((c,i)=>{ const [x,z]=pos[i]; box(gm,2.4,.04,2.4,0xBFDDB4,x,.02,z); maison(gm,x,z,c.etape==='termine',i); });
-    ZONES.quartier.center.set(0,0,-15.4); HOT.quartier.at.set(-16.6,2.6,-14.4);
-  } else {
-    // Pas encore de chantier : un terrain à bâtir avec son panneau, derrière le magasin
-    const gm=grp(gq,'quartier'), [x,z]=emplacements(1)[0];
-    box(gm,2.4,.04,2.4,0xBFDDB4,x,.02,z); box(gm,.08,.9,.08,0x6B4F3A,x,.06,z); box(gm,.9,.5,.06,0xFFFFFF,x,.8,z+.05); box(gm,.8,.08,.07,0x0E9C8F,x,1.12,z+.06);
-    ZONES.quartier.center.set(x,0,z); HOT.quartier.at.set(x,2.2,z);
-  }
-  ZONES.quartier.zoom=Math.max(.55,Math.min(1,13/Math.max(13,etendue)));
-  vueGenerale.x=0; vueGenerale.zoom=etendue?Math.max(.4,Math.min(1,14/etendue)):1;     // tout le magasin et la ville à l'écran
+  maisons.forEach((c,i)=>{ const [x,z]=pos[i], hg=new THREE.Group(); hg.position.set(x,.08,z); hg.scale.setScalar(1.55); hg.rotation.y=(Math.abs(x)>Math.abs(z)*1.2)?(x>0?-Math.PI/2:Math.PI/2):(z>0?Math.PI:0); gm.add(hg);
+    maison(hg,0,0,c.etape==='termine',i); etendue=Math.max(etendue,Math.abs(x)/1.3+3,Math.abs(z)+3); });
+  // La prochaine parcelle : un terrain à bâtir avec son panneau
+  const [px,pz]=pos[maisons.length]; box(gm,.08,.9,.08,0x6B4F3A,px,.08,pz); box(gm,1,.55,.06,0xFFFFFF,px,.85,pz+.05); box(gm,.9,.09,.07,0x0E9C8F,px,1.2,pz+.06);
+  const ref=maisons.length?pos[maisons.length-1]:[px,pz];
+  ZONES.quartier.center.set(ref[0],0,ref[1]); HOT.quartier.at.set(ref[0],3.4,ref[1]);
+  ZONES.quartier.zoom=1.25;
+  vueGenerale.x=0; vueGenerale.zoom=etendue?Math.max(.38,Math.min(1,16/etendue)):1;     // le QG et toute la ville construite à l'écran
   if(!S.open){ goal.target.set(0,0,0); goal.zoom=vueGenerale.zoom; }
   collect();
 }
@@ -640,7 +670,8 @@ function pick(cx,cy){
 /* Caméra */
 const view={target:V3(0,0,0), zoom:REDUCED?1:.72, yaw:0}, goal={target:V3(0,0,0), zoom:1, yaw:0}, vueGenerale={x:0, zoom:1};
 function resize(){ const w=innerWidth, h=innerHeight, a=w/h; renderer.setSize(w,h,false);
-  const d=Math.max(10.8,16/a); camera.left=-d*a; camera.right=d*a; camera.top=d; camera.bottom=-d; camera.updateProjectionMatrix(); }
+  const t=Math.tan(THREE.MathUtils.degToRad(camera.fov/2)); BASE=Math.max(11.2/t,16.5/(t*a));   // le magasin entier à l'écran, quel que soit le format
+  camera.aspect=a; camera.updateProjectionMatrix(); }
 addEventListener('resize',()=>{ resize(); if(S.open) focusZone(S.open); });
 resize();
 function focusZone(id){
@@ -648,7 +679,7 @@ function focusZone(id){
   camera.updateMatrixWorld();
   const right=V3().setFromMatrixColumn(camera.matrixWorld,0).setY(0).normalize();
   const up=V3().setFromMatrixColumn(camera.matrixWorld,1);
-  const wpp=(camera.right-camera.left)/zoom/innerWidth, t=z.center.clone();
+  const wpp=2*(BASE/zoom)*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))/innerHeight, t=z.center.clone();
   if(MOBILE()) t.addScaledVector(up,-innerHeight*.27*wpp); else t.addScaledVector(right,225*wpp);
   goal.target.copy(t); goal.zoom=zoom;
 }
@@ -858,11 +889,12 @@ const k=REDUCED?1:.09; let t0=performance.now();
 function loop(now){
   const dt=Math.min(.05,(now-t0)/1000); t0=now;
   view.target.lerp(goal.target,k); view.zoom+=(goal.zoom-view.zoom)*k; view.yaw+=(goal.yaw-view.yaw)*k;
-  camera.position.copy(view.target).add(OFFSET.clone().applyAxisAngle(V3(0,1,0),view.yaw));
-  camera.lookAt(view.target); camera.zoom=view.zoom; camera.updateProjectionMatrix();
+  camera.position.copy(view.target).add(OFFSET.clone().normalize().multiplyScalar(BASE/view.zoom).applyAxisAngle(V3(0,1,0),view.yaw));
+  camera.lookAt(view.target);
+  if(!REDUCED) bougerVoitures(dt);
   const hz=hovered&&hovered.zone;
   Object.entries(Z).forEach(([id,z])=>{
-    const on=hz===id||S.open===id; z.lift+=((on?.22:0)-z.lift)*(REDUCED?1:.15); z.group.position.y=z.lift;
+    const on=hz===id||S.open===id; if(id!=='quartier'){ z.lift+=((on?.22:0)-z.lift)*(REDUCED?1:.15); z.group.position.y=z.lift; }
     z.plate.emissive.setHex(on?ZONES[id].hex:0x000000); z.plate.emissiveIntensity=on?.25:0;
   });
   if(!REDUCED) beacons.forEach(b=>{ b.material.emissiveIntensity=.4+.6*(Math.sin(now/180)*.5+.5); });
