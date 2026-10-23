@@ -464,54 +464,41 @@ const gC=makeZone('cedyan',.1,11.1,-8.1,-.2,0xE3EBF8,0x1F4AA8);
 
 /* --- ENR (statique) --- */
 const gE=makeZone('enr',.1,11.1,.2,8.1,0xDDF1EE,0x0E9C8F);
-/* --- Quartier ENR Pose : un terrain qui s'agrandit, une maison par chantier --- */
-(function(){ const g=grp(scene); g.userData.zone='quartier'; const pm=new THREE.MeshStandardMaterial({color:0xE4F1E1,roughness:.9,emissive:0x000000}); Z.quartier={group:g, plate:pm, lift:0, dyn:grp(g)}; })();
-const toitMat=new THREE.MeshStandardMaterial({color:0x8B3A2E,roughness:.8});
-function maison(p,x,z,finie){
-  box(p,1.7,finie?1.05:.55,1.4,0xF8F4EC,x,.2,z);                       // murs (à mi-hauteur pendant le chantier)
-  if(finie){
-    const t=new THREE.Mesh(new THREE.ConeGeometry(1.32,.7,4),toitMat); t.rotation.y=Math.PI/4; t.scale.set(1,1,.82); t.position.set(x,1.6,z); t.castShadow=true; p.add(t);
-    solar(p,.9,.55,x,1.62,z+.32,-.62);                                 // panneaux sur le toit
-    box(p,.03,.6,.03,0x334155,x+.95,.2,z-.5); box(p,.3,.18,.02,0x22C55E,x+1.1,.62,z-.5);   // drapeau vert
-    box(p,.3,.5,.02,0x6B4F3A,x,.2,z+.71);                              // porte
-  } else {
-    [[-.95,-.8],[.95,-.8],[-.95,.8],[.95,.8]].forEach(([dx,dz])=>box(p,.06,1.25,.06,0xF08C00,x+dx,.2,z+dz));  // échafaudage
-    box(p,2,.05,.08,0xF08C00,x,1.2,z-.8); box(p,2,.05,.08,0xF08C00,x,1.2,z+.8);
-    box(p,.5,.3,.4,0xA0704A,x+1.3,.2,z+.4);                              // palette de matériel
+/* --- Quartier ENR Pose : la ville se construit autour du magasin, une maison par chantier --- */
+(function(){ const g=grp(scene); g.userData.zone='quartier'; Z.quartier={group:g, plate:new THREE.MeshStandardMaterial({color:0xffffff}), lift:0, dyn:grp(g)}; })();
+const toitMat=new THREE.MeshStandardMaterial({color:0xB5523B,roughness:.75});
+const COULEURS_MURS=[0xFFF6E5,0xF9E3C8,0xE6F2EC,0xFDEBD3,0xEFE7F6,0xE8F0FA];
+// Maison 1,6 × 1,6 : toit en pyramide (4 pans réguliers), panneaux posés sur le pan tourné vers la caméra
+function maison(p,x,z,finie,k){
+  const W=1.6, mur=COULEURS_MURS[k%COULEURS_MURS.length];
+  if(!finie){
+    box(p,W,.62,W,mur,x,.12,z);                                             // murs en cours de montage
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(p,.07,1.45,.07,0xF08C00,x+a*(W/2+.18),.12,z+b*(W/2+.18)));   // échafaudage
+    [-1,1].forEach((b)=>{ box(p,W+.5,.05,.08,0xF08C00,x,.82,z+b*(W/2+.18)); box(p,W+.5,.05,.08,0xF08C00,x,1.42,z+b*(W/2+.18)); });
+    box(p,.55,.32,.45,0xA0704A,x+W/2+.55,.12,z+.2);                        // palette de matériel
+    return;
   }
+  box(p,W,1,W,mur,x,.12,z);                                                 // murs
+  const h=.8, r=(W/2+.12)*Math.SQRT2;                                       // toit qui déborde un peu
+  const t=new THREE.Mesh(new THREE.ConeGeometry(r,h,4),toitMat); t.rotation.y=Math.PI/4; t.position.set(x,1.12+h/2,z); t.castShadow=true; p.add(t);
+  const pente=Math.atan2(h,W/2+.12);
+  const pan=solar(p,.95,.62,x,1.12+h/2+.02,z+(W/2+.12)/2+.04,pente);       // panneaux sur le pan avant
+  box(p,.34,.62,.04,0x7A5A40,x+.35,.12,z+W/2+.01);                          // porte
+  box(p,.36,.3,.04,0xBFE3F2,x-.35,.52,z+W/2+.01);                           // fenêtre
+  box(p,.03,.7,.03,0x334155,x-W/2-.2,.12,z+W/2+.1); box(p,.32,.2,.02,0x22C55E,x-W/2-.03,.6,z+W/2+.1);   // drapeau vert
 }
-(function(){ const g=grp(gE,'prevus');
-  box(g,2.6,1.2,2.2,0xF3E3C3,2.3,.18,2.6);
-  const a=.5, top=1.38;
-  const rf=box(g,2.9,.1,1.32,0xB5462E,0,0,0); rf.position.set(2.3,top+.3,2.6+.55); rf.rotation.x=a;
-  const rb=box(g,2.9,.1,1.32,0xB5462E,0,0,0); rb.position.set(2.3,top+.3,2.6-.55); rb.rotation.x=-a;
-  const sh=new THREE.Shape(); sh.moveTo(-1.1,0); sh.lineTo(1.1,0); sh.lineTo(0,.6); sh.lineTo(-1.1,0);
-  const gg=new THREE.ExtrudeGeometry(sh,{depth:2.6,bevelEnabled:false}); gg.translate(0,0,-1.3);
-  const gab=new THREE.Mesh(gg,mat(0xF3E3C3)); gab.rotation.y=Math.PI/2; gab.position.set(2.3,top,2.6); gab.castShadow=true; g.add(gab);
-  solar(g,2.3,1.0,2.3,top+.3+.878*.09,2.6+.55+.479*.09,a);
-  box(g,.5,.8,.05,0x8B5E3C,2.3,.18,3.72);
-  box(g,.06,.9,.06,0x8B5E3C,3.9,.18,3.9); box(g,.8,.55,.05,0xFFFFFF,3.9,.75,3.92); box(g,.8,.1,.06,0x0E9C8F,3.9,1.25,3.92);
-})();
-(function(){ const g=grp(gE,'encours');
-  box(g,2.2,1,1.8,0xEDE3D0,9.3,.18,2.2);
-  const r=box(g,2.5,.1,2.1,0xB5462E,0,0,0); r.position.set(9.3,1.45,2.2); r.rotation.x=.22;
-  solar(g,.95,.8,8.75,1.55,2.55,.22); solar(g,.95,.8,9.8,1.55,2.55,.22);
-  [8.1,9.3,10.5].forEach(x=>box(g,.06,1.7,.06,0x94A3B8,x,.18,3.35)); box(g,2.5,.06,.4,0xD4A373,9.3,1.0,3.35); box(g,2.5,.04,.04,0x94A3B8,9.3,1.75,3.35);
-})();
-(function(){ const g=grp(gE);
-  box(g,3.2,1.55,1.7,0xF7F9FB,5.9,.55,5.6); box(g,1,1.15,1.65,0xF7F9FB,8,.55,5.6);
-  box(g,.05,.5,1.4,0x1E2B44,8.51,1.05,5.6); box(g,3.22,.22,1.72,0x0E9C8F,5.9,1.3,5.6); box(g,.04,.4,.6,0x1E2B44,8,1.05,6.44);
-  [[4.9,4.75],[4.9,6.45],[7.8,4.75],[7.8,6.45]].forEach(([x,z])=>{ const w=cyl(g,.38,.25,0x111827,0,0,0); w.rotation.x=Math.PI/2; w.position.set(x,.56,z); });
-  box(g,3,.06,.08,0x64748B,5.9,2.1,5); box(g,3,.06,.08,0x64748B,5.9,2.1,6.2);
-  solar(g,1.4,1.15,5.15,2.22,5.6); solar(g,1.4,1.15,6.65,2.22,5.6);
-})();
-(function(){ const g=grp(gE,'sav');
-  box(g,.9,.45,.45,0xDC2626,1.6,.18,7.2); box(g,.5,.08,.08,0x111827,1.6,.63,7.2);
-  const l=grp(g); l.position.set(2.9,.18,7.3); l.rotation.x=-.25;
-  box(l,.05,2,.05,0xA3A3A3,-.22,0,0); box(l,.05,2,.05,0xA3A3A3,.22,0,0); for(let i=0;i<6;i++) box(l,.44,.04,.04,0xA3A3A3,0,.2+i*.32,0);
-  const c=new THREE.Mesh(new THREE.ConeGeometry(.22,.6,12),mat(0xF97316)); c.position.set(.9,.48,6.4); c.castShadow=true; g.add(c); box(g,.42,.05,.42,0xF97316,.9,.18,6.4);
-})();
-
+// Emplacements autour du magasin : rangées successives (derrière, à gauche, à droite, devant), de plus en plus loin
+function emplacements(n){
+  const L=[], pas=3.4;
+  for(let r=0; L.length<n && r<6; r++){
+    const dx=16.6+r*3.6, dz=14.4+r*3.6;
+    const xs=[], zs=[];
+    for(let x=-dx+pas; x<=dx-pas+.01; x+=pas) xs.push(x);
+    for(let z=-dz+pas; z<=dz-pas+.01; z+=pas) zs.push(z);
+    xs.forEach((x)=>L.push([x,-dz])); zs.forEach((z)=>L.push([-dx,z])); zs.forEach((z)=>L.push([dx,z])); xs.forEach((x)=>L.push([x,dz]));
+  }
+  return L.slice(0,n);
+}
 /* --- Petits personnages --- */
 const smats={}, sgeos={}, buddies=[];
 const smat=c=>smats[c]||(smats[c]=new THREE.MeshStandardMaterial({color:c,roughness:.5}));
@@ -607,17 +594,28 @@ function rebuild(){
   g=grp(Z.enr.dyn,'prevus'); DATA.pose.slice(0,4).forEach((p,i)=>{ const x=1.6+i*.7; box(g,.03,.55,.03,0x334155,x,1.95,2.6); box(g,.28,.17,.02,0x0E9C8F,x+.15,2.3,2.6); });
   // Gyrophare au-dessus de la caisse SAV : une demande urgente attend
   if(savUrgent().length){ const gb=grp(Z.enr.dyn,'sav'); const bc=box(gb,.16,.22,.16,null,1.6,.71,7.2,new THREE.MeshStandardMaterial({color:0xF97316,emissive:0xF97316,emissiveIntensity:.8})); beacons.push(bc); }
-  // Quartier : le terrain s'agrandit d'une colonne tous les 4 chantiers (20 maisons affichées au maximum)
-  const maisons=DATA.chantiers.slice(-20), cols=Math.max(1,Math.ceil(maisons.length/4)), x0=11.6, x1=x0+cols*3.4+.6;
-  const gq=Z.quartier.dyn;
-  box(gq,x1-x0,.08,16.2,null,(x0+x1)/2,.1,0,Z.quartier.plate); edge(gq,x0,x1,-8.1,8.1,0x0E9C8F,.18);
-  for(let k=0;k<cols;k++) box(gq,.5,.02,15.6,0xD6D0C4,x0+.3+k*3.4+3.05,.15,0);   // allées
-  const gm=grp(gq,'quartier');
-  maisons.forEach((c,i)=>maison(gm,x0+1.7+Math.floor(i/4)*3.4,-5.6+(i%4)*3.75,c.etape==='termine'));
-  ZONES.quartier.center.set((x0+x1)/2,0,0); HOT.quartier.at.set((x0+x1)/2,2.4,-7.4);
-  ZONES.quartier.zoom=Math.max(.9,Math.min(1.6,9/(x1-x0)));
-  vueGenerale.x=(x1-11.1)/2; vueGenerale.zoom=Math.min(1,22.5/(x1+11.1));   // tout le magasin et le quartier dans l'écran
-  if(!S.open){ goal.target.set((x1-11.1)/2,0,0); goal.zoom=vueGenerale.zoom; }
+  // Quartier : la ville s'étend autour du magasin, rangée après rangée (une maison par chantier, 60 au maximum)
+  const maisons=DATA.chantiers.slice(-60), pos=emplacements(maisons.length), gq=Z.quartier.dyn;
+  let etendue=0;
+  if(maisons.length){
+    const rangs=Math.ceil(Math.max(...pos.map(([x,z])=>Math.max(Math.abs(x)-16.6,Math.abs(z)-14.4)))/3.6)+1;
+    const ex=16.6+(rangs-1)*3.6+2.4, ez=14.4+(rangs-1)*3.6+2.4; etendue=Math.max(ex,ez*1.15);
+    box(gq,ex*2,.04,ez*2,0xD5E8CF,0,-.02,0);                                // pelouse de la ville
+    const R1=13.3, R2=10.9, larg=1.5;                                        // route qui fait le tour du magasin
+    box(gq,2*(R1+larg),.03,larg,0x8A939E,0,.02,-(R2+larg/2)-.6); box(gq,2*(R1+larg),.03,larg,0x8A939E,0,.02,(R2+larg/2)+.6);
+    box(gq,larg,.03,2*(R2+larg+.6),0x8A939E,-(R1+larg/2),.02,0); box(gq,larg,.03,2*(R2+larg+.6),0x8A939E,(R1+larg/2),.02,0);
+    const gm=grp(gq,'quartier');
+    maisons.forEach((c,i)=>{ const [x,z]=pos[i]; box(gm,2.4,.04,2.4,0xBFDDB4,x,.02,z); maison(gm,x,z,c.etape==='termine',i); });
+    ZONES.quartier.center.set(0,0,-15.4); HOT.quartier.at.set(-16.6,2.6,-14.4);
+  } else {
+    // Pas encore de chantier : un terrain à bâtir avec son panneau, derrière le magasin
+    const gm=grp(gq,'quartier'), [x,z]=emplacements(1)[0];
+    box(gm,2.4,.04,2.4,0xBFDDB4,x,.02,z); box(gm,.08,.9,.08,0x6B4F3A,x,.06,z); box(gm,.9,.5,.06,0xFFFFFF,x,.8,z+.05); box(gm,.8,.08,.07,0x0E9C8F,x,1.12,z+.06);
+    ZONES.quartier.center.set(x,0,z); HOT.quartier.at.set(x,2.2,z);
+  }
+  ZONES.quartier.zoom=Math.max(.55,Math.min(1,13/Math.max(13,etendue)));
+  vueGenerale.x=0; vueGenerale.zoom=etendue?Math.max(.4,Math.min(1,14/etendue)):1;     // tout le magasin et la ville à l'écran
+  if(!S.open){ goal.target.set(0,0,0); goal.zoom=vueGenerale.zoom; }
   collect();
 }
 
