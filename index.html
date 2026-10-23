@@ -220,6 +220,7 @@ a.ghost{color:inherit}
   <div class="actions">
     <a class="chip chip--jaune" href="devis.html?nouveau">Faire un devis</a>
     <a class="chip" href="devis.html">Devis</a>
+    <a class="chip" href="stock.html">Stock</a>
     <a class="chip" href="https://cedyan-energy.net/dashboard.html" target="_blank" rel="noopener">Tableau de bord</a>
     <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/4</b></button>
     <button class="chip" id="btnCyclone" aria-pressed="false">Alerte cyclone</button>
@@ -270,7 +271,7 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const euroD = (n) => (Number(n) || 0).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 const dateC = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
 const S = { open:null, cyclone:false, moi:null };
-const DATA = { demandes:[], devis:[], kbis:[], produits:[], pose:[] };
+const DATA = { demandes:[], devis:[], kbis:[], produits:[], pose:[], stock:[], receptions:0 };
 
 // Le stock est rangé par familles du catalogue (les quantités arriveront avec l'étape Stock)
 const BAIES = {
@@ -282,6 +283,12 @@ const BAIES = {
 };
 const baie = (k) => DATA.produits.filter((p) => p.actif && BAIES[k].cats.includes(p.cat));
 const enStock = (l) => l.filter((p) => p.dispo === "stock").length;
+// Stock réel (Dolibarr) : par famille, et ce qui passe sous le seuil d'alerte
+const stockBaie = (k) => DATA.stock.filter((s) => BAIES[k].cats.includes(s.cat));
+const alertesStock = () => DATA.stock.filter((s) => s.en_alerte && s.seuil_alerte != null);
+const nbFr = (n) => (Number(n) || 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 });
+const txtBaie = (k, unite, sinon) => { const l = stockBaie(k); return l.length ? `${nbFr(l.reduce((a, s) => a + (+s.disponible || 0), 0))} ${unite} dispo` : sinon; };
+const alerteBaie = (k) => stockBaie(k).some((s) => s.en_alerte && s.seuil_alerte != null);
 const STAGES = { brouillon:["À valider","#F5B700"], valide:["Prêts à envoyer","#8B5CF6"], envoye:["En attente du client","#3B82F6"], accepte:["Signés","#16A34A"] };
 const devisSt = (st) => DATA.devis.filter((d) => d.statut === st);
 const aAppeler = () => DATA.devis.filter((d) => d.statut === "envoye" && d.a_appeler);
@@ -290,13 +297,16 @@ const debutMois = () => { const n = new Date(); return new Date(n.getFullYear(),
 const signesMois = () => DATA.devis.filter((d) => d.statut === "accepte" && d.accepte_le && d.accepte_le >= debutMois());
 
 async function charger() {
-  const [dm, dv, kb, pr] = await Promise.all([
+  const [dm, dv, kb, pr, st, rc] = await Promise.all([
     sb.from("demandes").select("id,created_at,type,statut,contact,installateur,profil,pour_quand").order("created_at", { ascending: false }).limit(300),
     sb.from("devis").select("id,numero,statut,total_ttc,created_at,envoye_le,accepte_le,valide_jusqu,a_appeler,vu_le,demande:demandes(contact)").order("created_at", { ascending: false }).limit(500),
     sb.from("comptes_pro").select("id,entreprise,nom,metier,statut,created_at").eq("statut", "en_attente").order("created_at"),
     sb.from("produits").select("id,cat,actif,produits_prive(dispo)").limit(3000),
+    sb.from("stock_vue").select("ref,libelle,cat,reel,reserve,disponible,seuil_alerte,en_alerte").limit(5000),
+    sb.from("stock_receptions").select("id", { count: "exact", head: true }).eq("statut", "a_valider"),
   ]);
   const err = [dm, dv, kb, pr].find((r) => r.error); if (err) throw err.error;
+  DATA.stock = st.error ? [] : (st.data || []); DATA.receptions = rc.error ? 0 : (rc.count || 0);
   DATA.demandes = dm.data || []; DATA.devis = dv.data || []; DATA.kbis = kb.data || [];
   DATA.produits = (pr.data || []).map((p) => { const x = Array.isArray(p.produits_prive) ? p.produits_prive[0] : p.produits_prive; return { id:p.id, cat:p.cat, actif:p.actif, dispo:x?.dispo || null }; });
   DATA.pose = DATA.demandes.filter((d) => d.installateur === "pose_enr" && !["gagne","perdu","expire"].includes(d.statut));
@@ -308,11 +318,11 @@ const ZONES = {
   enr:    {name:'ENR Pose',      sub:'Poses chez les particuliers',             css:'#0E9C8F', hex:0x0E9C8F, center:V3(5.5,0,4.15),  labelY:3.8, zoom:1.75},
 };
 const HOT = {
-  pv:      {zone:'stock',  at:V3(-8.7,1.5,0),    txt:()=>pl(baie('pv').length,'panneau','panneaux')+' au catalogue', alert:()=>false},
-  ond:     {zone:'stock',  at:V3(-2.9,3.2,-6.4), txt:()=>pl(baie('ond').length,'onduleur')+' et régulateurs', alert:()=>false},
-  bat:     {zone:'stock',  at:V3(-2.9,1.7,0),    txt:()=>pl(baie('bat').length,'batterie'), alert:()=>false},
-  small:   {zone:'stock',  at:V3(-8.7,3.1,-6.6), txt:()=>'Petit matériel ('+baie('small').length+')', alert:()=>false},
-  recv:    {zone:'stock',  at:V3(-8.7,1.6,5.4),  txt:()=>pl(baie('recv').length,'kit'), alert:()=>false},
+  pv:      {zone:'stock',  at:V3(-8.7,1.5,0),    txt:()=>txtBaie('pv','panneaux',pl(baie('pv').length,'panneau','panneaux')+' au catalogue'), alert:()=>alerteBaie('pv')},
+  ond:     {zone:'stock',  at:V3(-2.9,3.2,-6.4), txt:()=>txtBaie('ond','onduleurs',pl(baie('ond').length,'onduleur')+' et régulateurs'), alert:()=>alerteBaie('ond')},
+  bat:     {zone:'stock',  at:V3(-2.9,1.7,0),    txt:()=>txtBaie('bat','batteries',pl(baie('bat').length,'batterie')), alert:()=>alerteBaie('bat')},
+  small:   {zone:'stock',  at:V3(-8.7,3.1,-6.6), txt:()=>'Petit matériel'+(alerteBaie('small')?' : à commander':''), alert:()=>alerteBaie('small')},
+  recv:    {zone:'stock',  at:V3(-8.7,1.6,5.4),  txt:()=>DATA.receptions?pl(DATA.receptions,'livraison')+' à valider':'Réception', alert:()=>false},
   demandes:{zone:'cedyan', at:V3(6.3,2.5,-3.3),  txt:()=>{ const n=devisSt('brouillon').length; return n?pl(n,'devis','devis')+' à valider':'Comptoir à jour'; }, alert:()=>false},
   pipe:    {zone:'cedyan', at:V3(9.1,3.2,-7.9),  txt:()=>aAppeler().length?pl(aAppeler().length,'client')+' à appeler':`${devisSt('envoye').length} en attente, ${signesMois().length} signés ce mois`, alert:()=>aAppeler().length>0},
   kbis:    {zone:'cedyan', at:V3(3.9,2.0,-4.6),  txt:()=>DATA.kbis.length?`${DATA.kbis.length} Kbis à valider`:'Kbis à jour', alert:()=>false},
@@ -320,9 +330,9 @@ const HOT = {
   encours: {zone:'enr',    at:V3(9.3,3.0,2.2),   txt:()=>'Chantiers : bientôt', alert:()=>false},
   sav:     {zone:'enr',    at:V3(2.0,1.9,6.9),   txt:()=>'SAV : bientôt', alert:()=>false},
 };
-const TODO = { demandes:()=>devisSt('brouillon').length>0 || devisSt('valide').length>0, kbis:()=>DATA.kbis.length>0, prevus:()=>DATA.pose.length>0 };
+const TODO = { recv:()=>DATA.receptions>0, demandes:()=>devisSt('brouillon').length>0 || devisSt('valide').length>0, kbis:()=>DATA.kbis.length>0, prevus:()=>DATA.pose.length>0 };
 const needs = id => HOT[id].alert() || (TODO[id] ? TODO[id]() : false);
-const HOTSEC = {pv:'stock', ond:'stock', bat:'stock', small:'stock', recv:'stock', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'bientot', sav:'bientot'};
+const HOTSEC = {pv:'stock', ond:'stock', bat:'stock', small:'stock', recv:'recv', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'bientot', sav:'bientot'};
 
 /* =============== Three.js =============== */
 const canvas = document.getElementById('c');
@@ -630,7 +640,7 @@ Object.entries(HOT).forEach(([id,h])=>{
 });
 
 function counts(){ return {
-  stock: 0,
+  stock: alertesStock().length + DATA.receptions,
   cedyan: devisSt('brouillon').length + devisSt('valide').length + aAppeler().length + DATA.kbis.length,
   enr: DATA.pose.length };
 }
@@ -707,9 +717,16 @@ const ligneDevis=(d,extra='')=>`<li class="row line"><div><b>${esc(clientDe(d))}
 function render(){
   const id=S.open; if(!id) return; const z=ZONES[id]; let h=head(z);
   if(id==='stock'){
-    h+=`<div class="sec" id="h-stock"><p class="empty">Les quantités réelles arriveront avec l'étape Stock. En attendant, voici le catalogue en ligne, famille par famille.</p>
-      <div class="grid">${Object.entries(BAIES).map(([k,b])=>{ const l=baie(k); return `<div class="tile"><span class="tn">${b.nom}</span><b class="big">${l.length}</b><span class="tu">en ligne, dont ${enStock(l)} en stock</span></div>`; }).join('')}</div></div>
-      <div class="sec">${lien(SITE+'/dashboard.html','Gérer le catalogue dans le tableau de bord','cta',true)}</div>`;
+    const al=alertesStock();
+    h+=`<div class="sec"><div class="line">${lien('stock.html','Ouvrir le stock','cta')}${lien('stock.html?v=reception','📷 Livraison reçue','ghost')}</div></div>`;
+    if(!DATA.stock.length) h+=`<div class="sec" id="h-stock">${empty("Le stock n'est pas encore chargé : ouvrez le stock et importez l'export Dolibarr, en attendant la connexion automatique.")}</div>`;
+    else {
+      h+=`<div class="sec" id="h-recv"><h3>À faire <small>${al.length+DATA.receptions}</small></h3>`+(al.length||DATA.receptions?
+        (DATA.receptions?`<ul class="rows"><li class="row line"><div><b>${pl(DATA.receptions,'livraison')} à valider</b><span class="meta">Vérifiez les lignes lues sur le bon, puis validez.</span></div>${lien('stock.html?v=reception','Valider')}</li></ul>`:'')
+        +(al.length?`<p class="meta" style="margin:10px 0 6px"><b>Sous le seuil d'alerte</b></p><ul class="rows">${al.slice(0,8).map(s=>`<li class="row line"><div><b>${esc(s.libelle)}</b><span class="meta">${nbFr(s.disponible)} disponible(s), seuil ${nbFr(s.seuil_alerte)}</span></div></li>`).join('')}</ul><p style="margin-top:8px">${lien('stock.html?v=commandes','Préparer les commandes fournisseurs')}</p>`:'')
+        :empty('Rien à faire : aucun produit sous son seuil, aucune livraison en attente.'))+`</div>`;
+      h+=`<div class="sec" id="h-stock"><h3>Par famille</h3><div class="grid">${Object.entries(BAIES).map(([k,b])=>{ const l=stockBaie(k); return `<div class="tile"><span class="tn">${b.nom}</span><b class="big">${nbFr(l.reduce((a,s)=>a+(+s.disponible||0),0))}</b><span class="tu">disponibles, ${l.length} référence(s)</span></div>`; }).join('')}</div></div>`;
+    }
   }
   if(id==='cedyan'){
     const av=devisSt('brouillon'), pr=devisSt('valide'), ap=aAppeler();

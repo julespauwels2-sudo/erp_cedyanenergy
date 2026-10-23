@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.png">
+<title>Stock · QG Cedyan</title>
+<style>
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("InterVariable.woff2") format("woff2")}
+:root{--vert:#14551f;--vert-2:#218034;--nuit:#08170d;--soleil:#fbbb10;--papier:#f3f6f2;--carte:#fff;--encre:#16241a;--encre-2:#56665b;--trait:#dfe7e0;--alerte:#9a5b00;--alerte-fond:#fff4d6;--rouge:#b42318;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--papier);color:var(--encre);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--soleil);outline-offset:2px}
+[hidden]{display:none!important}
+.barre{background:var(--nuit);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 20px 12px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+.barre h1{margin:0;font-size:18px;font-weight:900;letter-spacing:-.02em}
+.barre a{color:#fff;opacity:.85;text-decoration:none;font-size:14px}
+.barre .esp{flex:1}
+.etat{font-size:13px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.14)}
+.etat.err{background:var(--rouge)}
+main{max-width:1000px;margin:0 auto;padding:18px 16px 60px}
+.onglets{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.onglet{border:1.5px solid var(--trait);background:var(--carte);border-radius:999px;padding:8px 16px;font-weight:700;cursor:pointer}
+.onglet[aria-selected="true"]{background:var(--nuit);border-color:var(--nuit);color:#fff}
+.onglet b{background:var(--soleil);color:var(--encre);border-radius:8px;padding:0 6px;margin-left:4px;font-size:12px}
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:18px;padding:18px;margin-bottom:14px}
+.carte h2{margin:0 0 6px;font-size:1.3rem;font-weight:900;letter-spacing:-.02em}
+.meta{font-size:13px;color:var(--encre-2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 18px;border-radius:999px;border:1.5px solid var(--trait);background:var(--carte);font-weight:700;cursor:pointer;text-decoration:none;color:var(--encre)}
+.btn.jaune{background:var(--soleil);border-color:var(--soleil)}
+.btn.vert{background:var(--vert-2);border-color:var(--vert-2);color:#fff}
+.btn.petit{min-height:32px;padding:0 12px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:wait}
+.outils{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.outils input[type=search]{flex:1;min-width:200px;border:1.5px solid var(--trait);border-radius:999px;padding:10px 16px;background:var(--carte)}
+.puce{border:1.5px solid var(--trait);background:var(--carte);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer}
+.puce[aria-pressed="true"]{background:var(--nuit);border-color:var(--nuit);color:#fff}
+.tab{width:100%;border-collapse:collapse;background:var(--carte);border:1px solid var(--trait);border-radius:18px;overflow:hidden}
+.tab th{text-align:left;font-size:12px;color:var(--encre-2);font-weight:600;padding:10px 12px;border-bottom:1.5px solid var(--trait);background:#fafcf9}
+.tab td{padding:10px 12px;border-bottom:1px solid var(--trait);vertical-align:middle}
+.tab tr.clic{cursor:pointer}
+.tab tr.clic:hover td{background:#f8faf7}
+.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dispo{font-weight:800}
+.alerte .dispo{color:var(--alerte)}
+.badge{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;background:var(--alerte-fond);color:var(--alerte)}
+.ref{font-size:12px;color:var(--encre-2)}
+.edit{display:flex;gap:8px;flex-wrap:wrap;align-items:end;padding:10px 0 4px}
+.edit label{display:grid;gap:3px;font-size:12px;color:var(--encre-2)}
+.edit input{border:1.5px solid var(--trait);border-radius:10px;padding:8px 10px;width:130px;background:#fff}
+.lignes{display:grid;gap:8px;margin:12px 0}
+.ligne{display:grid;grid-template-columns:minmax(0,1fr) 110px 34px;gap:8px;align-items:center;border:1px solid var(--trait);border-radius:14px;padding:10px 12px;background:#fff}
+.ligne.doute{border-left:5px solid var(--alerte)}
+.ligne select,.ligne input{border:1.5px solid var(--trait);border-radius:10px;padding:8px 10px;width:100%;background:#fff}
+.ligne .orig{grid-column:1/-1;font-size:12px;color:var(--alerte)}
+.x{width:34px;height:34px;border-radius:9px;border:1px solid var(--trait);background:#fff;cursor:pointer}
+.groupe{border:1px solid var(--trait);border-radius:16px;padding:14px;margin-bottom:12px;background:#fff}
+.groupe h3{margin:0 0 8px;font-size:1.05rem;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.vide{text-align:center;color:var(--encre-2);padding:26px}
+.fichier{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fichier input{display:none}
+.connexion{max-width:380px;margin:60px auto}
+.connexion input{width:100%;border:1.5px solid var(--trait);border-radius:12px;padding:12px;margin:6px 0;background:#fff}
+.connexion .btn{width:100%;margin-top:8px}
+@media (max-width:640px){.tab .cache-mobile{display:none}.ligne{grid-template-columns:1fr 90px 34px}}
+</style>
+</head>
+<body>
+<header class="barre"><a href="/">← QG</a><h1>Stock</h1><span class="esp"></span><span class="etat" id="etat" hidden></span></header>
+<main id="app"><p class="vide">Chargement…</p></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+"use strict";
+const sb = window.supabase.createClient("https://uotqqkhraqxtlssgavlm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvdHFxa2hyYXF4dGxzc2dhdmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDI1NTAsImV4cCI6MjEwNjgxODU1MH0.61NliFrPeWNilEmXPayAONTIVF49tmq3arjgdzSwPpM");
+const app = document.getElementById("app"), etat = document.getElementById("etat");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nb = (n) => (Number(n) || 0).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+const dateC = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
+function info(t, err) { etat.hidden = !t; etat.textContent = t || ""; etat.classList.toggle("err", !!err); if (t && !err) { clearTimeout(info.t); info.t = setTimeout(() => (etat.hidden = true), 2200); } }
+const L = { articles: [], receptions: [], commandes: [], mouv: [] };
+let onglet = new URLSearchParams(location.search).get("v") || "stock", filtre = "tout", cherche = "", ouvert = null;
+
+async function charger() {
+  const [a, r, c, m] = await Promise.all([
+    sb.from("stock_vue").select("*").order("libelle").limit(5000),
+    sb.from("stock_receptions").select("*").eq("statut", "a_valider").order("created_at", { ascending: false }),
+    sb.from("commandes_fournisseur").select("*").in("statut", ["brouillon", "envoyee"]).order("created_at", { ascending: false }),
+    sb.from("stock_mouvements").select("*").order("created_at", { ascending: false }).limit(100),
+  ]);
+  const e = [a, r, c, m].find((x) => x.error); if (e) throw e.error;
+  L.articles = a.data || []; L.receptions = r.data || []; L.commandes = c.data || []; L.mouv = m.data || [];
+}
+const alertes = () => L.articles.filter((x) => x.en_alerte && (x.seuil_alerte != null || x.reserve > 0 || x.disponible < 0));
+
+function rendre() {
+  const nA = alertes().length;
+  app.innerHTML = `<div class="onglets" role="tablist">
+    ${[["stock", "Stock"], ["reception", "Réception", L.receptions.length], ["commandes", "À commander", nA], ["mouvements", "Mouvements"]].map(([k, l, n]) => `<button class="onglet" role="tab" data-o="${k}" aria-selected="${onglet === k}">${l}${n ? `<b>${n}</b>` : ""}</button>`).join("")}
+  </div><div id="zone"></div>`;
+  app.querySelectorAll("[data-o]").forEach((b) => (b.onclick = () => { onglet = b.dataset.o; history.replaceState(null, "", "?v=" + onglet); rendre(); }));
+  ({ stock: vueStock, reception: vueReception, commandes: vueCommandes, mouvements: vueMouvements })[onglet]();
+}
+
+/* ---------- Stock : réel, réservé, disponible ---------- */
+function vueStock() {
+  const z = document.getElementById("zone");
+  if (!L.articles.length) {
+    z.innerHTML = `<section class="carte"><h2>Le stock n'est pas encore chargé</h2>
+      <p class="meta">Dès que Dolibarr sera joignable, les quantités se mettront à jour toutes seules. En attendant, exportez la liste des produits avec leur stock depuis Dolibarr (fichier Excel ou CSV) et importez-la ici.</p>
+      <div class="fichier"><label class="btn jaune">Importer l'export Dolibarr<input type="file" id="imp" accept=".csv,.xlsx,.xls"></label><span class="meta" id="impinfo"></span></div></section>`;
+    brancherImport(); return;
+  }
+  const q = cherche.toLowerCase();
+  const liste = L.articles.filter((a) => (filtre === "alerte" ? a.en_alerte : filtre === "reserve" ? a.reserve > 0 : true) && (!q || (a.libelle + " " + a.ref).toLowerCase().includes(q)));
+  z.innerHTML = `<div class="outils"><input type="search" id="q" placeholder="Chercher un produit ou une référence" value="${esc(cherche)}">
+    ${[["tout", "Tout"], ["alerte", "En alerte"], ["reserve", "Réservé"]].map(([k, l]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${l}</button>`).join("")}
+    <label class="btn petit">Réimporter<input type="file" id="imp" accept=".csv,.xlsx,.xls" hidden></label></div>
+    <p class="meta" id="impinfo"></p>
+    <table class="tab"><thead><tr><th>Produit</th><th class="n">Réel</th><th class="n cache-mobile">Réservé</th><th class="n">Disponible</th><th class="n cache-mobile">Seuil</th></tr></thead>
+    <tbody>${liste.slice(0, 400).map((a) => `<tr class="clic ${a.en_alerte ? "alerte" : ""}" data-r="${esc(a.ref)}"><td><b>${esc(a.libelle)}</b> ${a.en_alerte ? `<span class="badge">À commander</span>` : ""}<div class="ref">${esc(a.ref)}${a.fournisseur ? " · " + esc(a.fournisseur) : ""}</div>
+      ${ouvert === a.ref ? `<div class="edit"><label>Quantité réelle<input id="e-q" inputmode="decimal" value="${nb(a.reel)}"></label><label>Seuil d'alerte<input id="e-s" inputmode="decimal" value="${a.seuil_alerte ?? ""}"></label><label>Stock désiré<input id="e-d" inputmode="decimal" value="${a.stock_desire ?? ""}"></label><label>Fournisseur<input id="e-f" value="${esc(a.fournisseur || "")}"></label><label>Délai (jours)<input id="e-j" inputmode="numeric" value="${a.delai_jours ?? ""}"></label><button class="btn vert petit" id="e-ok">Enregistrer</button></div>` : ""}</td>
+      <td class="n">${nb(a.reel)}</td><td class="n cache-mobile">${a.reserve ? nb(a.reserve) : "–"}</td><td class="n dispo">${nb(a.disponible)}</td><td class="n cache-mobile">${a.seuil_alerte ?? "–"}</td></tr>`).join("") || `<tr><td colspan="5" class="vide">Aucun produit.</td></tr>`}</tbody></table>
+    ${liste.length > 400 ? `<p class="meta">400 premiers résultats affichés : précisez la recherche.</p>` : ""}`;
+  const qi = document.getElementById("q"); qi.oninput = () => { cherche = qi.value; clearTimeout(qi.t); qi.t = setTimeout(() => { vueStock(); const n = document.getElementById("q"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  z.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; vueStock(); }));
+  z.querySelectorAll("tr[data-r]").forEach((tr) => (tr.onclick = (e) => { if (e.target.closest(".edit")) return; ouvert = ouvert === tr.dataset.r ? null : tr.dataset.r; vueStock(); }));
+  const ok = document.getElementById("e-ok");
+  if (ok) ok.onclick = async () => {
+    const a = L.articles.find((x) => x.ref === ouvert), v = (id) => document.getElementById(id).value.trim(), num = (s) => s === "" ? null : Number(s.replace(",", "."));
+    const q = num(v("e-q"));
+    if (q != null && q !== Number(a.reel)) { const { error } = await sb.rpc("corriger_stock", { p_ref: a.ref, p_quantite: q }); if (error) return info("Erreur : " + error.message, true); }
+    const { error } = await sb.from("stock_articles").update({ seuil_alerte: num(v("e-s")), stock_desire: num(v("e-d")), fournisseur: v("e-f") || null, delai_jours: num(v("e-j")) }).eq("ref", a.ref);
+    if (error) return info("Erreur : " + error.message, true);
+    info("Enregistré"); ouvert = null; await charger(); rendre();
+  };
+  brancherImport();
+}
+
+/* Import de l'export Dolibarr (Excel ou CSV) */
+function brancherImport() {
+  const inp = document.getElementById("imp"); if (!inp) return;
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return; const out = document.getElementById("impinfo");
+    out.textContent = "Lecture du fichier…";
+    try {
+      if (!window.XLSX) await new Promise((ok, ko) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"; s.onload = ok; s.onerror = ko; document.head.appendChild(s); });
+      const wb = XLSX.read(await f.arrayBuffer(), { type: "array" });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+      const norm = (s) => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+      const cols = Object.keys(rows[0] || {});
+      const trouve = (...mots) => cols.find((c) => mots.some((m) => norm(c).includes(m)));
+      const cRef = trouve("ref"), cLib = trouve("libelle", "label", "designation"), cQ = trouve("stockphysique", "stockreel", "physicalstock", "stock");
+      const cS = cols.find((c) => /alerte|limit|seuil/.test(norm(c))), cD = cols.find((c) => /desire|optimal|desired/.test(norm(c)));
+      if (!cRef || !cQ) { out.textContent = "Colonnes introuvables : il faut au moins la référence et le stock. Colonnes lues : " + cols.join(", "); return; }
+      const num = (v) => { const n = Number(String(v).replace(/\s/g, "").replace(",", ".")); return Number.isFinite(n) ? n : null; };
+      const { data: prods } = await sb.from("produits").select("id,ref_dolibarr").not("ref_dolibarr", "is", null);
+      const parRef = new Map((prods || []).map((p) => [p.ref_dolibarr, p.id]));
+      const lignes = rows.filter((r) => String(r[cRef]).trim()).map((r) => { const ref = String(r[cRef]).trim();
+        return { ref, libelle: String(cLib ? r[cLib] : ref).trim() || ref, quantite: num(r[cQ]) ?? 0, seuil_alerte: cS ? num(r[cS]) : null, stock_desire: cD ? num(r[cD]) : null, produit_id: parRef.get(ref) || null, source: "import", maj_le: new Date().toISOString() }; });
+      if (!confirm(`Importer ${lignes.length} produits (colonnes : ${cRef}, ${cQ}${cS ? ", " + cS : ""}${cD ? ", " + cD : ""}) ? Les quantités actuelles seront remplacées.`)) { out.textContent = ""; return; }
+      for (let i = 0; i < lignes.length; i += 500) { const { error } = await sb.from("stock_articles").upsert(lignes.slice(i, i + 500), { onConflict: "ref" }); if (error) throw error; }
+      out.textContent = `${lignes.length} produits importés.`; await charger(); rendre();
+    } catch (e) { out.textContent = "Import impossible : " + (e.message || e); }
+  };
+}
+
+/* ---------- Réception par photo du bon de livraison ---------- */
+let recOuverte = null;
+function vueReception() {
+  const z = document.getElementById("zone");
+  const r = recOuverte && L.receptions.find((x) => x.id === recOuverte);
+  if (r) return vueUneReception(r);
+  z.innerHTML = `<section class="carte"><h2>Nouvelle livraison</h2><p class="meta">Prenez le bon de livraison en photo (ou choisissez un PDF). Il est lu automatiquement, vous vérifiez, et le stock monte quand vous validez.</p>
+    <div class="fichier"><label class="btn jaune">📷 Photographier le bon<input type="file" id="bl" accept="image/*,application/pdf" capture="environment"></label><span class="meta" id="blinfo"></span></div></section>
+    ${L.receptions.length ? `<section class="carte"><h2>À valider</h2>${L.receptions.map((x) => `<p><button class="btn petit" data-rec="${x.id}">${esc(x.fournisseur || "Livraison")} ${x.numero_bl ? "· BL " + esc(x.numero_bl) : ""} · ${dateC(x.created_at)} · ${(x.lignes || []).length} ligne(s)</button></p>`).join("")}</section>` : ""}`;
+  z.querySelectorAll("[data-rec]").forEach((b) => (b.onclick = () => { recOuverte = b.dataset.rec; vueReception(); }));
+  const inp = document.getElementById("bl");
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return; const out = document.getElementById("blinfo");
+    if (f.size > 10 * 1024 * 1024) return (out.textContent = "Fichier trop lourd (10 Mo maximum).");
+    const ext = (f.name.split(".").pop() || "jpg").toLowerCase().replace("jpeg", "jpg");
+    const chemin = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
+    out.textContent = "Envoi de la photo…";
+    const up = await sb.storage.from("receptions").upload(chemin, f, { contentType: f.type || undefined });
+    if (up.error) return (out.textContent = "Envoi impossible : " + up.error.message);
+    const { data: rec, error } = await sb.from("stock_receptions").insert({ photo_path: chemin }).select("*").single();
+    if (error) return (out.textContent = "Erreur : " + error.message);
+    out.textContent = "Lecture du bon de livraison…";
+    const { data, error: e2 } = await sb.functions.invoke("stock", { body: { action: "lire_bl", reception_id: rec.id } });
+    await charger(); recOuverte = rec.id; rendre();
+    if (e2 || !data?.ok) info((data?.erreur || "Lecture automatique impossible") + " : ajoutez les lignes à la main.", true);
+  };
+}
+function vueUneReception(r) {
+  const z = document.getElementById("zone");
+  const lignes = (r.lignes || []).map((l) => ({ ...l }));
+  const options = (sel) => `<option value="">Choisir le produit…</option>` + L.articles.map((a) => `<option value="${esc(a.ref)}" ${a.ref === sel ? "selected" : ""}>${esc(a.libelle)} (${esc(a.ref)})</option>`).join("");
+  const dessiner = () => {
+    z.innerHTML = `<p><button class="btn petit" id="ret">← Toutes les livraisons</button></p><section class="carte">
+      <h2>${esc(r.fournisseur || "Livraison")}${r.numero_bl ? " · BL " + esc(r.numero_bl) : ""}</h2><p class="meta">Reçue le ${dateC(r.created_at)} · <a href="#" id="photo">voir la photo</a>. Vérifiez les lignes en orange, puis validez.</p>
+      <div class="lignes">${lignes.map((l, i) => `<div class="ligne ${l.a_verifier ? "doute" : ""}"><select data-i="${i}" data-c="ref">${options(l.ref)}</select><input data-i="${i}" data-c="quantite" inputmode="decimal" value="${l.quantite ?? ""}" aria-label="Quantité"><button class="x" data-del="${i}" aria-label="Supprimer">✕</button>${l.a_verifier && l.texte_origine ? `<div class="orig">Lu sur le bon : « ${esc(l.texte_origine)} »</div>` : ""}</div>`).join("") || `<p class="vide">Aucune ligne lue. Ajoutez-les à la main.</p>`}</div>
+      <div class="outils"><button class="btn" id="ajout">+ Ajouter une ligne</button><span class="esp"></span><button class="btn" id="annul">Annuler la réception</button><button class="btn vert" id="valid">Valider : le stock monte</button></div></section>`;
+    document.getElementById("ret").onclick = () => { recOuverte = null; vueReception(); };
+    document.getElementById("photo").onclick = async (e) => { e.preventDefault(); const { data } = await sb.storage.from("receptions").createSignedUrl(r.photo_path, 600); if (data?.signedUrl) open(data.signedUrl, "_blank", "noopener"); };
+    z.querySelectorAll("[data-c]").forEach((el) => (el.onchange = () => { const l = lignes[+el.dataset.i]; if (el.dataset.c === "ref") { l.ref = el.value || null; const a = L.articles.find((x) => x.ref === l.ref); l.libelle = a ? a.libelle : l.libelle; l.a_verifier = !l.ref; } else l.quantite = Number(el.value.replace(",", ".")) || 0; }));
+    z.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { lignes.splice(+b.dataset.del, 1); dessiner(); }));
+    document.getElementById("ajout").onclick = () => { lignes.push({ ref: null, quantite: 1, a_verifier: true }); dessiner(); };
+    document.getElementById("annul").onclick = async () => { if (!confirm("Annuler cette réception ? Rien n'entre en stock.")) return; await sb.from("stock_receptions").update({ statut: "annulee" }).eq("id", r.id); recOuverte = null; await charger(); rendre(); };
+    document.getElementById("valid").onclick = async (e) => {
+      const ok = lignes.filter((l) => l.ref && l.quantite > 0);
+      if (!ok.length) return info("Aucune ligne valide à faire entrer", true);
+      if (lignes.some((l) => !l.ref) && !confirm("Certaines lignes n'ont pas de produit choisi : elles seront ignorées. Continuer ?")) return;
+      e.target.disabled = true;
+      const { data, error } = await sb.rpc("valider_reception", { p_reception: r.id, p_lignes: ok });
+      if (error) { e.target.disabled = false; return info("Erreur : " + error.message, true); }
+      info(`${data} produit(s) entrés en stock`); recOuverte = null; await charger(); onglet = "stock"; rendre();
+    };
+  };
+  dessiner();
+}
+
+/* ---------- Alertes avant rupture et commandes fournisseurs préparées ---------- */
+function vueCommandes() {
+  const z = document.getElementById("zone");
+  const groupes = {};
+  alertes().forEach((a) => {
+    const cible = a.stock_desire ?? (a.seuil_alerte != null ? a.seuil_alerte * 2 : 0);
+    const qte = Math.max(1, Math.ceil(cible - a.disponible));
+    (groupes[a.fournisseur || "Fournisseur à préciser"] ||= []).push({ ref: a.ref, libelle: a.libelle, quantite: qte, dispo: a.disponible, delai: a.delai_jours });
+  });
+  const envoyees = L.commandes;
+  z.innerHTML = `<section class="carte"><h2>À commander</h2><p class="meta">Les produits dont le stock disponible est passé sous leur seuil d'alerte, regroupés par fournisseur. Quantité proposée : de quoi remonter au stock désiré. Tout est modifiable.</p></section>
+    ${Object.keys(groupes).length ? Object.entries(groupes).map(([f, l]) => `<div class="groupe" data-g="${esc(f)}"><h3>${esc(f)}<button class="btn jaune petit" data-creer="${esc(f)}">Préparer la commande</button></h3>
+      ${l.map((x, i) => `<div class="ligne" style="grid-template-columns:minmax(0,1fr) 110px"><div><b>${esc(x.libelle)}</b><div class="ref">${esc(x.ref)} · disponible ${nb(x.dispo)}${x.delai ? ` · délai habituel ${x.delai} j` : ""}</div></div><input data-g="${esc(f)}" data-i="${i}" inputmode="numeric" value="${x.quantite}" aria-label="Quantité à commander"></div>`).join("")}</div>`).join("")
+      : `<p class="vide">Rien à commander : tous les produits sont au-dessus de leur seuil d'alerte.</p>`}
+    ${envoyees.length ? `<section class="carte"><h2>Commandes en cours</h2>${envoyees.map((c) => `<div class="groupe"><h3>${esc(c.fournisseur)} <span class="meta">${c.statut === "envoyee" ? "envoyée le " + dateC(c.envoyee_le) : "préparée le " + dateC(c.created_at)}</span></h3>
+      <p class="meta">${c.lignes.map((l) => `${nb(l.quantite)} × ${esc(l.libelle)} (${esc(l.ref)})`).join("<br>")}</p>
+      <div class="outils"><button class="btn petit" data-copie="${c.id}">Copier le texte pour le fournisseur</button>${c.statut === "brouillon" ? `<button class="btn vert petit" data-env="${c.id}">Marquer envoyée</button>` : ""}<button class="btn petit" data-ann="${c.id}">Annuler</button></div></div>`).join("")}</section>` : ""}`;
+  z.querySelectorAll("input[data-g]").forEach((el) => (el.onchange = () => { groupes[el.dataset.g][+el.dataset.i].quantite = Math.max(0, Number(el.value) || 0); }));
+  z.querySelectorAll("[data-creer]").forEach((b) => (b.onclick = async () => {
+    const f = b.dataset.creer, lignes = groupes[f].filter((x) => x.quantite > 0).map(({ ref, libelle, quantite }) => ({ ref, libelle, quantite }));
+    const { error } = await sb.from("commandes_fournisseur").insert({ fournisseur: f, lignes });
+    if (error) return info("Erreur : " + error.message, true); info("Commande préparée"); await charger(); vueCommandes();
+  }));
+  z.querySelectorAll("[data-copie]").forEach((b) => (b.onclick = async () => {
+    const c = envoyees.find((x) => x.id === b.dataset.copie);
+    const t = `Bonjour,\n\nMerci de nous faire parvenir la commande suivante :\n${c.lignes.map((l) => `- ${l.quantite} × ${l.libelle} (réf. ${l.ref})`).join("\n")}\n\nMerci de nous confirmer les délais de livraison jusqu'en Guadeloupe.\n\nCordialement,\nYann Pauwels\nCedyan Energy, 0590 32 15 20`;
+    try { await navigator.clipboard.writeText(t); info("Texte copié : collez-le dans votre e-mail"); } catch { prompt("Copiez ce texte :", t); }
+  }));
+  z.querySelectorAll("[data-env]").forEach((b) => (b.onclick = async () => { await sb.from("commandes_fournisseur").update({ statut: "envoyee", envoyee_le: new Date().toISOString() }).eq("id", b.dataset.env); await charger(); vueCommandes(); }));
+  z.querySelectorAll("[data-ann]").forEach((b) => (b.onclick = async () => { if (!confirm("Annuler cette commande ?")) return; await sb.from("commandes_fournisseur").update({ statut: "annulee" }).eq("id", b.dataset.ann); await charger(); vueCommandes(); }));
+}
+
+/* ---------- Mouvements ---------- */
+function vueMouvements() {
+  const MOTIF = { reception: "Réception", vente: "Vente", chantier: "Chantier", sav: "SAV", correction: "Correction", import: "Import" };
+  const lib = new Map(L.articles.map((a) => [a.ref, a.libelle]));
+  document.getElementById("zone").innerHTML = L.mouv.length ? `<table class="tab"><thead><tr><th>Date</th><th>Produit</th><th>Motif</th><th class="n">Quantité</th></tr></thead><tbody>${L.mouv.map((m) => `<tr><td>${dateC(m.created_at)}</td><td>${esc(lib.get(m.ref) || m.ref)}<div class="ref">${esc(m.document || "")}</div></td><td>${MOTIF[m.motif] || m.motif}</td><td class="n" style="color:${m.quantite < 0 ? "var(--rouge)" : "var(--vert-2)"};font-weight:700">${m.quantite > 0 ? "+" : ""}${nb(m.quantite)}</td></tr>`).join("")}</tbody></table>` : `<p class="vide">Aucun mouvement pour l'instant.</p>`;
+}
+
+/* ---------- Connexion ---------- */
+function connexion(msg) {
+  app.innerHTML = `<form class="carte connexion" id="fco"><h2>Connexion</h2><p class="meta">Même accès que le tableau de bord.</p>${msg ? `<p class="badge">${esc(msg)}</p>` : ""}
+    <input id="em" type="email" placeholder="E-mail" autocomplete="username"><input id="mdp" type="password" placeholder="Mot de passe" autocomplete="current-password"><button class="btn jaune">Se connecter</button></form>`;
+  document.getElementById("fco").onsubmit = async (e) => { e.preventDefault(); const { error } = await sb.auth.signInWithPassword({ email: document.getElementById("em").value.trim(), password: document.getElementById("mdp").value }); if (error) return connexion("E-mail ou mot de passe incorrect."); demarrer(); };
+}
+async function demarrer() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return connexion();
+  const { data: eq } = await sb.from("staff").select("email").limit(1);
+  if (!eq || !eq.length) return connexion("Ce compte n'a pas accès au stock.");
+  try { await charger(); rendre(); } catch (e) { app.innerHTML = `<p class="vide">Erreur : ${esc(e.message || e)}</p>`; }
+}
+demarrer();
+})();
+</script>
+</body>
+</html>

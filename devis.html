@@ -559,6 +559,13 @@ function rendrePied() {
   document.getElementById("rouvrir")?.addEventListener("click", rouvrir);
   document.getElementById("pdf")?.addEventListener("click", telechargerPdf);
   document.getElementById("envoyer")?.addEventListener("click", envoyerAuClient);
+  // Le client a récupéré son matériel : le stock réservé pour ce devis sort du stock
+  document.getElementById("livrer")?.addEventListener("click", async () => {
+    if (!confirm("Le client a bien récupéré ou reçu son matériel ? Les produits réservés vont sortir du stock.")) return;
+    const { data, error } = await sb.rpc("sortir_stock_devis", { p_devis: D.devis.id });
+    if (error) return afficherEtat("Erreur : " + error.message, true);
+    D.devis.livre_le = new Date().toISOString(); afficherEtat(data ? `${data} produit(s) sortis du stock` : "Noté comme livré"); prevenir(); rendre();
+  });
   document.getElementById("appel")?.addEventListener("click", async () => {
     Object.assign(D.devis, { a_appeler: false, appel_fait_le: new Date().toISOString() });
     await ecrire(sb.from("devis").update({ a_appeler: false, appel_fait_le: D.devis.appel_fait_le }).eq("id", D.devis.id)); rendre();
@@ -590,7 +597,8 @@ function piedFige() {
       + (d.a_appeler ? `<button class="btn jaune" id="appel">📞 Appel fait</button>` : "")
       + `<button class="btn clair" id="prolonger">Prolonger de 15 jours</button><button class="btn clair" id="stoprel">${d.relances_stop ? "Reprendre les relances" : "Arrêter les relances"}</button><button class="btn clair" id="rouvrir">Modifier</button><button class="btn clair" id="envoyer">Renvoyer</button>`;
   }
-  if (s === "accepte") return txt(`✓ Accepté le ${dateFr(d.accepte_le)}${d.accepte_nom ? " par " + esc(d.accepte_nom) : ""}`);
+  if (s === "accepte") return txt(`✓ Accepté le ${dateFr(d.accepte_le)}${d.accepte_nom ? " par " + esc(d.accepte_nom) : ""}${d.livre_le ? `, livré le ${dateFr(d.livre_le)}` : ""}`)
+    + (d.livre_le ? "" : `<button class="btn jaune" id="livrer">Livré ou retiré : sortir du stock</button>`);
   if (s === "refuse") return txt(`Refusé le ${dateFr(d.refuse_le)}${d.refus_motif ? " : " + esc(d.refus_motif) : ""}`);
   return txt(`Devis expiré le ${dateFr(d.valide_jusqu)}`) + `<button class="btn jaune" id="prolonger">Prolonger de 15 jours</button>`;
 }
