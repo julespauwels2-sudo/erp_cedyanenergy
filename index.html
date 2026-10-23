@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.png">
+<meta name="robots" content="noindex, nofollow">
 <title>QG de Yann, le magasin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,6 +51,21 @@ button[disabled]{opacity:.45;cursor:not-allowed}
 .chip{background:var(--surface);border:0;padding:11px 15px;border-radius:14px;box-shadow:var(--shadow);font-weight:600;font-size:14px}
 .chip b{background:var(--surface-2);padding:2px 8px;border-radius:8px;margin-left:4px}
 #btnCyclone[aria-pressed="true"]{background:#B91C1C;color:#fff}
+a.chip{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+.chip--jaune{background:var(--sun)!important;color:#14213D!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.connexion{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 80% 10%,rgba(251,187,16,.2),transparent 55%),#08170d}
+.connexion[hidden]{display:none}
+.connexion__carte{width:min(100%,400px);background:#fff;color:#14213D;border-radius:24px;padding:30px;display:grid;gap:12px;box-shadow:0 40px 80px -40px rgba(0,0,0,.8)}
+.connexion__carte img{width:170px;height:auto}
+.connexion__carte h2{margin:4px 0 0;font-size:1.7rem;font-weight:800;letter-spacing:-.02em}
+.connexion__carte p{margin:0;color:#4F5D78}
+.connexion__carte input{min-height:48px;padding:10px 14px;border:1.5px solid #D8E1EB;border-radius:12px;font:inherit;background:#fff;color:#14213D}
+.connexion__carte .chip{min-height:48px;justify-content:center;border:0;cursor:pointer}
+.lien-co{border:0;background:none;padding:0;color:#4F5D78;text-decoration:underline;cursor:pointer;text-align:left;font:inherit;font-size:.9rem}
+.co-msg{min-height:1.2em;font-weight:600;color:#14551f!important}
+a.cta,a.ghost{text-decoration:none;display:inline-flex;align-items:center}
+a.ghost{color:inherit}
 
 .missions{position:fixed;left:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:300px;background:var(--surface);
   border-radius:18px;padding:16px;box-shadow:var(--shadow);z-index:4}
@@ -201,8 +218,12 @@ button[disabled]{opacity:.45;cursor:not-allowed}
     </div>
   </div>
   <div class="actions">
-    <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/3</b></button>
+    <a class="chip chip--jaune" href="devis.html?nouveau">Faire un devis</a>
+    <a class="chip" href="devis.html">Devis</a>
+    <a class="chip" href="https://cedyan-energy.net/dashboard.html" target="_blank" rel="noopener">Tableau de bord</a>
+    <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/4</b></button>
     <button class="chip" id="btnCyclone" aria-pressed="false">Alerte cyclone</button>
+    <button class="chip" id="btnSortir">Quitter</button>
   </div>
 </header>
 
@@ -216,8 +237,21 @@ button[disabled]{opacity:.45;cursor:not-allowed}
 <aside id="panel" aria-hidden="true" aria-labelledby="ptitle"><div id="pbody"></div></aside>
 <p class="hint" id="hint">Les points orange demandent ton attention. Clique dessus pour voir.</p>
 <div id="toasts" aria-live="polite"></div>
+<section class="connexion" id="connexion" hidden>
+  <form class="connexion__carte" id="form-co" novalidate>
+    <img src="logo-cedyan.png" alt="Cedyan Energy" width="180" height="54">
+    <h2>QG de Yann</h2>
+    <p>Même accès que le tableau de bord.</p>
+    <label class="sr" for="co-email">E-mail</label><input id="co-email" type="email" autocomplete="username" placeholder="E-mail">
+    <label class="sr" for="co-mdp">Mot de passe</label><input id="co-mdp" type="password" autocomplete="current-password" placeholder="Mot de passe">
+    <button class="chip chip--jaune" type="submit">Se connecter</button>
+    <button class="lien-co" type="button" id="co-lien">Première connexion ou mot de passe oublié ? Recevoir un lien par e-mail</button>
+    <p class="co-msg" id="co-msg" role="status" aria-live="polite"></p>
+  </form>
+</section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -227,103 +261,68 @@ const euro = n => n.toLocaleString('fr-FR') + ' €';
 const pl = (n,s,p) => n + ' ' + (n>1 ? (p||s+'s') : s);
 const MOBILE = () => innerWidth < 760;
 
-/* =============== Données de démo =============== */
-const S = { level:4, xp:290, done:new Set(), advanced:0, started:0, open:null, cyclone:false, uid:100 };
-const need = l => 250 + l*40;
+/* =============== Données réelles (base Supabase de Cedyan) =============== */
+const SUPA_URL = "https://uotqqkhraqxtlssgavlm.supabase.co";
+const SUPA_CLE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvdHFxa2hyYXF4dGxzc2dhdmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDI1NTAsImV4cCI6MjEwNjgxODU1MH0.61NliFrPeWNilEmXPayAONTIVF49tmq3arjgdzSwPpM";
+const SITE = "https://cedyan-energy.net";
+const sb = window.supabase.createClient(SUPA_URL, SUPA_CLE);
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const euroD = (n) => (Number(n) || 0).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+const dateC = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
+const S = { open:null, cyclone:false, moi:null };
+const DATA = { demandes:[], devis:[], kbis:[], produits:[], pose:[] };
 
-const stock = [
-  {id:'pv',    hot:'pv',    name:'Panneaux 500 Wc',          qty:240, min:100, unit:'panneaux', prix:118,  reorder:120},
-  {id:'ondH',  hot:'ond',   name:'Onduleurs hybrides 6 kW',  qty:3,   min:8,   unit:'unités',   prix:1450, reorder:10},
-  {id:'ondM',  hot:'ond',   name:'Micro-onduleurs',          qty:56,  min:40,  unit:'unités',   prix:142,  reorder:50},
-  {id:'bat',   hot:'bat',   name:'Batteries lithium 5 kWh',  qty:4,   min:5,   unit:'batteries',prix:2100, reorder:6},
-  {id:'rail',  hot:'small', acc:true, name:'Rails de fixation',        qty:310, min:200, unit:'mètres',   prix:9,    reorder:200},
-  {id:'cab',   hot:'small', acc:true, name:'Câble solaire 6 mm²',      qty:12,  min:10,  unit:'bobines', prix:165, reorder:10},
-  {id:'mc4',   hot:'small', name:'Connecteurs MC4',          qty:420, min:200, unit:'paires',   prix:2,    reorder:400, small:true, c:0x111827},
-  {id:'coll',  hot:'small', name:'Colliers anti-UV',         qty:1800,min:500, unit:'pièces',   prix:0.1,  reorder:1000,small:true, c:0x1F2937},
-  {id:'fus',   hot:'small', name:'Fusibles DC',              qty:36,  min:40,  unit:'pièces',   prix:6,    reorder:60,  small:true, c:0xDC2626},
-  {id:'para',  hot:'small', name:'Parafoudres DC',           qty:14,  min:10,  unit:'pièces',   prix:48,   reorder:12,  small:true, c:0xF5B700},
-  {id:'croch', hot:'small', name:'Crochets de toiture',      qty:260, min:150, unit:'pièces',   prix:7,    reorder:200, small:true, c:0x94A3B8},
-  {id:'cosse', hot:'small', name:'Cosses et embouts',        qty:900, min:300, unit:'pièces',   prix:0.2,  reorder:500, small:true, c:0xB45309},
-];
-const it = id => stock.find(s=>s.id===id);
-const isLow = i => i.qty < i.min;
-let arrivages = [ {id:'a1', item:'pv', q:120, date:'jeudi 22 octobre'} ];
-
-let demandes = [
-  {id:'n1', client:'Caraïbes Toitures', besoin:'20 panneaux et fixations bac acier', montant:3600, recu:'il y a 2 heures'},
-  {id:'n2', client:'EcoWatt Antilles',  besoin:'4 onduleurs hybrides',               montant:6100, recu:'ce matin'},
-];
-const pipeline = [
-  {id:'p1', client:'Batimat Sud',            objet:'40 panneaux et 2 onduleurs', montant:9800,  stage:'prop',    urgent:true,  days:1,  rel:0},
-  {id:'p2', client:'Électricité Morel',      objet:'Kit batterie 10 kWh',        montant:5200,  stage:'prop',    urgent:true,  days:2,  rel:0},
-  {id:'p3', client:'Kaz Solaire',            objet:'Rails et micro-onduleurs',   montant:3150,  stage:'envoye',  urgent:false, days:3,  rel:0},
-  {id:'p4', client:'SARL Bonnet Énergie',    objet:'Modules pour 2027',          montant:14500, stage:'relance', urgent:false, days:9,  rel:1},
-  {id:'p5', client:'Antilles Clim Services', objet:'12 panneaux',                montant:1900,  stage:'relance', urgent:false, days:12, rel:0},
-  {id:'p6', client:'Soleil Caraïbes',        objet:'2 batteries',                montant:4200,  stage:'signe',   urgent:false, days:0,  rel:0},
-];
-const STAGES = { prop:['Propositions à envoyer','#F5B700'], envoye:['Devis envoyés','#3B82F6'], relance:['À relancer','#EA580C'], signe:['Signés','#16A34A'] };
-let kbis = [
-  {id:'k1', soc:'Soleil Caraïbes SARL', ville:'Le Moule',       date:'hier'},
-  {id:'k2', soc:'Antilles Élec Pro',    ville:'Pointe-à-Pitre', date:'il y a 2 jours'},
-  {id:'k3', soc:'Kaz Solaire',          ville:'Sainte-Rose',    date:'il y a 3 jours'},
-];
-const rdv = [
-  {j:'Mar. 10 h', t:'Soleil Caraïbes, livraison des batteries'},
-  {j:'Jeu. 14 h', t:'Batimat Sud, présentation des nouveaux modules'},
-  {j:'Ven. 9 h',  t:'Point fournisseur onduleurs'},
-];
-let pros = 37, caMois = 48600, kwcMois = 18;
-
-const STEPS = ['Visite technique','Dossier mairie','Pose des panneaux','Raccordement EDF','Mise en service'];
-let prevus = [
-  {id:'v1', client:'Famille Ramassamy', ville:'Le Lamentin', kwc:6, date:'lundi 26 octobre',  mat:{pv:12, ondH:1, rail:24}},
-  {id:'v2', client:'Mme Céleste',       ville:'Capesterre',  kwc:3, date:'mercredi 4 novembre',mat:{pv:6, ondM:6, rail:12}},
-  {id:'v3', client:'Gîte Bois Joli',    ville:'Deshaies',    kwc:9, date:'lundi 9 novembre',  mat:{pv:18, ondH:1, bat:2, rail:36}},
-];
-const chantiers = [
-  {id:'c1', client:'Famille Lacroix',      ville:'Saint-François', kwc:6,  step:2},
-  {id:'c2', client:'Résidence Les Alizés', ville:'Baie-Mahault',   kwc:36, step:1},
-  {id:'c3', client:'M. Bellon',            ville:'Petit-Bourg',    kwc:3,  step:3},
-];
-const tournee = [
-  {j:'Lun.', t:'Visite technique à Morne-à-l\u2019Eau'},
-  {j:'Mar.', t:'Pose chez la famille Lacroix, Saint-François'},
-  {j:'Jeu.', t:'Passage EDF chez M. Bellon, Petit-Bourg'},
-  {j:'Ven.', t:'Livraison de modules pour Les Alizés'},
-];
-let sav = [
-  {id:'s1', client:'M. Desfontaines', ville:'Le Moule',  pb:'Onduleur en défaut depuis 2 jours', urgent:true},
-  {id:'s2', client:'Famille Nérée',   ville:'Gourbeyre', pb:'Entretien annuel et nettoyage des panneaux', urgent:false},
-];
-const MATN = { pv:'panneaux', ondH:'onduleur hybride', ondM:'micro-onduleurs', bat:'batteries', rail:'m de rails' };
-
-const INIT = {
-  kbis:kbis.length, urgent:pipeline.filter(p=>p.urgent).map(p=>p.id),
-  rel:pipeline.filter(p=>p.stage==='relance').map(p=>p.id), low:stock.filter(isLow).map(i=>i.id)
+// Le stock est rangé par familles du catalogue (les quantités arriveront avec l'étape Stock)
+const BAIES = {
+  pv:   { nom:"Panneaux", cats:["panneaux"] },
+  ond:  { nom:"Onduleurs et régulateurs", cats:["onduleurs","convertisseurs","regulateurs"] },
+  bat:  { nom:"Batteries", cats:["batteries"] },
+  small:{ nom:"Petit matériel", cats:["protections","cables","structures","monitoring"] },
+  recv: { nom:"Kits et centrales", cats:["kits"] },
 };
+const baie = (k) => DATA.produits.filter((p) => p.actif && BAIES[k].cats.includes(p.cat));
+const enStock = (l) => l.filter((p) => p.dispo === "stock").length;
+const STAGES = { brouillon:["À valider","#F5B700"], valide:["Prêts à envoyer","#8B5CF6"], envoye:["En attente du client","#3B82F6"], accepte:["Signés","#16A34A"] };
+const devisSt = (st) => DATA.devis.filter((d) => d.statut === st);
+const aAppeler = () => DATA.devis.filter((d) => d.statut === "envoye" && d.a_appeler);
+const clientDe = (d) => { const c = d.demande?.contact || d.contact || {}; return c.entreprise || c.nom || c.telephone || "Client"; };
+const debutMois = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1).toISOString(); };
+const signesMois = () => DATA.devis.filter((d) => d.statut === "accepte" && d.accepte_le && d.accepte_le >= debutMois());
+
+async function charger() {
+  const [dm, dv, kb, pr] = await Promise.all([
+    sb.from("demandes").select("id,created_at,type,statut,contact,installateur,profil,pour_quand").order("created_at", { ascending: false }).limit(300),
+    sb.from("devis").select("id,numero,statut,total_ttc,created_at,envoye_le,accepte_le,valide_jusqu,a_appeler,vu_le,demande:demandes(contact)").order("created_at", { ascending: false }).limit(500),
+    sb.from("comptes_pro").select("id,entreprise,nom,metier,statut,created_at").eq("statut", "en_attente").order("created_at"),
+    sb.from("produits").select("id,cat,actif,produits_prive(dispo)").limit(3000),
+  ]);
+  const err = [dm, dv, kb, pr].find((r) => r.error); if (err) throw err.error;
+  DATA.demandes = dm.data || []; DATA.devis = dv.data || []; DATA.kbis = kb.data || [];
+  DATA.produits = (pr.data || []).map((p) => { const x = Array.isArray(p.produits_prive) ? p.produits_prive[0] : p.produits_prive; return { id:p.id, cat:p.cat, actif:p.actif, dispo:x?.dispo || null }; });
+  DATA.pose = DATA.demandes.filter((d) => d.installateur === "pose_enr" && !["gagne","perdu","expire"].includes(d.statut));
+}
 
 const ZONES = {
-  stock:  {name:'Stock',         sub:'Le matériel disponible',     css:'#C98C00', hex:0xF5B700, center:V3(-5.8,0,0),   labelY:4.4, zoom:1.4},
-  cedyan: {name:'Cedyan Energy', sub:'Ventes aux pros',    css:'#1F4AA8', hex:0x1F4AA8, center:V3(5.5,0,-4.15), labelY:3.9, zoom:1.75},
-  enr:    {name:'ENR Pose',      sub:'Chantiers chez les particuliers',       css:'#0E9C8F', hex:0x0E9C8F, center:V3(5.5,0,4.15),  labelY:3.8, zoom:1.75},
+  stock:  {name:'Stock',         sub:'Le catalogue, rangé par familles',       css:'#C98C00', hex:0xF5B700, center:V3(-5.8,0,0),   labelY:4.4, zoom:1.4},
+  cedyan: {name:'Cedyan Energy', sub:'Devis, ventes et comptes pros',           css:'#1F4AA8', hex:0x1F4AA8, center:V3(5.5,0,-4.15), labelY:3.9, zoom:1.75},
+  enr:    {name:'ENR Pose',      sub:'Poses chez les particuliers',             css:'#0E9C8F', hex:0x0E9C8F, center:V3(5.5,0,4.15),  labelY:3.8, zoom:1.75},
 };
-const relN = () => pipeline.filter(p=>p.stage==='relance').length;
 const HOT = {
-  pv:      {zone:'stock',  at:V3(-8.7,1.5,0),  txt:()=>pl(it('pv').qty,'panneau','panneaux'),                   alert:()=>isLow(it('pv'))},
-  ond:     {zone:'stock',  at:V3(-2.9,3.2,-6.4),   txt:()=>pl(it('ondH').qty+it('ondM').qty,'onduleur'), alert:()=>isLow(it('ondH'))||isLow(it('ondM'))},
-  bat:     {zone:'stock',  at:V3(-2.9,1.7,0),  txt:()=>pl(it('bat').qty,'batterie'),                  alert:()=>isLow(it('bat'))},
-  small:   {zone:'stock',  at:V3(-8.7,3.1,-6.6), txt:()=>'Petit matériel',                              alert:()=>stock.some(s=>(s.small||s.acc)&&isLow(s))},
-  recv:    {zone:'stock',  at:V3(-8.7,1.6,5.4), txt:()=>arrivages.length?pl(arrivages.length,'livraison')+' à ranger':'Réception', alert:()=>false},
-  demandes:{zone:'cedyan', at:V3(6.3,2.5,-3.3),  txt:()=>pl(demandes.length,'demande'),                 alert:()=>false},
-  pipe:    {zone:'cedyan', at:V3(9.1,3.2,-7.9),  txt:()=>relN()?pl(relN(),'relance')+' à faire':'Ventes', alert:()=>relN()>0},
-  kbis:    {zone:'cedyan', at:V3(3.9,2.0,-4.6),  txt:()=>`${kbis.length} Kbis`,                          alert:()=>false},
-  prevus:  {zone:'enr',    at:V3(2.3,3.1,2.6),   txt:()=>pl(prevus.length,'prévu','prévus'),             alert:()=>false},
-  encours: {zone:'enr',    at:V3(9.3,3.0,2.2),   txt:()=>chantiers.filter(c=>c.step<STEPS.length).length+' en cours', alert:()=>false},
-  sav:     {zone:'enr',    at:V3(2.0,1.9,6.9),   txt:()=>sav.length?pl(sav.length,'SAV','SAV'):'SAV à jour', alert:()=>sav.length>0},
+  pv:      {zone:'stock',  at:V3(-8.7,1.5,0),    txt:()=>pl(baie('pv').length,'panneau','panneaux')+' au catalogue', alert:()=>false},
+  ond:     {zone:'stock',  at:V3(-2.9,3.2,-6.4), txt:()=>pl(baie('ond').length,'onduleur')+' et régulateurs', alert:()=>false},
+  bat:     {zone:'stock',  at:V3(-2.9,1.7,0),    txt:()=>pl(baie('bat').length,'batterie'), alert:()=>false},
+  small:   {zone:'stock',  at:V3(-8.7,3.1,-6.6), txt:()=>'Petit matériel ('+baie('small').length+')', alert:()=>false},
+  recv:    {zone:'stock',  at:V3(-8.7,1.6,5.4),  txt:()=>pl(baie('recv').length,'kit'), alert:()=>false},
+  demandes:{zone:'cedyan', at:V3(6.3,2.5,-3.3),  txt:()=>{ const n=devisSt('brouillon').length; return n?pl(n,'devis','devis')+' à valider':'Comptoir à jour'; }, alert:()=>false},
+  pipe:    {zone:'cedyan', at:V3(9.1,3.2,-7.9),  txt:()=>aAppeler().length?pl(aAppeler().length,'client')+' à appeler':`${devisSt('envoye').length} en attente, ${signesMois().length} signés ce mois`, alert:()=>aAppeler().length>0},
+  kbis:    {zone:'cedyan', at:V3(3.9,2.0,-4.6),  txt:()=>DATA.kbis.length?`${DATA.kbis.length} Kbis à valider`:'Kbis à jour', alert:()=>false},
+  prevus:  {zone:'enr',    at:V3(2.3,3.1,2.6),   txt:()=>DATA.pose.length?pl(DATA.pose.length,'demande')+' de pose':'Aucune demande de pose', alert:()=>false},
+  encours: {zone:'enr',    at:V3(9.3,3.0,2.2),   txt:()=>'Chantiers : bientôt', alert:()=>false},
+  sav:     {zone:'enr',    at:V3(2.0,1.9,6.9),   txt:()=>'SAV : bientôt', alert:()=>false},
 };
-const TODO = { recv:()=>arrivages.length>0, demandes:()=>demandes.length>0, kbis:()=>kbis.length>0, prevus:()=>false };
+const TODO = { demandes:()=>devisSt('brouillon').length>0 || devisSt('valide').length>0, kbis:()=>DATA.kbis.length>0, prevus:()=>DATA.pose.length>0 };
 const needs = id => HOT[id].alert() || (TODO[id] ? TODO[id]() : false);
-const HOTSEC = {pv:'have', ond:'have', bat:'have', small:'small', recv:'recv', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'encours', sav:'sav'};
+const HOTSEC = {pv:'stock', ond:'stock', bat:'stock', small:'stock', recv:'stock', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'bientot', sav:'bientot'};
 
 /* =============== Three.js =============== */
 const canvas = document.getElementById('c');
@@ -538,40 +537,36 @@ const beacons=[];
 function rebuild(){
   Object.values(Z).forEach(z=>{ while(z.dyn.children.length) z.dyn.remove(z.dyn.children[0]); });
   beacons.length=0;
-  // Panneaux : 1 couche = 10 panneaux, 8 couches max par palette
-  let g=grp(Z.stock.dyn,'pv'); let layers=Math.ceil(it('pv').qty/10);
+  // Panneaux : quelques couches par référence au catalogue
+  let g=grp(Z.stock.dyn,'pv'); let layers=Math.min(32,baie('pv').length*3);
   [[-9.7,-1],[-7.7,-1],[-9.7,1],[-7.7,1]].forEach(([x,z],i)=>{ if(i>0&&layers<=0) return;
     box(g,1.9,.16,1.3,0xA0704A,x,.2,z); const n=Math.min(8,Math.max(0,layers)); for(let k=0;k<n;k++) solar(g,1.8,1.2,x,.39+k*.075,z); layers-=n; });
-  // Onduleurs : hybrides en bas, micro en haut
-  g=grp(Z.stock.dyn,'ond'); const oh=Math.min(12,it('ondH').qty);
+  // Onduleurs : un carton par référence (12 au maximum)
+  g=grp(Z.stock.dyn,'ond'); const oh=Math.min(12,baie('ond').length);
   for(let i=0;i<oh;i++){ const lv=i<6?.38:1.38, x=-4.25+(i%6)*.54; box(g,.44,.55,.42,0x3B4252,x,lv,-7); box(g,.3,.12,.01,0xFFFFFF,x,lv+.3,-6.78); }
-  const om=Math.min(10,Math.ceil(it('ondM').qty/6)); for(let i=0;i<om;i++) box(g,.24,.2,.32,0xF1F5F9,-4.3+i*.31,2.38,-7);
-  // Batteries : 1 armoire par batterie
-  g=grp(Z.stock.dyn,'bat'); const nb=Math.min(10,it('bat').qty);
-  for(let i=0;i<nb;i++){ const x=-4.2+(i%5)*.65, z=i<5?-.5:.5; box(g,.55,1.1,.5,0xF4F6F8,x,.2,z); box(g,.1,.1,.02,isLow(it('bat'))?0xF97316:0x22C55E,x,1.05,z+.26); }
-  // Bacs : orange si sous le seuil
+  // Batteries : une armoire par référence (10 au maximum), voyant vert si en stock
+  g=grp(Z.stock.dyn,'bat'); const bl=baie('bat'), nb=Math.min(10,bl.length);
+  for(let i=0;i<nb;i++){ const x=-4.2+(i%5)*.65, z=i<5?-.5:.5; box(g,.55,1.1,.5,0xF4F6F8,x,.2,z); box(g,.1,.1,.02,bl[i].dispo==='stock'?0x22C55E:0xF97316,x,1.05,z+.26); }
+  // Bacs de petit matériel
   g=grp(Z.stock.dyn,'small');
-  stock.filter(s=>s.small).forEach((s,i)=>{ const x=-9.9+(i%3)*1.2, y=i<3?.43:1.33, low=isLow(s);
-    box(g,1.05,.42,.62,low?0xF97316:0x2F6FDB,x,y,-7.3); box(g,.4,.12,.01,0xFFFFFF,x,y+.2,-6.98);
-    box(g,.9,Math.max(.05,Math.min(.3,s.qty/(s.min*3)*.3)),.5,s.c,x,y+.06,-7.3); });
-  // Livraisons à ranger
+  [0x111827,0x1F2937,0xDC2626,0xF5B700,0x94A3B8,0xB45309].forEach((c,i)=>{ const x=-9.9+(i%3)*1.2, y=i<3?.43:1.33;
+    box(g,1.05,.42,.62,0x2F6FDB,x,y,-7.3); box(g,.4,.12,.01,0xFFFFFF,x,y+.2,-6.98); box(g,.9,.22,.5,c,x,y+.06,-7.3); });
+  // Kits : palettes filmées
   g=grp(Z.stock.dyn,'recv');
-  arrivages.slice(0,3).forEach((a,i)=>{ const [x,z]=[[-9.6,4.6],[-7.8,4.6],[-9.6,6.3]][i]; box(g,1.4,.15,1.15,0xA0704A,x,.2,z);
-    box(g,1.35,.8,1.1,null,x,.35,z,new THREE.MeshStandardMaterial({color:0xDCE3EA,transparent:true,opacity:.85,roughness:.3})); });
-  // Kbis : 1 feuille par Kbis
-  g=grp(Z.cedyan.dyn,'kbis'); kbis.forEach((k,i)=>{ const o=box(g,.5,.025,.36,0xFFFFFF,3.9,1.32+i*.03,-4.6); o.rotation.y=(i-1)*.12; });
-  // Post-it des relances sur le bureau
-  g=grp(Z.cedyan.dyn,'pipe'); for(let i=0;i<relN();i++) box(g,.18,.01,.18,0xFB923C,1.0+i*.24,.92,-6.25);
-  // Tableau des ventes : un post-it par affaire
+  for(let i=0;i<Math.min(3,Math.ceil(baie('recv').length/5));i++){ const [x,z]=[[-9.6,4.6],[-7.8,4.6],[-9.6,6.3]][i]; box(g,1.4,.15,1.15,0xA0704A,x,.2,z);
+    box(g,1.35,.8,1.1,null,x,.35,z,new THREE.MeshStandardMaterial({color:0xDCE3EA,transparent:true,opacity:.85,roughness:.3})); }
+  // Kbis : une feuille par compte pro à valider
+  g=grp(Z.cedyan.dyn,'kbis'); DATA.kbis.slice(0,8).forEach((k,i)=>{ const o=box(g,.5,.025,.36,0xFFFFFF,3.9,1.32+i*.03,-4.6); o.rotation.y=(i-1)*.12; });
+  // Post-it orange sur le bureau : un par client à appeler
+  g=grp(Z.cedyan.dyn,'pipe'); aAppeler().slice(0,6).forEach((d,i)=>box(g,.18,.01,.18,0xFB923C,1.0+i*.24,.92,-6.25));
+  // Tableau des ventes : un post-it par devis, colonne selon l'étape
   g=grp(Z.cedyan.dyn,'pipe');
   Object.keys(STAGES).forEach((st,i)=>{ const col=parseInt(STAGES[st][1].slice(1),16);
-    pipeline.filter(p=>p.stage===st).slice(0,5).forEach((p,k)=>box(g,.3,.24,.015,col,7.975+i*.75+(k%2?.17:-.17),2.25-Math.floor(k/2)*.32,-8.125)); });
-  // Nouvelles demandes : enveloppes sur le comptoir
-  g=grp(Z.cedyan.dyn,'demandes'); demandes.forEach((d,i)=>box(g,.36,.03,.24,0xFDE68A,4.6+i*.45,1.26,-3));
-  // Drapeaux sur la maison : 1 par chantier prévu
-  g=grp(Z.enr.dyn,'prevus'); prevus.forEach((p,i)=>{ const x=1.6+i*.7; box(g,.03,.55,.03,0x334155,x,1.95,2.6); box(g,.28,.17,.02,0x0E9C8F,x+.15,2.3,2.6); });
-  // Gyrophare SAV
-  g=grp(Z.enr.dyn,'sav'); if(sav.length){ const bc=box(g,.16,.22,.16,null,1.6,.71,7.2,new THREE.MeshStandardMaterial({color:0xF97316,emissive:0xF97316,emissiveIntensity:.8})); beacons.push(bc); }
+    devisSt(st).slice(0,6).forEach((p,k)=>box(g,.3,.24,.015,col,7.975+i*.75+(k%2?.17:-.17),2.25-Math.floor(k/2)*.32,-8.125)); });
+  // Enveloppes sur le comptoir : une par devis à valider
+  g=grp(Z.cedyan.dyn,'demandes'); devisSt('brouillon').slice(0,6).forEach((d,i)=>box(g,.36,.03,.24,0xFDE68A,4.6+(i%3)*.45,1.26+Math.floor(i/3)*.04,-3));
+  // Drapeaux sur la maison : un par demande de pose
+  g=grp(Z.enr.dyn,'prevus'); DATA.pose.slice(0,4).forEach((p,i)=>{ const x=1.6+i*.7; box(g,.03,.55,.03,0x334155,x,1.95,2.6); box(g,.28,.17,.02,0x0E9C8F,x+.15,2.3,2.6); });
   collect();
 }
 
@@ -633,10 +628,11 @@ Object.entries(HOT).forEach(([id,h])=>{
   b.addEventListener('click',()=>openZone(h.zone,id)); b.addEventListener('mouseenter',()=>hovered={zone:h.zone,hot:id}); b.addEventListener('mouseleave',()=>hovered=null);
   labelsEl.appendChild(b); tagEls[id]=b;
 });
+
 function counts(){ return {
-  stock: stock.filter(isLow).length + arrivages.length,
-  cedyan: demandes.length + pipeline.filter(p=>p.stage==='prop'||p.stage==='relance').length + kbis.length,
-  enr: prevus.length + sav.length };
+  stock: 0,
+  cedyan: devisSt('brouillon').length + devisSt('valide').length + aAppeler().length + DATA.kbis.length,
+  enr: DATA.pose.length };
 }
 function updateLabels(){
   const c=counts();
@@ -704,97 +700,76 @@ function closePanel(){
   if(was) labelEls[was].focus({preventScroll:true});
 }
 const head=z=>`<header class="p-head"><div><h2 id="ptitle">${z.name}</h2><p>${z.sub}</p></div><button class="x" data-act="close" aria-label="Fermer">✕</button></header>`;
-const onOrder=id=>arrivages.find(a=>a.item===id);
-const big=(name,n,unit,low)=>`<div class="tile ${low?'low':''}"><span class="tn">${name}</span><b class="big">${n.toLocaleString('fr-FR')}</b><span class="tu">${unit}</span></div>`;
 const empty=t=>`<p class="empty">${t}</p>`;
+const lien=(href,txt,cls='cta sm',neuf)=>`<a class="${cls}" href="${href}"${neuf?' target="_blank" rel="noopener"':''}>${txt}</a>`;
+const ligneDevis=(d,extra='')=>`<li class="row line"><div><b>${esc(clientDe(d))}</b><span class="meta">${d.numero?esc(d.numero)+', ':''}${euroD(d.total_ttc)}${extra}</span></div>${lien('devis.html?d='+d.id,'Ouvrir')}</li>`;
 
 function render(){
   const id=S.open; if(!id) return; const z=ZONES[id]; let h=head(z);
   if(id==='stock'){
-    const low=stock.filter(i=>isLow(i)&&!onOrder(i.id));
-    if(low.length) h+=`<div class="sec" id="h-todo"><h3>À recommander</h3><ul class="rows">${low.map(i=>`<li class="row warn line"><div><b>${i.name}</b><span class="meta">Il reste ${i.qty} ${i.unit}, seuil ${i.min}</span></div><button class="cta sm" data-act="order" data-id="${i.id}">Commander ${i.reorder}</button></li>`).join('')}</ul></div>`;
-    const oh=it('ondH'), om=it('ondM');
-    h+=`<div class="sec" id="h-have"><h3>En stock</h3><div class="grid">${big('Panneaux',it('pv').qty,'panneaux 500 Wc',isLow(it('pv')))}${big('Batteries',it('bat').qty,'batteries 5 kWh',isLow(it('bat')))}${big('Onduleurs hybrides',oh.qty,'unités',isLow(oh))}${big('Micro-onduleurs',om.qty,'unités',isLow(om))}</div></div>`;
-    h+=`<div class="sec" id="h-small"><h3>Petit matériel</h3><ul class="list">${stock.filter(s=>s.small||s.acc).map(s=>`<li class="${isLow(s)?'low':''}"><span>${s.name}</span><span>${s.qty.toLocaleString('fr-FR')} ${s.unit}</span></li>`).join('')}</ul></div>`;
-    if(arrivages.length) h+=`<div class="sec" id="h-recv"><h3>Livraisons en route</h3><ul class="rows">${arrivages.map(a=>{const i=it(a.item);
-      return `<li class="row line"><div><b>${a.q.toLocaleString('fr-FR')} ${i.unit}</b><span class="meta">${i.name}, ${a.date}</span></div><button class="cta sm" data-act="recv" data-id="${a.id}">Réceptionner</button></li>`;}).join('')}</ul></div>`;
+    h+=`<div class="sec" id="h-stock"><p class="empty">Les quantités réelles arriveront avec l'étape Stock. En attendant, voici le catalogue en ligne, famille par famille.</p>
+      <div class="grid">${Object.entries(BAIES).map(([k,b])=>{ const l=baie(k); return `<div class="tile"><span class="tn">${b.nom}</span><b class="big">${l.length}</b><span class="tu">en ligne, dont ${enStock(l)} en stock</span></div>`; }).join('')}</div></div>
+      <div class="sec">${lien(SITE+'/dashboard.html','Gérer le catalogue dans le tableau de bord','cta',true)}</div>`;
   }
   if(id==='cedyan'){
-    const todo=[];
-    pipeline.filter(p=>p.stage==='prop').sort((a,b)=>b.urgent-a.urgent).forEach(p=>todo.push({c:'#C98C00',t:p.urgent?'Devis urgent':'Devis à envoyer',who:p.client,what:`${p.objet}, ${euro(p.montant)}`,btn:`<button class="cta sm" data-act="send" data-id="${p.id}">Envoyer</button>`}));
-    pipeline.filter(p=>p.stage==='relance').forEach(p=>todo.push({c:'#EA580C',t:'À relancer',who:p.client,what:`Sans réponse depuis ${p.days} jours, ${euro(p.montant)}`,btn:`<button class="cta sm" data-act="relance" data-id="${p.id}" data-how="mail">Relancer</button>`}));
-    demandes.forEach(d=>todo.push({c:'#3B82F6',t:'Nouvelle demande',who:d.client,what:d.besoin,btn:`<button class="cta sm" data-act="prep" data-id="${d.id}">Préparer</button>`}));
-    kbis.forEach(k=>todo.push({c:'#64748B',t:'Kbis',who:k.soc,what:k.ville,btn:`<button class="cta sm" data-act="kbis-ok" data-id="${k.id}">Valider</button><button class="ghost sm" data-act="kbis-no" data-id="${k.id}">Refuser</button>`}));
-    h+=`<div class="sec" id="h-todo"><h3>À faire <small>${todo.length}</small></h3>`+(todo.length?`<ul class="rows">${todo.map(t=>`<li class="row line" style="--c:${t.c}"><div><span class="type">${t.t}</span><b>${t.who}</b><span class="meta">${t.what}</span></div><div class="btns">${t.btn}</div></li>`).join('')}</ul>`:empty('Tout est à jour.'))+`</div>`;
-    h+=`<div class="sec" id="h-pipe"><h3>Ventes <small>signé ce mois : ${euro(caMois)}</small></h3><div class="board">${Object.entries(STAGES).map(([st,[l,c]])=>{const L=pipeline.filter(p=>p.stage===st);
-      return `<div style="--c:${c}"><b>${L.length}</b><span>${l}</span><span>${euro(L.reduce((s,p)=>s+p.montant,0))}</span></div>`;}).join('')}</div>`;
-    const env=pipeline.filter(p=>p.stage==='envoye');
-    if(env.length) h+=`<ul class="rows" style="margin-top:10px">${env.map(p=>`<li class="row line"><div><b>${p.client}</b><span class="meta">Envoyé il y a ${p.days} jour${p.days>1?'s':''}, ${euro(p.montant)}</span></div><button class="ghost sm" data-act="sign" data-id="${p.id}">Signé</button></li>`).join('')}</ul>`;
+    const av=devisSt('brouillon'), pr=devisSt('valide'), ap=aAppeler();
+    h+=`<div class="sec"><div class="line">${lien('devis.html?nouveau','Faire un devis','cta')}${lien('devis.html','Tous les devis','ghost')}</div></div>`;
+    h+=`<div class="sec" id="h-todo"><h3>À faire <small>${av.length+pr.length+ap.length+DATA.kbis.length}</small></h3>`;
+    if(!av.length && !pr.length && !ap.length && !DATA.kbis.length) h+=empty('Tout est à jour.');
+    if(av.length) h+=`<p class="meta" style="margin:8px 0 6px"><b>Devis à valider</b></p><ul class="rows">${av.slice(0,8).map(d=>ligneDevis(d,', reçu le '+dateC(d.created_at))).join('')}</ul>`;
+    if(pr.length) h+=`<p class="meta" style="margin:12px 0 6px"><b>Validés, à envoyer au client</b></p><ul class="rows">${pr.slice(0,8).map(d=>ligneDevis(d)).join('')}</ul>`;
+    if(ap.length) h+=`<p class="meta" style="margin:12px 0 6px"><b>📞 Clients à appeler</b></p><ul class="rows">${ap.slice(0,8).map(d=>{ const t=d.demande?.contact?.telephone; return ligneDevis(d, t?', tél. '+esc(t):''); }).join('')}</ul>`;
+    if(DATA.kbis.length) h+=`<p class="meta" style="margin:12px 0 6px"><b>Kbis à valider</b></p><ul class="rows">${DATA.kbis.map(k=>`<li class="row line"><div><b>${esc(k.entreprise||k.nom)}</b><span class="meta">${esc(k.metier||'')}${k.metier?', ':''}demande du ${dateC(k.created_at)}</span></div>${lien(SITE+'/dashboard.html','Décider','cta sm',true)}</li>`).join('')}</ul>`;
     h+=`</div>`;
+    h+=`<div class="sec" id="h-pipe"><h3>Ventes <small>signé ce mois : ${euroD(signesMois().reduce((a,d)=>a+(+d.total_ttc||0),0))}</small></h3><div class="board">${Object.entries(STAGES).map(([st,[l,c]])=>{ const L=st==='accepte'?signesMois():devisSt(st);
+      return `<div style="--c:${c}"><b>${L.length}</b><span>${l}${st==='accepte'?' (ce mois)':''}</span><span>${euroD(L.reduce((a,d)=>a+(+d.total_ttc||0),0))}</span></div>`; }).join('')}</div></div>`;
   }
   if(id==='enr'){
-    h+=`<div class="sec" id="h-prevus"><h3>Chantiers prévus</h3>`+(prevus.length?`<ul class="rows">${prevus.map(p=>{ const miss=Object.entries(p.mat).filter(([k,q])=>it(k).qty<q);
-      return `<li class="row"><div class="top"><div><b>${p.client}</b><span class="meta">${p.ville}, ${p.kwc} kWc, le ${p.date}</span></div></div>
-        <div class="line"><span class="meta">${miss.length?'<span style="color:var(--alert)">Il manque du matériel</span>':'Matériel dispo en stock'}</span><button class="cta sm" data-act="start" data-id="${p.id}" ${S.cyclone?'disabled':''}>Démarrer</button></div></li>`;}).join('')}</ul>`:empty('Aucun chantier prévu.'))+`</div>`;
-    const cur=chantiers.filter(c=>c.step<STEPS.length);
-    h+=`<div class="sec" id="h-encours"><h3>En cours</h3>`+(cur.length?`<ul class="rows">${cur.map(c=>`<li class="row"><div class="top"><div><b>${c.client}</b><span class="meta">${c.ville}, ${c.kwc} kWc</span></div><em class="tag">${STEPS[c.step]}</em></div>
-        <div class="steps">${STEPS.map((s,i)=>`<i class="${i<c.step?'on':''}"></i>`).join('')}</div>
-        <div class="line"><span class="meta">Étape ${c.step+1} sur ${STEPS.length}</span><button class="cta sm" data-act="next" data-id="${c.id}" ${S.cyclone?'disabled':''}>Étape faite</button></div></li>`).join('')}</ul>`:empty('Aucun chantier en cours.'))
-      +(S.cyclone?empty('Chantiers suspendus pendant la vigilance cyclonique.'):'')+`</div>`;
-    h+=`<div class="sec" id="h-sav"><h3>SAV</h3>`+(sav.length?`<ul class="rows">${sav.map(s=>`<li class="row line ${s.urgent?'warn':''}"><div><b>${s.client}</b><span class="meta">${s.pb}</span></div><button class="cta sm" data-act="sav" data-id="${s.id}">Fait</button></li>`).join('')}</ul>`:empty('Aucune intervention en attente.'))+`</div>`;
+    h+=`<div class="sec" id="h-prevus"><h3>Demandes de pose <small>clients qui veulent une installation</small></h3>`+(DATA.pose.length?`<ul class="rows">${DATA.pose.map(d=>{ const c=d.contact||{}; return `<li class="row line"><div><b>${esc(c.nom||c.telephone||'Client')}</b><span class="meta">${esc(c.commune||'')}${c.commune?', ':''}demande du ${dateC(d.created_at)}${c.telephone?', tél. '+esc(c.telephone):''}</span></div>${lien(SITE+'/dashboard.html','Voir','cta sm',true)}</li>`; }).join('')}</ul>`:empty('Aucune demande de pose pour le moment.'))+`</div>`;
+    h+=`<div class="sec" id="h-bientot"><h3>Chantiers et SAV</h3>${empty("Le suivi des chantiers et du SAV arrive avec les prochaines étapes. Les objets de cette zone s'animeront à ce moment-là.")}</div>`;
   }
   pbody.innerHTML=h+'<div class="pad"></div>';
 }
 
-pbody.addEventListener('click',e=>{
-  const j=e.target.closest('[data-jump]'); if(j){ const el=document.getElementById('h-'+j.dataset.jump); if(el){ el.scrollIntoView({block:'start',behavior:REDUCED?'auto':'smooth'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } return; }
-  const b=e.target.closest('[data-act]'); if(!b||b.disabled) return; const a=b.dataset.act, id=b.dataset.id;
-  if(a==='close') return closePanel();
-  if(a==='plus'||a==='minus'){ const i=it(id); const step=i.qty>=500?10:1; i.qty=Math.max(0,i.qty+(a==='plus'?step:-step)); }
-  if(a==='order'){ const i=it(id); arrivages.push({id:'a'+(S.uid++), item:id, q:i.reorder, date:'sous 5 jours'}); gain(15,'Commande passée : '+i.name.toLowerCase()); }
-  if(a==='recv'){ const ar=arrivages.find(x=>x.id===id); arrivages=arrivages.filter(x=>x.id!==id); it(ar.item).qty+=ar.q; gain(25,'Arrivage rangé en stock'); }
-  if(a==='prep'){ const d=demandes.find(x=>x.id===id); demandes=demandes.filter(x=>x.id!==id);
-    pipeline.unshift({id:'p'+(S.uid++), client:d.client, objet:d.besoin, montant:d.montant, stage:'prop', urgent:false, days:0, rel:0}); gain(15,'Proposition créée pour '+d.client); }
-  if(a==='send'){ const p=pipeline.find(x=>x.id===id); p.stage='envoye'; p.days=0; gain(p.urgent?40:25,'Devis envoyé à '+p.client); }
-  if(a==='sign'){ const p=pipeline.find(x=>x.id===id); p.stage='signe'; caMois+=p.montant; gain(60,'Signé : '+p.client+', '+euro(p.montant)); }
-  if(a==='relance'){ const p=pipeline.find(x=>x.id===id); p.stage='envoye'; p.rel++; p.days=0; gain(20,(b.dataset.how==='tel'?'Appel passé à ':'Relance envoyée à ')+p.client); }
-  if(a==='kbis-ok'){ const k=kbis.find(x=>x.id===id); kbis=kbis.filter(x=>x.id!==id); pros++; gain(20,k.soc+' validé'); }
-  if(a==='kbis-no'){ kbis=kbis.filter(x=>x.id!==id); gain(10,'Kbis refusé'); }
-  if(a==='start'){ const p=prevus.find(x=>x.id===id); const miss=Object.entries(p.mat).filter(([k,q])=>it(k).qty<q);
-    if(miss.length){ toast('Stock insuffisant','Il manque : '+miss.map(([k,q])=>(q-it(k).qty)+' '+MATN[k]).join(', '),'warn'); return; }
-    Object.entries(p.mat).forEach(([k,q])=>it(k).qty-=q); prevus=prevus.filter(x=>x.id!==id);
-    chantiers.unshift({id:'c'+(S.uid++), client:p.client, ville:p.ville, kwc:p.kwc, step:0}); S.started++; gain(35,'Chantier lancé, matériel sorti du stock'); }
-  if(a==='next'){ const c=chantiers.find(x=>x.id===id); c.step++; S.advanced++;
-    if(c.step>=STEPS.length){ kwcMois+=c.kwc; gain(80,'Chantier terminé : '+c.client); } else gain(30,STEPS[c.step-1]+' validée'); }
-  if(a==='sav'){ const s=sav.find(x=>x.id===id); sav=sav.filter(x=>x.id!==id); gain(s.urgent?35:20,'SAV réglé chez '+s.client); }
-  const y=panel.scrollTop; render(); panel.scrollTop=y; refresh();
-});
+pbody.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(b&&b.dataset.act==='close') closePanel(); });
 
 /* Jeu : XP et missions */
 const toasts=document.getElementById('toasts');
 function toast(big,small,cls){ const t=document.createElement('div'); t.className='toast '+(cls||''); t.innerHTML=`<b>${big}</b><span>${small}</span>`; toasts.appendChild(t); while(toasts.children.length>3) toasts.firstChild.remove(); setTimeout(()=>t.remove(),2800); }
+// XP et niveau gardés sur l'appareil : chaque tâche réglée rapporte des points
+const J = (()=>{ try{ return JSON.parse(localStorage.getItem('qg-jeu')||'{}'); }catch{ return {}; } })();
+J.xp=J.xp||0; J.niveau=J.niveau||1;
+const sauverJeu=()=>{ try{ localStorage.setItem('qg-jeu',JSON.stringify(J)); }catch{} };
+const need = l => 250 + l*40;
 function gain(n,why){
-  S.xp+=n; toast('+'+n+' XP',why);
-  while(S.xp>=need(S.level)){ S.xp-=need(S.level); S.level++; const L=S.level; setTimeout(()=>toast('Niveau '+L,'Nouveau niveau atteint, bravo Yann','big'),450); }
-  hud();
+  J.xp+=n; toast('+'+n+' XP',why);
+  while(J.xp>=need(J.niveau)){ J.xp-=need(J.niveau); J.niveau++; const L=J.niveau; setTimeout(()=>toast('Niveau '+L,'Nouveau niveau atteint, bravo Yann','big'),450); }
+  sauverJeu(); hud();
 }
 function hud(){
-  document.getElementById('lvl').textContent='Niveau '+S.level;
-  document.getElementById('xpfill').style.width=(S.xp/need(S.level)*100)+'%';
-  document.getElementById('xptxt').textContent=S.xp+' / '+need(S.level)+' XP';
+  document.getElementById('lvl').textContent='Niveau '+J.niveau;
+  document.getElementById('xpfill').style.width=(J.xp/need(J.niveau)*100)+'%';
+  document.getElementById('xptxt').textContent=J.xp+' / '+need(J.niveau)+' XP';
 }
-function missions(){ return [
-  {id:'m1',t:'Envoyer les devis urgents',          p:INIT.urgent.filter(i=>pipeline.find(p=>p.id===i).stage!=='prop').length, n:INIT.urgent.length, z:'cedyan', h:'todo'},
-  {id:'m2',t:'Remettre le stock au-dessus du seuil',p:INIT.low.filter(i=>!isLow(it(i))).length, n:INIT.low.length, z:'stock', h:'todo'},
-  {id:'m3',t:'Lancer un chantier prévu',           p:Math.min(S.started,1), n:1, z:'enr', h:'prevus'},
-];}
+// Missions du jour : le matin, on note ce qu'il y a à faire ; chaque élément réglé fait avancer la mission
+function missions(){
+  const jour=new Date().toLocaleDateString('en-CA');
+  const actuel={ valider:devisSt('brouillon').length, envoyer:devisSt('valide').length, appeler:aAppeler().length, kbis:DATA.kbis.length };
+  if(J.jour!==jour){ J.jour=jour; J.depart={...actuel}; J.fait={}; J.vu={}; }
+  Object.keys(actuel).forEach(k=>{ if(actuel[k]>J.depart[k]) J.depart[k]=actuel[k]; }); // nouvelles arrivées dans la journée
+  const m=(id,t,k,h)=>({ id,t,h,z:'cedyan',n:J.depart[k],p:Math.max(0,J.depart[k]-actuel[k]) });
+  return [ m('m1','Valider les devis du comptoir','valider','todo'), m('m2','Envoyer les devis validés','envoyer','todo'), m('m3','Appeler les clients à relancer','appeler','todo'), m('m4','Décider pour les Kbis','kbis','todo') ];
+}
 function refresh(){
   const ms=missions(); let done=0;
-  document.getElementById('mlist').innerHTML=ms.map(m=>{ const ok=m.p>=m.n; if(ok) done++;
-    return `<li class="${ok?'done':''}"><button data-z="${m.z}" data-h="${m.h}"><span class="ck">${ok?'✓':''}</span><span class="t">${m.t}</span><small>${m.p}/${m.n}</small></button></li>`; }).join('');
+  document.getElementById('mlist').innerHTML=ms.map(m=>{ const rien=m.n===0, ok=rien||m.p>=m.n; if(ok) done++;
+    return `<li class="${ok?'done':''}"><button data-z="${m.z}" data-h="${m.h}"><span class="ck">${ok?'✓':''}</span><span class="t">${m.t}</span><small>${rien?'rien à faire':m.p+'/'+m.n}</small></button></li>`; }).join('');
   document.getElementById('mcount').textContent=done+'/'+ms.length;
-  ms.forEach(m=>{ if(m.p>=m.n && !S.done.has(m.id)){ S.done.add(m.id); setTimeout(()=>gain(50,'Mission terminée : '+m.t.toLowerCase()),800); } });
-  rebuild(); updateLabels();
+  ms.forEach(m=>{
+    const avant=J.vu[m.id]||0; if(m.p>avant){ gain((m.p-avant)*15, m.t); J.vu[m.id]=m.p; }
+    if(m.n>0 && m.p>=m.n && !J.fait[m.id]){ J.fait[m.id]=true; setTimeout(()=>gain(50,'Mission terminée : '+m.t.toLowerCase()),800); }
+  });
+  sauverJeu(); rebuild(); updateLabels();
 }
 document.getElementById('mlist').addEventListener('click',e=>{ const b=e.target.closest('[data-z]'); if(b) openZone(b.dataset.z,b.dataset.h); });
 function syncMissionBtn(){ mBtn.setAttribute('aria-expanded',String(!mBox.hidden)); }
@@ -836,7 +811,39 @@ function loop(now){
   renderer.render(scene,camera); placeLabels();
   requestAnimationFrame(loop);
 }
-hud(); refresh(); requestAnimationFrame(loop);
+/* Connexion (même accès que le tableau de bord) */
+const ecranCo=document.getElementById('connexion');
+function montrerConnexion(msg){ ecranCo.hidden=false; document.getElementById('co-msg').textContent=msg||''; document.getElementById('co-email').focus(); }
+document.getElementById('form-co').addEventListener('submit',async(e)=>{
+  e.preventDefault(); const em=document.getElementById('co-email').value.trim().toLowerCase(), mdp=document.getElementById('co-mdp').value, msg=document.getElementById('co-msg');
+  if(!mdp){ msg.textContent='Saisis ton mot de passe, ou reçois un lien juste en dessous.'; return; }
+  msg.textContent='Connexion…';
+  const { error }=await sb.auth.signInWithPassword({ email:em, password:mdp });
+  if(error){ msg.textContent='E-mail ou mot de passe incorrect.'; return; }
+  demarrer();
+});
+document.getElementById('co-lien').addEventListener('click',async()=>{
+  const em=document.getElementById('co-email').value.trim().toLowerCase(), msg=document.getElementById('co-msg');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ msg.textContent="Saisis d'abord ton e-mail."; return; }
+  await sb.auth.signInWithOtp({ email:em, options:{ shouldCreateUser:false, emailRedirectTo:location.origin+location.pathname } });
+  msg.textContent='Si cette adresse a accès, un lien de connexion vient de partir.';
+});
+document.getElementById('btnSortir').addEventListener('click',async()=>{ await sb.auth.signOut(); location.reload(); });
+
+async function demarrer(){
+  const { data:{ session } }=await sb.auth.getSession();
+  if(!session) return montrerConnexion();
+  const { data:eq }=await sb.from('staff').select('email,nom').ilike('email',session.user.email).maybeSingle();
+  if(!eq){ await sb.auth.signOut(); return montrerConnexion("Ce compte n'a pas accès au QG."); }
+  ecranCo.hidden=true; S.moi=eq;
+  document.querySelector('.who h1').textContent='QG de '+(eq.nom||'Yann').split(' ')[0];
+  try{ await charger(); }catch(err){ toast('Oups','Données indisponibles : '+(err.message||err),'warn'); }
+  hud(); refresh();
+  setInterval(async()=>{ if(document.hidden) return; try{ await charger(); refresh(); if(S.open){ const y=panel.scrollTop; render(); panel.scrollTop=y; } }catch{} },60000);
+}
+sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_IN' && !S.moi) demarrer(); });
+requestAnimationFrame(loop);
+demarrer();
 })();
 </script>
 </body>

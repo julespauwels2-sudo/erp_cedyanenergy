@@ -5,38 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Devis à valider · Cedyan Energy</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --vert:#0d3a16; --vert-2:#1d5a2a; --soleil:#fbbb10; --papier:#f4f6f1; --carte:#ffffff;
-  --encre:#16241a; --encre-2:#56665b; --trait:#d9e3da; --alerte:#b45309; --alerte-fond:#fff4e0; --ok:#15803d; --rouge:#b91c1c;
+  /* mêmes couleurs que le tableau de bord */
+  --vert:#14551f; --vert-2:#218034; --nuit:#08170d; --soleil:#fbbb10; --papier:#f3f6f2; --carte:#ffffff;
+  --encre:#16241a; --encre-2:#56665b; --trait:#dfe7e0; --alerte:#9a5b00; --alerte-fond:#fff4d6; --ok:#14551f; --rouge:#b42318;
   color-scheme:light;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --papier:#0f1a12; --carte:#16241a; --encre:#e8efe9; --encre-2:#a5b7aa; --trait:#2a3d2f; --alerte-fond:#3a2a10; --alerte:#f59e0b; --ok:#4ade80; color-scheme:dark; }
-}
-:root[data-theme="dark"]{ --papier:#0f1a12; --carte:#16241a; --encre:#e8efe9; --encre-2:#a5b7aa; --trait:#2a3d2f; --alerte-fond:#3a2a10; --alerte:#f59e0b; --ok:#4ade80; color-scheme:dark; }
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("InterVariable.woff2") format("woff2")}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--papier);color:var(--encre);font:16px/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
-button,input,select{font:inherit;color:inherit}
+html,body{margin:0;background:var(--papier);color:var(--encre);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--soleil);outline-offset:2px}
-.barre{background:var(--vert);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 20px 12px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
-.barre h1{margin:0;font-size:18px;font-weight:700}
+.barre{background:var(--nuit);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 20px 12px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+.barre h1{margin:0;font-size:18px;font-weight:900;letter-spacing:-.02em}
 .barre a{color:#fff;opacity:.85;text-decoration:none;font-size:14px}
 .barre .esp{flex:1}
 .etat{font-size:13px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12)}
 .etat.err{background:var(--rouge)}
 main{max-width:980px;margin:0 auto;padding:20px 16px 140px}
-.carte{background:var(--carte);border:1px solid var(--trait);border-radius:14px;padding:18px}
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:18px;padding:20px}
 .puces{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
-.puce{border:1px solid var(--trait);background:var(--carte);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
-.puce[aria-pressed="true"]{background:var(--vert);border-color:var(--vert);color:#fff}
+.puce{border:1.5px solid var(--trait);background:var(--carte);border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px}
+.puce[aria-pressed="true"]{background:var(--nuit);border-color:var(--nuit);color:#fff}
 .liste{display:grid;gap:8px}
-.item{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;text-align:left;width:100%;background:var(--carte);border:1px solid var(--trait);border-radius:12px;padding:14px 16px}
-.item:hover{border-color:var(--vert-2)}
+.item{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;text-align:left;width:100%;background:var(--carte);border:1px solid var(--trait);border-radius:18px;padding:16px 18px;cursor:pointer}
+.item:hover{border-color:var(--vert-2);box-shadow:0 10px 24px -18px rgba(8,23,13,.5)}
 .item b{font-size:16px}
 .item .tot{font-weight:700;font-variant-numeric:tabular-nums;font-size:17px}
 .meta{font-size:13px;color:var(--encre-2)}
@@ -45,16 +40,16 @@ main{max-width:980px;margin:0 auto;padding:20px 16px 140px}
 .badge.ok{background:rgba(21,128,61,.12);color:var(--ok)}
 .vide{padding:30px;text-align:center;color:var(--encre-2)}
 .entete{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:start}
-.entete h2{margin:0 0 4px;font-size:22px}
-.grille{display:inline-flex;border:1px solid var(--trait);border-radius:10px;overflow:hidden}
-.grille button{border:0;background:transparent;padding:8px 14px;font-weight:600;font-size:14px}
-.grille button[aria-pressed="true"]{background:var(--vert);color:#fff}
+.entete h2{margin:0 0 4px;font-size:1.6rem;font-weight:900;letter-spacing:-.03em}
+.grille{display:inline-flex;border:1.5px solid var(--trait);border-radius:999px;overflow:hidden;background:var(--carte)}
+.grille button{border:0;background:transparent;padding:9px 16px;font-weight:700;font-size:14px;border-radius:999px}
+.grille button[aria-pressed="true"]{background:var(--nuit);color:#fff}
 .avert{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--alerte-fond);color:var(--alerte);font-size:14px;font-weight:500}
 details.origine{margin-top:12px;border-top:1px solid var(--trait);padding-top:10px}
 details.origine summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--encre-2)}
 details.origine p{margin:8px 0;white-space:pre-wrap;font-size:14px}
 .lignes{margin-top:16px;display:grid;gap:6px}
-.lg{display:grid;grid-template-columns:minmax(0,1fr) 128px 120px 104px 36px;gap:10px;align-items:center;background:var(--carte);border:1px solid var(--trait);border-radius:12px;padding:10px 12px}
+.lg{display:grid;grid-template-columns:minmax(0,1fr) 128px 120px 104px 36px;gap:10px;align-items:center;background:var(--carte);border:1px solid var(--trait);border-radius:16px;padding:10px 12px}
 .lg.douteuse{border-left:5px solid var(--alerte)}
 .lg .nom input{width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:6px 8px;font-weight:600}
 .lg .nom input:hover,.lg .nom input:focus{border-color:var(--trait);background:var(--papier)}
@@ -74,18 +69,18 @@ details.origine p{margin:8px 0;white-space:pre-wrap;font-size:14px}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) 128px 120px 104px 36px;gap:10px;padding:0 13px;font-size:12px;color:var(--encre-2);margin-top:18px}
 .cols span:nth-child(n+3){text-align:right}
 .ajout{position:relative;margin-top:10px;display:flex;gap:8px}
-.ajout input{flex:1;border:1px dashed var(--vert-2);border-radius:12px;padding:12px 14px;background:var(--carte)}
-.ajout .libre{border:1px solid var(--trait);background:var(--carte);border-radius:12px;padding:0 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.ajout input{flex:1;border:2px dashed #b9c8bc;border-radius:14px;padding:12px 14px;background:var(--carte)}
+.ajout .libre{border:1.5px solid var(--trait);background:var(--carte);border-radius:999px;padding:0 18px;font-weight:700;font-size:14px;white-space:nowrap}
 .resultats{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--carte);border:1px solid var(--trait);border-radius:12px;box-shadow:0 14px 34px -14px rgba(13,58,22,.35);max-height:320px;overflow:auto;z-index:15}
 .resultats button{display:grid;grid-template-columns:1fr auto;gap:2px 12px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--trait);background:transparent;padding:10px 14px}
 .resultats button:hover,.resultats button.actif{background:var(--papier)}
 .resultats .px{font-variant-numeric:tabular-nums;font-weight:600}
-.pied{position:fixed;left:0;right:0;bottom:0;background:var(--vert);color:#fff;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));z-index:20}
+.pied{position:fixed;left:0;right:0;bottom:0;background:var(--nuit);color:#fff;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));z-index:20}
 .pied .in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.pied .total{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.pied .total{font-size:28px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .pied .total small{display:block;font-size:12px;font-weight:500;opacity:.75;letter-spacing:0}
 .pied .esp{flex:1}
-.btn{border:0;border-radius:999px;padding:12px 20px;font-weight:700;font-size:15px}
+.btn{border:0;border-radius:999px;min-height:44px;padding:0 20px;font-weight:700;font-size:15px}
 .btn.jaune{background:var(--soleil);color:#16241a}
 .btn.clair{background:rgba(255,255,255,.14);color:#fff}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
@@ -93,9 +88,30 @@ details.origine p{margin:8px 0;white-space:pre-wrap;font-size:14px}
 .connexion{max-width:380px;margin:60px auto}
 .connexion h2{margin:0 0 6px}
 .connexion input{width:100%;border:1px solid var(--trait);border-radius:10px;padding:12px;margin:6px 0;background:var(--carte)}
-.connexion .btn{width:100%;margin-top:8px;background:var(--vert);color:#fff}
+.connexion .btn{width:100%;margin-top:8px;background:var(--soleil);color:var(--encre)}
 .lien{background:none;border:0;color:var(--vert-2);text-decoration:underline;padding:0;font-size:14px}
+.tetliste{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.tetliste h2{margin:0;font-size:1.9rem;font-weight:900;letter-spacing:-.03em}
+.btn.vert{background:var(--vert-2);color:#fff}
+.formu{display:grid;gap:14px}
+.formu h2{margin:0;font-size:1.6rem;font-weight:900;letter-spacing:-.03em}
+.formu label{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.formu input,.formu textarea{width:100%;border:1px solid var(--trait);border-radius:10px;padding:11px 12px;background:var(--carte)}
+.formu textarea{resize:vertical;min-height:110px;line-height:1.45}
+.champs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cherchepro{position:relative}
+.formu .aide{margin:4px 0 0;font-size:13px;color:var(--encre-2)}
+.formu .bas{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.client-edit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.client-edit input{border:1px solid var(--trait);border-radius:9px;padding:8px 10px;background:var(--carte);width:100%}
+.client-edit .bas{grid-column:1 / -1;display:flex;gap:8px}
+.petit{border:1px solid var(--trait);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600}
+.embed .barre{display:none}
+.embed main{padding-top:12px}
+.embed .pied{border-radius:0 0 18px 18px}
+.embed .etat{position:fixed;top:10px;right:12px;z-index:30;background:var(--nuit);color:#fff}
 @media (max-width:720px){
+  .champs,.client-edit{grid-template-columns:1fr}
   .cols{display:none}
   .lg{grid-template-columns:1fr 1fr;gap:8px}
   .lg .nom{grid-column:1 / -1}
@@ -112,7 +128,8 @@ details.origine p{margin:8px 0;white-space:pre-wrap;font-size:14px}
 <body>
 <header class="barre">
   <h1>Devis</h1>
-  <a href="dashboard.html">Tableau de bord</a>
+  <a href="/" id="lien-qg" hidden>← QG</a>
+  <a href="dashboard.html" id="lien-dash">Tableau de bord</a>
   <span class="esp"></span>
   <span class="etat" id="etat" hidden></span>
 </header>
@@ -126,8 +143,17 @@ details.origine p{margin:8px 0;white-space:pre-wrap;font-size:14px}
 const SUPABASE_URL = "https://uotqqkhraqxtlssgavlm.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvdHFxa2hyYXF4dGxzc2dhdmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDI1NTAsImV4cCI6MjEwNjgxODU1MH0.61NliFrPeWNilEmXPayAONTIVF49tmq3arjgdzSwPpM";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Affichée dans le tableau de bord (iframe) : on cache la barre du haut et on prévient le tableau de bord à chaque changement
+const EMBED = new URLSearchParams(location.search).has("embed");
+if (EMBED) document.documentElement.classList.add("embed");
+const adresse = (q) => "?" + [EMBED ? "embed=1" : "", q].filter(Boolean).join("&");
+// Même fichier sur le site et sur le QG : sur le QG, on ajoute le retour au magasin et le tableau de bord pointe vers le site
+const SUR_QG = location.hostname.startsWith("qg.");
+if (SUR_QG) { document.getElementById("lien-qg").hidden = false; const ld = document.getElementById("lien-dash"); ld.href = "https://cedyan-energy.net/dashboard.html"; ld.target = "_blank"; ld.rel = "noopener"; }
+const prevenir = () => { if (EMBED && parent !== window) parent.postMessage({ type: "devis-maj" }, location.origin); };
 
 const app = document.getElementById("app"), pied = document.getElementById("pied"), etat = document.getElementById("etat");
+if (EMBED) document.body.appendChild(etat);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const euro = (n) => (Number(n) || 0).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 const arrondi = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -146,7 +172,7 @@ async function ecrire(promesse) {
   afficherEtat("Enregistrement…");
   const { error } = await promesse;
   if (error) { afficherEtat("Erreur : " + error.message, true); throw error; }
-  afficherEtat("Enregistré");
+  afficherEtat("Enregistré"); prevenir();
 }
 
 /* ---------- Connexion ---------- */
@@ -158,7 +184,7 @@ function ecranConnexion(msg) {
     <label class="meta" for="em">E-mail</label><input id="em" type="email" autocomplete="email" required>
     <label class="meta" for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password">
     <button class="btn" type="submit">Se connecter</button>
-    <p class="meta" style="margin-top:12px">Pas de mot de passe ? <button class="lien" type="button" id="lienmagique">Recevoir un lien de connexion par e-mail</button></p>
+    <p class="meta" style="margin-top:12px"><button class="lien" type="button" id="lienmagique">Première connexion ou mot de passe oublié ? Recevoir un lien par e-mail</button></p>
   </form>`;
   const em = document.getElementById("em");
   document.getElementById("fco").onsubmit = async (e) => {
@@ -190,14 +216,19 @@ const libelleDe = (p) => [p.marque, p.nom].filter(Boolean).join(" ") + (p.ref ? 
 const prixSelon = (p, grille) => p ? (grille === "pro" ? p.prix : p.prix_public) : null;
 
 /* ---------- Liste ---------- */
+const relancesBadge = (d) => { const n = [d.relance1_le, d.relance2_le, d.relance_exp_le].filter(Boolean).length; return n ? `<span class="badge">Relancé ${n} fois</span>` : ""; };
+const STATUT_BADGE = { valide: `<span class="badge ok">Validé</span>`, envoye: `<span class="badge ok">Envoyé</span>`, accepte: `<span class="badge ok">✓ Accepté</span>`, refuse: `<span class="badge alerte">Refusé</span>`, expire: `<span class="badge">Expiré</span>` };
 async function ecranListe() {
-  D = null; pied.hidden = true; history.replaceState(null, "", location.pathname);
-  app.innerHTML = `<div class="puces" role="group" aria-label="Filtrer">
-    ${[["brouillon", "À valider"], ["valide", "Validés"], ["tous", "Tous"]].map(([k, l]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${l}</button>`).join("")}
+  D = null; pied.hidden = true; history.replaceState(null, "", adresse(""));
+  app.innerHTML = `<div class="tetliste"><h2>Devis</h2><button class="btn vert" id="nouveau">Faire un devis</button></div>
+  <div class="puces" role="group" aria-label="Filtrer">
+    ${[["brouillon", "À valider"], ["appeler", "À appeler"], ["valide", "Validés"], ["envoye", "Envoyés"], ["accepte", "Acceptés"], ["tous", "Tous"]].map(([k, l]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${l}</button>`).join("")}
   </div><div class="liste" id="liste"><p class="vide">Chargement…</p></div>`;
   app.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; ecranListe(); }));
-  let q = sb.from("devis").select("id,created_at,statut,grille,total_ttc,demande:demandes(id,contact,statut,type),devis_lignes(a_verifier)").order("created_at", { ascending: false }).limit(200);
-  if (filtre !== "tous") q = q.eq("statut", filtre);
+  document.getElementById("nouveau").onclick = ecranNouveau;
+  let q = sb.from("devis").select("id,created_at,statut,grille,total_ttc,source,numero,vu_le,a_appeler,relance1_le,relance2_le,relance_exp_le,demande:demandes(id,contact,statut,type),devis_lignes(a_verifier)").order("created_at", { ascending: false }).limit(200);
+  if (filtre === "appeler") q = q.eq("statut", "envoye").eq("a_appeler", true);
+  else if (filtre !== "tous") q = q.eq("statut", filtre);
   const { data, error } = await q;
   const liste = document.getElementById("liste");
   if (error) return (liste.innerHTML = `<p class="avert">Lecture impossible : ${esc(error.message)}</p>`);
@@ -208,11 +239,86 @@ async function ecranListe() {
     return `<button class="item" data-id="${d.id}">
       <span><b>${esc(c.entreprise || c.nom || c.telephone || "Client")}</b>${c.entreprise && c.nom ? ` <span class="meta">${esc(c.nom)}</span>` : ""}</span>
       <span class="tot">${euro(d.total_ttc)}</span>
-      <span class="meta">${dateFr(d.created_at)} · ${(d.devis_lignes || []).length} ligne(s)</span>
-      <span>${d.grille === "pro" ? `<span class="badge">Prix pros</span>` : `<span class="badge">Prix publics</span>`}${doutes ? `<span class="badge alerte">${doutes} à vérifier</span>` : ""}${d.demande?.statut === "attente_kbis" ? `<span class="badge alerte">Kbis à valider</span>` : ""}${d.statut === "valide" ? `<span class="badge ok">Validé</span>` : ""}</span>
+      <span class="meta">${d.numero ? esc(d.numero) + " · " : ""}${dateFr(d.created_at)} · ${(d.devis_lignes || []).length} ligne(s) · ${d.source === "manuel" ? "fait par l'équipe" : "demande du site"}</span>
+      <span>${d.grille === "pro" ? `<span class="badge">Prix pros</span>` : `<span class="badge">Prix publics</span>`}${doutes ? `<span class="badge alerte">${doutes} à vérifier</span>` : ""}${d.demande?.statut === "attente_kbis" ? `<span class="badge alerte">Kbis à valider</span>` : ""}${STATUT_BADGE[d.statut] || ""}${d.statut === "envoye" && d.vu_le ? `<span class="badge">Vu par le client</span>` : ""}${d.statut === "envoye" ? relancesBadge(d) : ""}${d.statut === "envoye" && d.a_appeler ? `<span class="badge alerte">📞 À appeler</span>` : ""}</span>
     </button>`;
   }).join("");
   liste.querySelectorAll("[data-id]").forEach((b) => (b.onclick = () => ouvrir(b.dataset.id)));
+}
+
+/* ---------- Nouveau devis fait par l'équipe ---------- */
+let comptesPro = null;
+async function ecranNouveau() {
+  D = null; pied.hidden = true; history.replaceState(null, "", adresse("nouveau"));
+  let profil = "particulier", compteId = null;
+  app.innerHTML = `<p><button class="lien" id="retour">← Tous les devis</button></p>
+  <form class="carte formu" id="fnv" novalidate>
+    <h2>Nouveau devis</h2>
+    <div>
+      <label for="cpro">Client pro déjà inscrit</label>
+      <div class="cherchepro"><input id="cpro" type="search" placeholder="Tapez le nom de l'entreprise (facultatif)" autocomplete="off"><div class="resultats" id="rpro" hidden></div></div>
+      <p class="aide" id="infopro">Sinon, remplissez simplement les champs ci-dessous.</p>
+    </div>
+    <div>
+      <label>Type de client</label>
+      <div class="grille" role="group" aria-label="Type de client"><button type="button" data-profil="particulier" aria-pressed="true">Particulier (prix publics)</button><button type="button" data-profil="pro" aria-pressed="false">Pro (prix pros)</button></div>
+    </div>
+    <div class="champs">
+      <div><label for="n-nom">Nom</label><input id="n-nom" autocomplete="off"></div>
+      <div><label for="n-ent">Entreprise</label><input id="n-ent" autocomplete="off"></div>
+      <div><label for="n-tel">Téléphone</label><input id="n-tel" inputmode="tel" autocomplete="off"></div>
+      <div><label for="n-mail">E-mail</label><input id="n-mail" type="email" autocomplete="off"></div>
+      <div><label for="n-com">Commune</label><input id="n-com" autocomplete="off"></div>
+    </div>
+    <div>
+      <label for="n-texte">Ce que veut le client</label>
+      <textarea id="n-texte" placeholder="Collez sa liste ou écrivez simplement : 12 panneaux JA Solar 500 W, 1 onduleur Huawei 6 kW, 2 batteries Pylontech US5000"></textarea>
+      <p class="aide">Facultatif. Les produits reconnus sont ajoutés avec les bons prix. Vous pourrez tout modifier ensuite.</p>
+    </div>
+    <p class="avert" id="nerr" hidden></p>
+    <div class="bas"><button class="btn vert" type="submit" id="nok">Préparer le devis</button><span class="meta" id="nattente"></span></div>
+  </form>`;
+  document.getElementById("retour").onclick = ecranListe;
+  const f = (id) => document.getElementById(id);
+  const choisirProfil = (p) => { profil = p; app.querySelectorAll("[data-profil]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.profil === p)); };
+  app.querySelectorAll("[data-profil]").forEach((b) => (b.onclick = () => choisirProfil(b.dataset.profil)));
+
+  // Recherche dans les comptes pros
+  const inp = f("cpro"), res = f("rpro");
+  inp.oninput = async () => {
+    const q = inp.value.trim().toLowerCase();
+    if (q.length < 2) { res.hidden = true; return; }
+    if (!comptesPro) { const { data } = await sb.from("comptes_pro").select("id,entreprise,nom,email,telephone,statut").order("entreprise").limit(1000); comptesPro = data || []; }
+    const liste = comptesPro.filter((c) => [c.entreprise, c.nom, c.email].join(" ").toLowerCase().includes(q)).slice(0, 8);
+    res.hidden = false;
+    res.innerHTML = liste.length ? liste.map((c, i) => `<button type="button" data-i="${i}"><span><b>${esc(c.entreprise || c.nom)}</b><br><span class="meta">${esc([c.nom, c.email].filter(Boolean).join(", "))}</span></span><span class="meta">${c.statut === "valide" ? "validé" : c.statut === "en_attente" ? "Kbis en attente" : "refusé"}</span></button>`).join("")
+      : `<p class="vide" style="padding:14px">Aucun pro trouvé. Remplissez les champs à la main.</p>`;
+    res.querySelectorAll("[data-i]").forEach((b) => (b.onmousedown = (e) => {
+      e.preventDefault(); const c = liste[+b.dataset.i];
+      compteId = c.id; inp.value = c.entreprise || c.nom || "";
+      f("n-nom").value = c.nom || ""; f("n-ent").value = c.entreprise || ""; f("n-tel").value = c.telephone || ""; f("n-mail").value = c.email || "";
+      choisirProfil(c.statut === "refuse" ? "particulier" : "pro");
+      f("infopro").textContent = c.statut === "valide" ? "Pro validé : prix pros appliqués." : c.statut === "en_attente" ? "Kbis pas encore validé : le devis pourra être préparé, mais pas validé avant votre décision." : "Compte refusé : prix publics appliqués.";
+      res.hidden = true;
+    }));
+  };
+  inp.onblur = () => setTimeout(() => (res.hidden = true), 150);
+
+  f("fnv").onsubmit = async (e) => {
+    e.preventDefault();
+    const err = f("nerr"); err.hidden = true;
+    const client = { nom: f("n-nom").value, entreprise: f("n-ent").value, telephone: f("n-tel").value, email: f("n-mail").value, commune: f("n-com").value };
+    if (!client.nom.trim() && !client.entreprise.trim()) { err.textContent = "Indiquez au moins un nom ou une entreprise."; err.hidden = false; f("n-nom").focus(); return; }
+    const texte = f("n-texte").value.trim();
+    f("nok").disabled = true; f("nattente").textContent = texte ? "Lecture de la liste et calcul des prix…" : "Création du devis…";
+    const { data, error } = await sb.functions.invoke("devis", { body: { action: "creer", client, profil, grille: profil === "pro" ? "pro" : "public", texte, compte_pro_id: compteId } });
+    if (error || !data?.devis_id) {
+      f("nok").disabled = false; f("nattente").textContent = "";
+      err.textContent = "Le devis n'a pas pu être créé : " + (data?.erreur || error?.message || "erreur inconnue"); err.hidden = false; return;
+    }
+    ouvrir(data.devis_id);
+  };
+  f("n-nom").focus();
 }
 
 /* ---------- Édition ---------- */
@@ -225,7 +331,7 @@ async function ouvrir(id) {
   let compte = null;
   if (devis.demande?.compte_pro_id) compte = (await sb.from("comptes_pro").select("id,statut,entreprise").eq("id", devis.demande.compte_pro_id).maybeSingle()).data;
   D = { devis, lignes: lignes || [], demande: devis.demande || {}, compte };
-  history.replaceState(null, "", "?d=" + id);
+  history.replaceState(null, "", adresse("d=" + id));
   rendre();
 }
 
@@ -245,7 +351,7 @@ function rendre() {
   const { devis, demande } = D, c = demande.contact || {}, fige = verrouille();
   const panier = Array.isArray(demande.panier) && demande.panier.length ? demande.panier.map((x) => `${x.q} × ${x.nom}`).join("\n") : "";
   const avertissements = [
-    D.compte?.statut === "en_attente" ? `Ce pro attend la validation de son Kbis. Validez son compte dans le <a href="dashboard.html">tableau de bord</a> pour pouvoir valider ce devis.` : null,
+    D.compte?.statut === "en_attente" ? `Ce pro attend la validation de son Kbis. Validez son compte dans le <a href="https://cedyan-energy.net/dashboard.html" target="_top">tableau de bord</a>, onglet Comptes pro, pour pouvoir valider ce devis.` : null,
     D.compte?.statut === "refuse" && devis.grille === "pro" ? `Le compte de ce pro a été refusé : passez le devis en prix publics.` : null,
     devis.note && !/Kbis/.test(devis.note) ? esc(devis.note) : null,
   ].filter(Boolean);
@@ -255,7 +361,9 @@ function rendre() {
     <div class="entete">
       <div>
         <h2>${esc(c.entreprise || c.nom || "Client")}</h2>
-        <div class="meta">${[c.entreprise ? c.nom : null, c.telephone, c.email, c.commune].filter(Boolean).map(esc).join(" · ")}</div>
+        <div class="meta">${[c.entreprise ? c.nom : null, c.telephone, c.email, c.commune].filter(Boolean).map(esc).join(" · ")} <button class="petit" id="editclient">Modifier le client</button></div>
+        <div class="meta">${devis.numero ? "Devis " + esc(devis.numero) + " · " : ""}${devis.source === "manuel" ? "Fait par l'équipe" : "Demande du site"}</div>
+        <div id="zoneclient"></div>
         <div class="meta">Demande du ${dateFr(demande.created_at)}${demande.pour_quand ? `, pour : ${esc(demande.pour_quand)}` : ""} · Valable jusqu'au ${dateFr(devis.valide_jusqu)}</div>
       </div>
       <div class="grille" role="group" aria-label="Grille de prix">
@@ -264,16 +372,38 @@ function rendre() {
       </div>
     </div>
     ${avertissements.map((a) => `<p class="avert">${a}</p>`).join("")}
-    ${demande.message || panier ? `<details class="origine" ${D.lignes.some((l) => l.a_verifier) ? "open" : ""}><summary>Demande d'origine</summary>${panier ? `<p><b>Panier :</b>\n${esc(panier)}</p>` : ""}${demande.message ? `<p><b>Message :</b>\n${esc(demande.message)}</p>` : ""}</details>` : ""}
+    ${demande.message || panier || (demande.pieces_jointes || []).length ? `<details class="origine" ${D.lignes.some((l) => l.a_verifier) || (demande.pieces_jointes || []).length ? "open" : ""}><summary>Demande d'origine</summary>${infosDemande(demande)}${panier ? `<p><b>Panier :</b>\n${esc(panier)}</p>` : ""}${demande.message ? `<p><b>Message :</b>\n${esc(demande.message)}</p>` : ""}${(demande.pieces_jointes || []).length ? `<p><b>Pièce jointe :</b> <span id="pieces">chargement…</span></p>` : ""}</details>` : ""}
   </section>
   <div class="cols" aria-hidden="true"><span>Produit</span><span>Quantité</span><span>Prix unitaire</span><span>Total</span><span></span></div>
   <div class="lignes" id="lignes">${D.lignes.map(ligneHtml).join("") || `<p class="vide">Aucune ligne. Ajoutez des produits ci-dessous.</p>`}</div>
   ${fige ? "" : `<div class="ajout"><input id="cherche" type="search" placeholder="Ajouter un produit : tapez un nom, une marque ou une référence" autocomplete="off" aria-label="Ajouter un produit"><button class="libre" id="libre">Ligne libre</button><div class="resultats" id="res" hidden></div></div>`}`;
   document.getElementById("retour").onclick = ecranListe;
+  document.getElementById("editclient").onclick = editerClient;
+  afficherPieces(demande);
   app.querySelectorAll("[data-grille]").forEach((b) => (b.onclick = () => changerGrille(b.dataset.grille)));
   brancherLignes();
   if (!fige) brancherAjout();
   rendrePied();
+}
+
+// Infos utiles de la demande : pro ou particulier, qui pose, retrait ou livraison
+function infosDemande(d) {
+  const POSE = { materiel_seul: "a déjà son installateur", pose_enr: "veut aussi la pose (ENR Pose)", ne_sait_pas: "ne sait pas encore qui pose" };
+  const RECUP = { retrait: "retrait au magasin", livraison: "livraison", ne_sait_pas: "retrait ou livraison à voir" };
+  const c = d.contact || {};
+  const morceaux = [d.profil === "pro" ? "Professionnel" + (c.metier ? " (" + c.metier + ")" : "") : d.profil === "particulier" ? "Particulier" : null,
+    POSE[d.installateur], RECUP[d.livraison?.mode] ? RECUP[d.livraison.mode] + (d.livraison.mode === "livraison" && d.livraison.commune ? " à " + d.livraison.commune : "") : null].filter(Boolean);
+  return morceaux.length ? `<p><b>Client :</b> ${esc(morceaux.join(", "))}</p>` : "";
+}
+// Liens temporaires vers les pièces jointes (espace privé)
+async function afficherPieces(d) {
+  const zone = document.getElementById("pieces"); if (!zone) return;
+  const liens = [];
+  for (const chemin of d.pieces_jointes || []) {
+    const { data } = await sb.storage.from("demandes").createSignedUrl(chemin, 3600);
+    if (data?.signedUrl) liens.push(`<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener">Ouvrir le fichier (${esc(chemin.split(".").pop().toUpperCase())})</a>`);
+  }
+  zone.innerHTML = liens.join(" · ") || "fichier introuvable";
 }
 
 function ligneHtml(l) {
@@ -309,6 +439,22 @@ function brancherLignes() {
     el.querySelector("[data-okligne]")?.addEventListener("click", () => majLigne(l, { a_verifier: false, raison: null }));
     el.querySelector("[data-choisir]")?.addEventListener("click", () => { const c = document.getElementById("cherche"); D.remplacer = l.id; c.placeholder = "Choisissez le produit pour « " + l.libelle + " »"; c.value = (l.texte_origine || l.libelle || "").slice(0, 40); c.focus(); c.dispatchEvent(new Event("input")); });
   });
+}
+
+function editerClient() {
+  const z = document.getElementById("zoneclient"); if (z.innerHTML) { z.innerHTML = ""; return; }
+  const c = D.demande.contact || {};
+  const champs = [["nom", "Nom"], ["entreprise", "Entreprise"], ["telephone", "Téléphone"], ["email", "E-mail"], ["commune", "Commune"]];
+  z.innerHTML = `<div class="client-edit">${champs.map(([k, l]) => `<input data-c="${k}" placeholder="${l}" aria-label="${l}" value="${esc(c[k] || "")}">`).join("")}<div class="bas"><button class="petit" id="okclient">Enregistrer</button><button class="petit" id="annclient">Annuler</button></div></div>`;
+  z.querySelector("[data-c]").focus();
+  document.getElementById("annclient").onclick = () => (z.innerHTML = "");
+  document.getElementById("okclient").onclick = async () => {
+    const contact = { ...c };
+    z.querySelectorAll("[data-c]").forEach((i) => { const v = i.value.trim(); if (v) contact[i.dataset.c] = v; else delete contact[i.dataset.c]; });
+    D.demande.contact = contact;
+    await ecrire(sb.from("demandes").update({ contact, updated_at: new Date().toISOString() }).eq("id", D.demande.id));
+    rendre();
+  };
 }
 
 async function majLigne(l, champs) {
@@ -404,13 +550,73 @@ function rendrePied() {
   pied.innerHTML = `<div class="in">
     <div class="total"><small>Total TTC</small>${euro(totalDevis())}</div>
     <span class="esp"></span>
-    ${fige ? `<span class="meta" style="color:#fff">Validé le ${dateFr(D.devis.valide_le)}${D.devis.valide_par ? " par " + esc(D.devis.valide_par) : ""}</span><button class="btn clair" id="rouvrir">Modifier à nouveau</button>`
-      : `<button class="btn clair" id="regen">Refaire le brouillon</button><button class="btn jaune" id="valider" ${bl.length ? "disabled" : ""}>Valider le devis</button>`}
+    <button class="btn clair" id="pdf">${fige ? "Télécharger le PDF" : "Aperçu PDF"}</button>
+    ${fige ? piedFige() : `<button class="btn clair" id="regen">Refaire le brouillon</button><button class="btn jaune" id="valider" ${bl.length ? "disabled" : ""}>Valider le devis</button>`}
     ${!fige && bl.length ? `<div class="pourquoi">Avant de valider : ${esc(bl.join(", "))}.</div>` : ""}
   </div>`;
   document.getElementById("valider")?.addEventListener("click", valider);
   document.getElementById("regen")?.addEventListener("click", regenerer);
   document.getElementById("rouvrir")?.addEventListener("click", rouvrir);
+  document.getElementById("pdf")?.addEventListener("click", telechargerPdf);
+  document.getElementById("envoyer")?.addEventListener("click", envoyerAuClient);
+  document.getElementById("appel")?.addEventListener("click", async () => {
+    Object.assign(D.devis, { a_appeler: false, appel_fait_le: new Date().toISOString() });
+    await ecrire(sb.from("devis").update({ a_appeler: false, appel_fait_le: D.devis.appel_fait_le }).eq("id", D.devis.id)); rendre();
+  });
+  // Prolonger la validité : 15 jours de plus à partir d'aujourd'hui (ou de la date prévue si elle est plus tard)
+  document.getElementById("prolonger")?.addEventListener("click", async () => {
+    const base = new Date(Math.max(Date.now(), Date.parse(D.devis.valide_jusqu || 0) || 0));
+    const nouvelle = new Date(base.getTime() + 15 * 86400000).toISOString().slice(0, 10);
+    if (!confirm(`Prolonger ce devis jusqu'au ${dateFr(nouvelle)} ?`)) return;
+    const champs = { valide_jusqu: nouvelle, relance_exp_le: null, ...(D.devis.statut === "expire" ? { statut: "envoye" } : {}) };
+    Object.assign(D.devis, champs);
+    await ecrire(sb.from("devis").update(champs).eq("id", D.devis.id));
+    if (champs.statut) await sb.from("demandes").update({ statut: "devis_envoye" }).eq("id", D.demande.id);
+    rendre();
+  });
+  document.getElementById("stoprel")?.addEventListener("click", async () => {
+    D.devis.relances_stop = !D.devis.relances_stop;
+    await ecrire(sb.from("devis").update({ relances_stop: D.devis.relances_stop }).eq("id", D.devis.id)); rendre();
+  });
+}
+// Ce qu'on affiche une fois le devis validé, envoyé, accepté ou refusé
+function piedFige() {
+  const d = D.devis, s = d.statut, txt = (t) => `<span class="meta" style="color:#fff">${t}</span>`;
+  if (s === "valide") return txt(`Validé le ${dateFr(d.valide_le)}`) + `<button class="btn clair" id="rouvrir">Modifier</button><button class="btn jaune" id="envoyer">Envoyer au client</button>`;
+  if (s === "envoye") {
+    const rel = [d.relance1_le && "1re relance le " + dateFr(d.relance1_le), d.relance2_le && "2e le " + dateFr(d.relance2_le), d.relance_exp_le && "rappel de fin le " + dateFr(d.relance_exp_le)].filter(Boolean).join(", ");
+    const suivi = d.relances_stop ? "Relances arrêtées." : rel ? "Relances : " + rel + "." : "Relances automatiques prévues à J+3 et J+7.";
+    return txt(`Envoyé le ${dateFr(d.envoye_le)} à ${esc(d.envoye_a || "")}${d.vu_le ? `, vu le ${dateFr(d.vu_le)}` : ", pas encore ouvert"}. ${suivi}`)
+      + (d.a_appeler ? `<button class="btn jaune" id="appel">📞 Appel fait</button>` : "")
+      + `<button class="btn clair" id="prolonger">Prolonger de 15 jours</button><button class="btn clair" id="stoprel">${d.relances_stop ? "Reprendre les relances" : "Arrêter les relances"}</button><button class="btn clair" id="rouvrir">Modifier</button><button class="btn clair" id="envoyer">Renvoyer</button>`;
+  }
+  if (s === "accepte") return txt(`✓ Accepté le ${dateFr(d.accepte_le)}${d.accepte_nom ? " par " + esc(d.accepte_nom) : ""}`);
+  if (s === "refuse") return txt(`Refusé le ${dateFr(d.refuse_le)}${d.refus_motif ? " : " + esc(d.refus_motif) : ""}`);
+  return txt(`Devis expiré le ${dateFr(d.valide_jusqu)}`) + `<button class="btn jaune" id="prolonger">Prolonger de 15 jours</button>`;
+}
+
+// Envoi au client : on fabrique le PDF ici, on le dépose dans l'espace privé, puis le serveur envoie l'e-mail
+async function envoyerAuClient() {
+  const c = D.demande.contact || {};
+  let email = (c.email || "").trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    email = (prompt("Ce client n'a pas d'e-mail. À quelle adresse envoyer le devis ?") || "").trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return afficherEtat("Adresse e-mail invalide", true);
+  } else if (!confirm(`Envoyer le devis ${D.devis.numero || ""} à ${email} ?`)) return;
+  const b = document.getElementById("envoyer"); if (b) { b.disabled = true; b.textContent = "Envoi…"; }
+  try {
+    afficherEtat("Préparation du PDF…");
+    const { octets } = await construirePdf();
+    const up = await sb.storage.from("devis").upload(`${D.devis.id}.pdf`, new Blob([octets], { type: "application/pdf" }), { upsert: true, contentType: "application/pdf" });
+    if (up.error) throw new Error("dépôt du PDF : " + up.error.message);
+    afficherEtat("Envoi de l'e-mail…");
+    const { data, error } = await sb.functions.invoke("devis", { body: { action: "envoyer", devis_id: D.devis.id, email } });
+    if (error || !data?.ok) throw new Error(data?.erreur || error?.message || "envoi impossible");
+    Object.assign(D.devis, { statut: "envoye", envoye_le: new Date().toISOString(), envoye_a: data.envoye_a });
+    if (!c.email) { D.demande.contact = { ...c, email }; await sb.from("demandes").update({ contact: D.demande.contact }).eq("id", D.demande.id); }
+    afficherEtat("Devis envoyé à " + data.envoye_a); prevenir();
+    rendre();
+  } catch (e) { afficherEtat("Erreur : " + (e.message || e), true); if (b) { b.disabled = false; b.textContent = "Envoyer au client"; } }
 }
 
 async function valider() {
@@ -418,10 +624,13 @@ async function valider() {
   const { data: { user } } = await sb.auth.getUser();
   Object.assign(D.devis, { statut: "valide", valide_le: new Date().toISOString(), valide_par: user?.email || null });
   await ecrire(sb.from("devis").update({ statut: "valide", valide_le: D.devis.valide_le, valide_par: D.devis.valide_par, total_ttc: totalDevis() }).eq("id", D.devis.id));
+  const { data: num } = await sb.from("devis").select("numero").eq("id", D.devis.id).maybeSingle();
+  if (num?.numero) D.devis.numero = num.numero;
   await sb.from("demandes").update({ statut: "en_cours", updated_at: new Date().toISOString() }).eq("id", D.demande.id);
   rendre();
 }
 async function rouvrir() {
+  if (D.devis.statut === "envoye" && !confirm("Ce devis a déjà été envoyé au client. Le modifier ? Il faudra le revalider puis le renvoyer.")) return;
   D.devis.statut = "brouillon";
   await ecrire(sb.from("devis").update({ statut: "brouillon", valide_le: null, valide_par: null }).eq("id", D.devis.id));
   await sb.from("demandes").update({ statut: "a_valider" }).eq("id", D.demande.id);
@@ -436,6 +645,121 @@ async function regenerer() {
   ouvrir(data.devis_id);
 }
 
+/* ---------- PDF du devis ---------- */
+const SOCIETE = {
+  nom: "Cedyan Energy",
+  adresse: ["AC Moudong, Immeuble Point Plomberie", "97122 Baie-Mahault, Guadeloupe"],
+  contact: "0590 32 15 20  ·  yann.pauwels@cedyanenergytrade.com",
+  legal: "CEDYAN ENERGY, SAS au capital de 10 000 €, RCS Pointe-à-Pitre 789 041 514, SIRET 789 041 514 00025, TVA FR89789041514",
+};
+function chargerPdfLib() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  return new Promise((ok, ko) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"; s.onload = () => ok(window.PDFLib); s.onerror = () => ko(new Error("Impossible de charger l'outil PDF")); document.head.appendChild(s); });
+}
+const montantPdf = (n) => { const [e, d] = (Math.round((Number(n) || 0) * 100) / 100).toFixed(2).split("."); return e.replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "," + d + " €"; };
+const datePdf = (d) => new Date(d || Date.now()).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+// Les polices standard du PDF ne connaissent que l'alphabet latin courant
+const sur = (t) => String(t ?? "").replace(/[\u202F\u00A0]/g, " ").replace(/[^\x20-\x7E\u00A1-\u00FF€’‘“”–—…œŒ•]/g, "?");
+
+async function telechargerPdf() {
+  const bouton = document.getElementById("pdf"); if (bouton) bouton.disabled = true;
+  try {
+    const { octets, nom } = await construirePdf();
+    const url = URL.createObjectURL(new Blob([octets], { type: "application/pdf" }));
+    const a = document.createElement("a"); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    afficherEtat("PDF prêt");
+    window.__dernierPdf = octets;
+  } catch (e) { afficherEtat("PDF impossible : " + (e.message || e), true); }
+  finally { if (bouton) bouton.disabled = false; }
+}
+
+async function construirePdf() {
+  {
+    const { PDFDocument, StandardFonts, rgb, degrees } = await chargerPdfLib();
+    const doc = await PDFDocument.create();
+    const f = await doc.embedFont(StandardFonts.Helvetica), fb = await doc.embedFont(StandardFonts.HelveticaBold);
+    const VERT = rgb(0.051, 0.227, 0.086), GRIS = rgb(0.34, 0.4, 0.36), NOIR = rgb(0.09, 0.14, 0.1), JAUNE = rgb(0.984, 0.733, 0.063), FOND = rgb(0.957, 0.965, 0.945);
+    let logo = null;
+    try { const r = await fetch("logo-cedyan.png"); if (r.ok) logo = await doc.embedPng(await r.arrayBuffer()); } catch {}
+    const W = 595.28, H = 841.89, M = 42;
+    const { devis, demande } = D, c = demande.contact || {}, fige = verrouille();
+    const titre = fige ? (devis.numero ? "Devis " + devis.numero : "Devis") : "Devis (brouillon)";
+    const pages = [];
+    const ecrireTxt = (p, t, x, y, o = {}) => p.drawText(sur(t), { x, y, size: o.size || 10, font: o.gras ? fb : f, color: o.couleur || NOIR });
+    const largeur = (t, size = 10, gras = false) => (gras ? fb : f).widthOfTextAtSize(sur(t), size);
+    const couper = (t, max, size = 10) => { const mots = sur(t).split(" "), lignes = []; let l = ""; for (const m of mots) { const essai = l ? l + " " + m : m; if (largeur(essai, size) > max && l) { lignes.push(l); l = m; } else l = essai; } if (l) lignes.push(l); return lignes.length ? lignes : [""]; };
+
+    const nouvellePage = (premiere) => {
+      const p = doc.addPage([W, H]); pages.push(p);
+      let y = H - M;
+      if (premiere) {
+        if (logo) { const h = 46, w = logo.width * (h / logo.height); p.drawImage(logo, { x: M, y: y - h, width: Math.min(w, 190), height: h }); }
+        else ecrireTxt(p, SOCIETE.nom, M, y - 22, { size: 20, gras: true, couleur: VERT });
+        let yy = y - 8;
+        [[SOCIETE.nom, true], ...SOCIETE.adresse.map((a) => [a, false]), [SOCIETE.contact, false]].forEach(([t, g]) => { ecrireTxt(p, t, W - M - largeur(t, 9, g), yy, { size: 9, gras: g, couleur: g ? NOIR : GRIS }); yy -= 12; });
+        y -= 78;
+        ecrireTxt(p, titre, M, y, { size: 20, gras: true, couleur: VERT });
+        y -= 18;
+        ecrireTxt(p, `Date : ${datePdf(fige ? devis.valide_le : null)}     Valable jusqu'au : ${datePdf(devis.valide_jusqu)}`, M, y, { size: 10, couleur: GRIS });
+        // Bloc client
+        const lc = [c.entreprise, c.nom, c.commune, c.telephone, c.email].filter(Boolean);
+        const hb = 22 + lc.length * 13;
+        y -= 14;
+        p.drawRectangle({ x: W / 2, y: y - hb + 10, width: W / 2 - M, height: hb, color: FOND });
+        ecrireTxt(p, "Client", W / 2 + 12, y - 6, { size: 8, couleur: GRIS });
+        let yc = y - 20; lc.forEach((t, i) => { ecrireTxt(p, t, W / 2 + 12, yc, { size: 10, gras: i === 0 }); yc -= 13; });
+        y -= hb + 16;
+      } else { ecrireTxt(p, titre + " (suite)", M, y - 10, { size: 11, gras: true, couleur: VERT }); y -= 30; }
+      // En-tête du tableau
+      p.drawRectangle({ x: M, y: y - 6, width: W - 2 * M, height: 20, color: VERT });
+      const blanc = rgb(1, 1, 1);
+      ecrireTxt(p, "Désignation", M + 8, y, { size: 9, gras: true, couleur: blanc });
+      [["Qté", 360], ["Prix unit. TTC", 440], ["Total TTC", W - M - 8]].forEach(([t, xd]) => ecrireTxt(p, t, xd - largeur(t, 9, true), y, { size: 9, gras: true, couleur: blanc }));
+      return { p, y: y - 24 };
+    };
+
+    let { p, y } = nouvellePage(true);
+    const lignes = D.lignes.filter((l) => l.libelle);
+    lignes.forEach((l, i) => {
+      const remise = Number(l.remise_pct) || 0;
+      const texte = couper(l.libelle + (remise ? ` (remise ${remise} %)` : ""), 270, 10);
+      const h = texte.length * 12 + 8;
+      if (y - h < 150) { ({ p, y } = nouvellePage(false)); }
+      if (i % 2) p.drawRectangle({ x: M, y: y - h + 10, width: W - 2 * M, height: h, color: FOND });
+      texte.forEach((t, k) => ecrireTxt(p, t, M + 8, y - k * 12));
+      const tot = (Number(l.prix_unitaire) || 0) * (Number(l.quantite) || 0) * (1 - remise / 100);
+      [[String(l.quantite), 360], [l.prix_unitaire != null ? montantPdf(l.prix_unitaire) : "à définir", 440], [montantPdf(tot), W - M - 8]].forEach(([t, xd]) => ecrireTxt(p, t, xd - largeur(t), y));
+      y -= h;
+    });
+    if (y < 190) ({ p, y } = nouvellePage(false));
+    // Total
+    y -= 6;
+    p.drawLine({ start: { x: M, y: y + 8 }, end: { x: W - M, y: y + 8 }, thickness: 0.6, color: GRIS });
+    const tot = "Total TTC   " + montantPdf(totalDevis());
+    p.drawRectangle({ x: W - M - largeur(tot, 13, true) - 24, y: y - 22, width: largeur(tot, 13, true) + 24, height: 26, color: JAUNE });
+    ecrireTxt(p, tot, W - M - largeur(tot, 13, true) - 12, y - 13, { size: 13, gras: true });
+    y -= 48;
+    ecrireTxt(p, `Prix exprimés TTC. Devis valable jusqu'au ${datePdf(devis.valide_jusqu)}.`, M, y, { size: 9, couleur: GRIS });
+    // Bon pour accord
+    y -= 22;
+    p.drawRectangle({ x: W - M - 220, y: y - 64, width: 220, height: 70, borderColor: GRIS, borderWidth: 0.6 });
+    ecrireTxt(p, "Bon pour accord, date et signature du client", W - M - 212, y - 8, { size: 8, couleur: GRIS });
+
+    pages.forEach((pg, i) => {
+      const leg = couper(SOCIETE.legal, W - 2 * M, 7);
+      leg.forEach((t, k) => pg.drawText(sur(t), { x: (W - largeur(t, 7)) / 2, y: 30 - k * 9, size: 7, font: f, color: GRIS }));
+      const n = `Page ${i + 1} / ${pages.length}`; pg.drawText(n, { x: W - M - largeur(n, 7), y: 30 + 12, size: 7, font: f, color: GRIS });
+      if (!fige) pg.drawText("BROUILLON", { x: 120, y: 300, size: 92, font: fb, color: rgb(0.93, 0.33, 0.1), opacity: 0.12, rotate: degrees(35) });
+    });
+
+    const octets = await doc.save();
+    const nomClient = (c.entreprise || c.nom || "client").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const nom = `${fige && devis.numero ? devis.numero : "Devis-brouillon"}-${nomClient}.pdf`;
+    return { octets, nom };
+  }
+}
+
 /* ---------- Démarrage ---------- */
 async function demarrer() {
   const { data } = await sb.auth.getSession();
@@ -443,8 +767,8 @@ async function demarrer() {
   if (!session) return ecranConnexion();
   const { data: equipe, error } = await sb.from("staff").select("email").limit(1);
   if (error || !equipe?.length) { await sb.auth.signOut(); return ecranConnexion("Ce compte n'a pas accès aux devis."); }
-  const id = new URLSearchParams(location.search).get("d");
-  if (id) ouvrir(id); else ecranListe();
+  const prm = new URLSearchParams(location.search), id = prm.get("d");
+  if (id) ouvrir(id); else if (prm.has("nouveau")) ecranNouveau(); else ecranListe();
 }
 sb.auth.onAuthStateChange((evt) => { if (evt === "SIGNED_IN" && !session) demarrer(); });
 demarrer().catch((e) => { app.innerHTML = `<p class="avert">Erreur au chargement : ${esc(e.message || e)}</p>`; });
