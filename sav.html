@@ -31,14 +31,24 @@ main{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
 .grille2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .photos{display:flex;gap:8px;flex-wrap:wrap}
 .photos img{width:96px;height:96px;object-fit:cover;border-radius:14px;cursor:zoom-in}
-.diag{background:#e3f4f2;border-radius:16px;padding:14px 16px}
-.diag p{margin:4px 0}
+.diag{background:#e3f4f2;border-radius:18px;padding:16px}
+.diag__etiq{margin:0;font-size:12px;font-weight:700;color:#0b7a70;text-transform:uppercase;letter-spacing:.04em}
+.diag__titre{margin:4px 0 12px;font-size:1.25rem;font-weight:900;letter-spacing:-.02em;line-height:1.2}
+.diag__danger{margin:0 0 12px;background:#fdecea;color:#8c1d13;border-radius:12px;padding:10px 12px;font-weight:700}
+.diag__grille{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.diag__bloc{background:#fff;border-radius:14px;padding:12px 14px}
+.diag__bloc.large{grid-column:1/-1}
+.diag__bloc span{display:block;font-size:12px;font-weight:700;color:var(--gris);margin-bottom:4px}
+.diag__bloc p{margin:0}
+.diag__bloc ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.diag__bloc.vert{background:#e7f3e7}
+.puces-d{display:flex;gap:6px;flex-wrap:wrap}.puces-d b{background:#f3f6f2;border-radius:999px;padding:3px 10px;font-weight:600;font-size:13px}
 label.ch{display:grid;gap:4px;font-size:12px;color:var(--gris);font-weight:600}
 label.ch input,label.ch select,label.ch textarea{border:1.5px solid var(--trait);border-radius:12px;padding:10px 12px;background:#fff;font-size:15px;color:var(--encre)}
 .rangee{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
 .check{display:grid;gap:8px}
 .check label{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--trait);border-radius:14px;background:#fff;font-size:16px;cursor:pointer}
-.check input{width:24px;height:24px;accent-color:var(--teal)}
+.check input{width:24px;height:24px;flex:none;accent-color:var(--teal)}
 canvas.sig{width:100%;height:170px;border:1.5px dashed #b9c8bc;border-radius:14px;background:#fff;touch-action:none}
 .fichier input{display:none}
 .mat{display:grid;grid-template-columns:130px 1fr 1fr 1fr 34px;gap:6px;margin-bottom:6px}
@@ -48,7 +58,9 @@ canvas.sig{width:100%;height:170px;border:1.5px dashed #b9c8bc;border-radius:14p
 .vide{text-align:center;color:var(--gris)}
 .connexion{max-width:380px;margin:40px auto}
 .connexion input{width:100%;border:1.5px solid var(--trait);border-radius:12px;padding:12px;margin:6px 0}
-@media (max-width:700px){.grille2{grid-template-columns:1fr}.mat{grid-template-columns:1fr 1fr}}
+@media (max-width:700px){.grille2{grid-template-columns:1fr}.mat{grid-template-columns:1fr 1fr}.diag__grille{grid-template-columns:1fr}
+  .rangee>.btn,.rangee>a.btn{flex:1 1 100%;min-height:46px}.rangee label.ch{flex:1 1 100%}
+  .kpis{grid-template-columns:1fr 1fr}.kpi{padding:12px 14px}.kpi b{font-size:1.6rem}.hero-qg__titre{margin-top:14px}.hero-qg h1{font-size:1.6rem}.hero-qg__sous{display:none}}
 /* ===== Habillage aux couleurs du site Cedyan Energy ===== */
 :root{--vert-site:#218034;--vert-fonce:#14551f;--nuit-site:#0d3a16;--bleu-site:#2b4b9b;--menthe:#9fcda1;--menthe-pale:#e7f3e7;--ombre:0 18px 40px -22px rgba(20,60,30,.35);--r-l:22px;--r-xl:32px}
 html,body{background:#f3f6f2}
@@ -198,7 +210,17 @@ async function vueDemande(s) {
     <h3>Ce que dit le client</h3><p>${esc(s.description)}</p>
     <p class="meta">${s.reponses?.coupure ? "⚠️ Plus de courant du tout. " : ""}${s.reponses?.danger ? "🔥 Odeur, chaleur ou fumée signalée. " : ""}${s.reponses?.depuis ? "Depuis : " + esc(s.reponses.depuis) : ""}</p>
     <div class="photos" id="ph"></div>
-    ${d.resume ? `<h3>Pré-diagnostic</h3><div class="diag"><p><b>${esc(d.resume)}</b></p>${d.cause_probable ? `<p>Cause probable : ${esc(d.cause_probable)}</p>` : ""}${(d.pieces || []).length ? `<p>À emporter : ${esc(d.pieces.join(", "))}</p>` : ""}${(d.a_verifier || []).length ? `<p>À vérifier : ${esc(d.a_verifier.join(" · "))}</p>` : ""}</div>` : ""}
+    ${d.resume ? `<h3>Pré-diagnostic</h3><div class="diag">
+      <p class="diag__etiq">Automatique, à confirmer sur place${d.confiance ? " · fiabilité " + esc(d.confiance) : ""}</p>
+      <p class="diag__titre">${esc(d.resume)}</p>
+      ${s.reponses?.danger ? `<p class="diag__danger">🔥 Danger signalé : le client a reçu les consignes de sécurité. À rappeler en premier.</p>` : ""}
+      <div class="diag__grille">
+        ${d.cause_probable ? `<div class="diag__bloc"><span>🔎 Cause probable</span><p>${esc(d.cause_probable)}</p></div>` : ""}
+        <div class="diag__bloc ${d.a_distance ? "vert" : ""}"><span>🏠 Déplacement</span><p>${d.a_distance ? `<b>Peut sûrement se régler à distance</b>${d.a_distance_comment ? " : " + esc(d.a_distance_comment) : ""}` : "Déplacement probable"}</p></div>
+        ${(d.pieces || []).length ? `<div class="diag__bloc large"><span>🧰 À emporter</span><div class="puces-d">${d.pieces.map((x) => `<b>${esc(x)}</b>`).join("")}</div></div>` : ""}
+        ${(d.a_verifier || []).length ? `<div class="diag__bloc large"><span>✅ À vérifier sur place, dans l'ordre</span><ol>${d.a_verifier.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
+        ${d.conseil_client ? `<div class="diag__bloc large"><span>💬 Conseil déjà donné au client</span><p>${esc(d.conseil_client)}</p></div>` : ""}
+      </div></div>` : ""}
   </section>
   <section class="carte"><h2>Planifier</h2><div class="rangee">
     <label class="ch">Date et heure<input type="datetime-local" id="cr" value="${s.creneau ? new Date(new Date(s.creneau).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}"></label>
