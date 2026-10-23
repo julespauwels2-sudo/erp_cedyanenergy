@@ -221,6 +221,7 @@ a.ghost{color:inherit}
     <a class="chip chip--jaune" href="devis.html?nouveau">Faire un devis</a>
     <a class="chip" href="devis.html">Devis</a>
     <a class="chip" href="stock.html">Stock</a>
+    <a class="chip" href="chantiers.html">Chantiers</a>
     <a class="chip" href="sav.html">SAV</a>
     <a class="chip" href="https://cedyan-energy.net/dashboard.html" target="_blank" rel="noopener">Tableau de bord</a>
     <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/4</b></button>
@@ -272,7 +273,7 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const euroD = (n) => (Number(n) || 0).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 const dateC = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
 const S = { open:null, cyclone:false, moi:null };
-const DATA = { demandes:[], devis:[], kbis:[], produits:[], pose:[], stock:[], receptions:0, sav:[] };
+const DATA = { demandes:[], devis:[], kbis:[], produits:[], pose:[], stock:[], receptions:0, sav:[], chantiers:[] };
 
 // Le stock est rangé par familles du catalogue (les quantités arriveront avec l'étape Stock)
 const BAIES = {
@@ -295,12 +296,14 @@ const devisSt = (st) => DATA.devis.filter((d) => d.statut === st);
 const aAppeler = () => DATA.devis.filter((d) => d.statut === "envoye" && d.a_appeler);
 const clientDe = (d) => { const c = d.demande?.contact || d.contact || {}; return c.entreprise || c.nom || c.telephone || "Client"; };
 const debutMois = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1).toISOString(); };
+const chEnCours = () => DATA.chantiers.filter((c) => c.etape !== "termine");
+const ETAPE_TXT = { visite: "Visite technique", demarches: "Démarches", pose: "Pose", mise_en_service: "Mise en service", termine: "Terminé" };
 const savATraiter = () => DATA.sav.filter((x) => x.statut === "nouveau");
 const savUrgent = () => savATraiter().filter((x) => x.priorite === "urgent");
 const signesMois = () => DATA.devis.filter((d) => d.statut === "accepte" && d.accepte_le && d.accepte_le >= debutMois());
 
 async function charger() {
-  const [dm, dv, kb, pr, st, rc, sv] = await Promise.all([
+  const [dm, dv, kb, pr, st, rc, sv, ch] = await Promise.all([
     sb.from("demandes").select("id,created_at,type,statut,contact,installateur,profil,pour_quand").order("created_at", { ascending: false }).limit(300),
     sb.from("devis").select("id,numero,statut,total_ttc,created_at,envoye_le,accepte_le,valide_jusqu,a_appeler,vu_le,demande:demandes(contact)").order("created_at", { ascending: false }).limit(500),
     sb.from("comptes_pro").select("id,entreprise,nom,metier,statut,created_at").eq("statut", "en_attente").order("created_at"),
@@ -308,7 +311,9 @@ async function charger() {
     sb.from("stock_vue").select("ref,libelle,cat,reel,reserve,disponible,seuil_alerte,en_alerte").limit(5000),
     sb.from("stock_receptions").select("id", { count: "exact", head: true }).eq("statut", "a_valider"),
     sb.from("sav").select("id,numero,nom,commune,priorite,statut,creneau,created_at,diagnostic").in("statut", ["nouveau", "planifie", "en_cours"]).order("created_at", { ascending: false }).limit(200),
+    sb.from("chantiers").select("id,numero,client_nom,commune,kwc,etape,date_visite,date_pose,date_mise_en_service,created_at").neq("etape", "annule").order("created_at").limit(500),
   ]);
+  DATA.chantiers = ch.error ? [] : (ch.data || []);
   DATA.sav = sv.error ? [] : (sv.data || []);
   const err = [dm, dv, kb, pr].find((r) => r.error); if (err) throw err.error;
   DATA.stock = st.error ? [] : (st.data || []); DATA.receptions = rc.error ? 0 : (rc.count || 0);
@@ -320,6 +325,7 @@ async function charger() {
 const ZONES = {
   stock:  {name:'Stock',         sub:'Le catalogue, rangé par familles',       css:'#C98C00', hex:0xF5B700, center:V3(-5.8,0,0),   labelY:4.4, zoom:1.4},
   cedyan: {name:'Cedyan Energy', sub:'Devis, ventes et comptes pros',           css:'#1F4AA8', hex:0x1F4AA8, center:V3(5.5,0,-4.15), labelY:3.9, zoom:1.75},
+  quartier:{name:'Quartier ENR Pose', sub:'Une maison par chantier', css:'#0E9C8F', hex:0x0E9C8F, center:V3(14.6,0,0), labelY:3.4, zoom:1.5},
   enr:    {name:'ENR Pose',      sub:'Poses chez les particuliers',             css:'#0E9C8F', hex:0x0E9C8F, center:V3(5.5,0,4.15),  labelY:3.8, zoom:1.75},
 };
 const HOT = {
@@ -332,12 +338,13 @@ const HOT = {
   pipe:    {zone:'cedyan', at:V3(9.1,3.2,-7.9),  txt:()=>aAppeler().length?pl(aAppeler().length,'client')+' à appeler':`${devisSt('envoye').length} en attente, ${signesMois().length} signés ce mois`, alert:()=>aAppeler().length>0},
   kbis:    {zone:'cedyan', at:V3(3.9,2.0,-4.6),  txt:()=>DATA.kbis.length?`${DATA.kbis.length} Kbis à valider`:'Kbis à jour', alert:()=>false},
   prevus:  {zone:'enr',    at:V3(2.3,3.1,2.6),   txt:()=>DATA.pose.length?pl(DATA.pose.length,'demande')+' de pose':'Aucune demande de pose', alert:()=>false},
-  encours: {zone:'enr',    at:V3(9.3,3.0,2.2),   txt:()=>'Chantiers : bientôt', alert:()=>false},
+  encours: {zone:'enr',    at:V3(9.3,3.0,2.2),   txt:()=>chEnCours().length?pl(chEnCours().length,'chantier')+' en cours':'Aucun chantier en cours', alert:()=>false},
+  quartier:{zone:'quartier', at:V3(14.6,2.4,-7.2), txt:()=>{ const n=DATA.chantiers.length; return n?`${pl(n,'maison')}, ${chEnCours().length} en construction`:'Le premier chantier apparaîtra ici'; }, alert:()=>false},
   sav:     {zone:'enr',    at:V3(2.0,1.9,6.9),   txt:()=>savATraiter().length?pl(savATraiter().length,'SAV','SAV')+' à traiter'+(savUrgent().length?' dont '+savUrgent().length+' urgent':''):'SAV à jour', alert:()=>savUrgent().length>0},
 };
 const TODO = { sav:()=>savATraiter().length>0, recv:()=>DATA.receptions>0, demandes:()=>devisSt('brouillon').length>0 || devisSt('valide').length>0, kbis:()=>DATA.kbis.length>0, prevus:()=>DATA.pose.length>0 };
 const needs = id => HOT[id].alert() || (TODO[id] ? TODO[id]() : false);
-const HOTSEC = {pv:'stock', ond:'stock', bat:'stock', small:'stock', recv:'recv', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'bientot', sav:'sav'};
+const HOTSEC = {pv:'stock', ond:'stock', bat:'stock', small:'stock', recv:'recv', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'chantiers', sav:'sav', quartier:'quartier'};
 
 /* =============== Three.js =============== */
 const canvas = document.getElementById('c');
@@ -457,6 +464,22 @@ const gC=makeZone('cedyan',.1,11.1,-8.1,-.2,0xE3EBF8,0x1F4AA8);
 
 /* --- ENR (statique) --- */
 const gE=makeZone('enr',.1,11.1,.2,8.1,0xDDF1EE,0x0E9C8F);
+/* --- Quartier ENR Pose : un terrain qui s'agrandit, une maison par chantier --- */
+(function(){ const g=grp(scene); g.userData.zone='quartier'; const pm=new THREE.MeshStandardMaterial({color:0xE4F1E1,roughness:.9,emissive:0x000000}); Z.quartier={group:g, plate:pm, lift:0, dyn:grp(g)}; })();
+const toitMat=new THREE.MeshStandardMaterial({color:0x8B3A2E,roughness:.8});
+function maison(p,x,z,finie){
+  box(p,1.7,finie?1.05:.55,1.4,0xF8F4EC,x,.2,z);                       // murs (à mi-hauteur pendant le chantier)
+  if(finie){
+    const t=new THREE.Mesh(new THREE.ConeGeometry(1.32,.7,4),toitMat); t.rotation.y=Math.PI/4; t.scale.set(1,1,.82); t.position.set(x,1.6,z); t.castShadow=true; p.add(t);
+    solar(p,.9,.55,x,1.62,z+.32,-.62);                                 // panneaux sur le toit
+    box(p,.03,.6,.03,0x334155,x+.95,.2,z-.5); box(p,.3,.18,.02,0x22C55E,x+1.1,.62,z-.5);   // drapeau vert
+    box(p,.3,.5,.02,0x6B4F3A,x,.2,z+.71);                              // porte
+  } else {
+    [[-.95,-.8],[.95,-.8],[-.95,.8],[.95,.8]].forEach(([dx,dz])=>box(p,.06,1.25,.06,0xF08C00,x+dx,.2,z+dz));  // échafaudage
+    box(p,2,.05,.08,0xF08C00,x,1.2,z-.8); box(p,2,.05,.08,0xF08C00,x,1.2,z+.8);
+    box(p,.5,.3,.4,0xA0704A,x+1.3,.2,z+.4);                              // palette de matériel
+  }
+}
 (function(){ const g=grp(gE,'prevus');
   box(g,2.6,1.2,2.2,0xF3E3C3,2.3,.18,2.6);
   const a=.5, top=1.38;
@@ -584,6 +607,17 @@ function rebuild(){
   g=grp(Z.enr.dyn,'prevus'); DATA.pose.slice(0,4).forEach((p,i)=>{ const x=1.6+i*.7; box(g,.03,.55,.03,0x334155,x,1.95,2.6); box(g,.28,.17,.02,0x0E9C8F,x+.15,2.3,2.6); });
   // Gyrophare au-dessus de la caisse SAV : une demande urgente attend
   if(savUrgent().length){ const gb=grp(Z.enr.dyn,'sav'); const bc=box(gb,.16,.22,.16,null,1.6,.71,7.2,new THREE.MeshStandardMaterial({color:0xF97316,emissive:0xF97316,emissiveIntensity:.8})); beacons.push(bc); }
+  // Quartier : le terrain s'agrandit d'une colonne tous les 4 chantiers (20 maisons affichées au maximum)
+  const maisons=DATA.chantiers.slice(-20), cols=Math.max(1,Math.ceil(maisons.length/4)), x0=11.6, x1=x0+cols*3.4+.6;
+  const gq=Z.quartier.dyn;
+  box(gq,x1-x0,.08,16.2,null,(x0+x1)/2,.1,0,Z.quartier.plate); edge(gq,x0,x1,-8.1,8.1,0x0E9C8F,.18);
+  for(let k=0;k<cols;k++) box(gq,.5,.02,15.6,0xD6D0C4,x0+.3+k*3.4+3.05,.15,0);   // allées
+  const gm=grp(gq,'quartier');
+  maisons.forEach((c,i)=>maison(gm,x0+1.7+Math.floor(i/4)*3.4,-5.6+(i%4)*3.75,c.etape==='termine'));
+  ZONES.quartier.center.set((x0+x1)/2,0,0); HOT.quartier.at.set((x0+x1)/2,2.4,-7.4);
+  ZONES.quartier.zoom=Math.max(.9,Math.min(1.6,9/(x1-x0)));
+  vueGenerale.x=(x1-11.1)/2; vueGenerale.zoom=Math.min(1,22.5/(x1+11.1));   // tout le magasin et le quartier dans l'écran
+  if(!S.open){ goal.target.set((x1-11.1)/2,0,0); goal.zoom=vueGenerale.zoom; }
   collect();
 }
 
@@ -606,7 +640,7 @@ function pick(cx,cy){
 }
 
 /* Caméra */
-const view={target:V3(0,0,0), zoom:REDUCED?1:.72, yaw:0}, goal={target:V3(0,0,0), zoom:1, yaw:0};
+const view={target:V3(0,0,0), zoom:REDUCED?1:.72, yaw:0}, goal={target:V3(0,0,0), zoom:1, yaw:0}, vueGenerale={x:0, zoom:1};
 function resize(){ const w=innerWidth, h=innerHeight, a=w/h; renderer.setSize(w,h,false);
   const d=Math.max(10.8,16/a); camera.left=-d*a; camera.right=d*a; camera.top=d; camera.bottom=-d; camera.updateProjectionMatrix(); }
 addEventListener('resize',()=>{ resize(); if(S.open) focusZone(S.open); });
@@ -649,7 +683,8 @@ Object.entries(HOT).forEach(([id,h])=>{
 function counts(){ return {
   stock: alertesStock().length + DATA.receptions,
   cedyan: devisSt('brouillon').length + devisSt('valide').length + aAppeler().length + DATA.kbis.length,
-  enr: DATA.pose.length + savATraiter().length };
+  enr: DATA.pose.length + savATraiter().length,
+  quartier: chEnCours().length };
 }
 function updateLabels(){
   const c=counts();
@@ -713,7 +748,7 @@ function openZone(id,hot){
 }
 function closePanel(){
   const was=S.open; S.open=null; panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
-  goal.target.set(0,0,0); goal.zoom=1; if(mWasOpen && !MOBILE()){ mBox.hidden=false; syncMissionBtn(); }
+  goal.target.set(vueGenerale.x,0,0); goal.zoom=vueGenerale.zoom; if(mWasOpen && !MOBILE()){ mBox.hidden=false; syncMissionBtn(); }
   if(was) labelEls[was].focus({preventScroll:true});
 }
 const head=z=>`<header class="p-head"><div><h2 id="ptitle">${z.name}</h2><p>${z.sub}</p></div><button class="x" data-act="close" aria-label="Fermer">✕</button></header>`;
@@ -748,11 +783,17 @@ function render(){
     h+=`<div class="sec" id="h-pipe"><h3>Ventes <small>signé ce mois : ${euroD(signesMois().reduce((a,d)=>a+(+d.total_ttc||0),0))}</small></h3><div class="board">${Object.entries(STAGES).map(([st,[l,c]])=>{ const L=st==='accepte'?signesMois():devisSt(st);
       return `<div style="--c:${c}"><b>${L.length}</b><span>${l}${st==='accepte'?' (ce mois)':''}</span><span>${euroD(L.reduce((a,d)=>a+(+d.total_ttc||0),0))}</span></div>`; }).join('')}</div></div>`;
   }
+  if(id==='quartier'){
+    const fin=DATA.chantiers.filter(c=>c.etape==='termine'), ce=chEnCours();
+    h+=`<div class="sec" id="h-quartier"><div class="grid"><div class="tile"><span class="tn">Maisons finies</span><b class="big">${fin.length}</b><span class="tu">installations en service</span></div><div class="tile"><span class="tn">En construction</span><b class="big">${ce.length}</b><span class="tu">chantiers en cours</span></div><div class="tile"><span class="tn">Puissance posée</span><b class="big">${nbFr(fin.reduce((a,c)=>a+(+c.kwc||0),0))}</b><span class="tu">kWc</span></div></div></div>`;
+    h+=`<div class="sec"><h3>En construction</h3>`+(ce.length?`<ul class="rows">${ce.map(c=>`<li class="row line"><div><b>${esc(c.client_nom)}</b><span class="meta">${esc(ETAPE_TXT[c.etape]||'')}${c.commune?' · '+esc(c.commune):''}${c.kwc?' · '+nbFr(c.kwc)+' kWc':''}</span></div>${lien('chantiers.html?c='+c.id,'Ouvrir')}</li>`).join('')}</ul>`:empty('Aucun chantier en cours.'))+`<p style="margin-top:8px">${lien('chantiers.html','Ouvrir les chantiers','cta')}</p></div>`;
+  }
   if(id==='enr'){
     h+=`<div class="sec" id="h-prevus"><h3>Demandes de pose <small>clients qui veulent une installation</small></h3>`+(DATA.pose.length?`<ul class="rows">${DATA.pose.map(d=>{ const c=d.contact||{}; return `<li class="row line"><div><b>${esc(c.nom||c.telephone||'Client')}</b><span class="meta">${esc(c.commune||'')}${c.commune?', ':''}demande du ${dateC(d.created_at)}${c.telephone?', tél. '+esc(c.telephone):''}</span></div>${lien(SITE+'/dashboard.html','Voir','cta sm',true)}</li>`; }).join('')}</ul>`:empty('Aucune demande de pose pour le moment.'))+`</div>`;
     const sv=[...DATA.sav].sort((a,b)=>({urgent:0,normal:1,faible:2}[a.priorite]-{urgent:0,normal:1,faible:2}[b.priorite]));
     h+=`<div class="sec" id="h-sav"><h3>SAV <small>${savATraiter().length} à traiter</small></h3>`+(sv.length?`<ul class="rows">${sv.slice(0,8).map(x=>`<li class="row line ${x.priorite==='urgent'?'warn':''}"><div><b>${esc(x.nom||'Client')}</b><span class="meta">${x.priorite==='urgent'?'🔴 Urgent · ':''}${esc(x.diagnostic?.resume||x.numero)}${x.statut==='planifie'&&x.creneau?' · prévu le '+dateC(x.creneau):''}</span></div>${lien('sav.html?s='+x.id,'Ouvrir')}</li>`).join('')}</ul>`:empty('Aucune demande SAV en cours.'))+`<p style="margin-top:8px">${lien('sav.html','Ouvrir le SAV','ghost')}</p></div>`;
-    h+=`<div class="sec" id="h-bientot"><h3>Chantiers</h3>${empty("Le suivi des chantiers (et le quartier ENR Pose) arrive avec l'étape suivante.")}</div>`;
+    const ce=chEnCours();
+    h+=`<div class="sec" id="h-chantiers"><h3>Chantiers <small>${ce.length} en cours</small></h3>`+(ce.length?`<ul class="rows">${ce.slice(0,8).map(c=>`<li class="row line"><div><b>${esc(c.client_nom)}</b><span class="meta">${esc(ETAPE_TXT[c.etape]||'')}${c.commune?' · '+esc(c.commune):''}</span></div>${lien('chantiers.html?c='+c.id,'Ouvrir')}</li>`).join('')}</ul>`:empty('Aucun chantier en cours.'))+`<p style="margin-top:8px">${lien('chantiers.html','Ouvrir les chantiers','ghost')}</p></div>`;
   }
   pbody.innerHTML=h+'<div class="pad"></div>';
 }

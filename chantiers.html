@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.png">
+<title>Chantiers · QG ENR Pose</title>
+<style>
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("InterVariable.woff2") format("woff2")}
+:root{--teal:#0E9C8F;--teal-f:#0b7a70;--encre:#16241a;--gris:#56665b;--trait:#dfe7e0;--rouge:#b42318;color-scheme:light}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;color:var(--encre);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #fbbb10;outline-offset:2px}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+.onglets{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.carte{background:#fff;border:1px solid #e3ebe4;padding:18px;margin-bottom:14px}
+.carte h2{margin:0 0 8px;font-size:1.3rem;font-weight:900;letter-spacing:-.02em}
+.carte h3{margin:16px 0 8px;font-size:1rem}
+.meta{font-size:13px;color:var(--gris)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--trait);background:#fff;cursor:pointer;text-decoration:none;color:var(--encre)}
+.btn.petit{min-height:34px;padding:0 14px;font-size:13px}
+.btn.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn:disabled{opacity:.5;cursor:wait}
+.liste{display:grid;gap:10px}
+.item{display:grid;grid-template-columns:1fr auto;gap:4px 14px;text-align:left;width:100%;background:#fff;cursor:pointer;padding:16px 18px 16px 24px}
+.item[data-p="urgent"]{--acc:#b42318}.item[data-p="normal"]{--acc:#0E9C8F}.item[data-p="faible"]{--acc:#b9c4bb}
+.badge.urgent{background:#fdecea;color:#8c1d13}
+.grille2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos img{width:96px;height:96px;object-fit:cover;border-radius:14px;cursor:zoom-in}
+.diag{background:#e3f4f2;border-radius:18px;padding:16px}
+.diag__etiq{margin:0;font-size:12px;font-weight:700;color:#0b7a70;text-transform:uppercase;letter-spacing:.04em}
+.diag__titre{margin:4px 0 12px;font-size:1.25rem;font-weight:900;letter-spacing:-.02em;line-height:1.2}
+.diag__danger{margin:0 0 12px;background:#fdecea;color:#8c1d13;border-radius:12px;padding:10px 12px;font-weight:700}
+.diag__grille{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.diag__bloc{background:#fff;border-radius:14px;padding:12px 14px}
+.diag__bloc.large{grid-column:1/-1}
+.diag__bloc span{display:block;font-size:12px;font-weight:700;color:var(--gris);margin-bottom:4px}
+.diag__bloc p{margin:0}
+.diag__bloc ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.diag__bloc.vert{background:#e7f3e7}
+.puces-d{display:flex;gap:6px;flex-wrap:wrap}.puces-d b{background:#f3f6f2;border-radius:999px;padding:3px 10px;font-weight:600;font-size:13px}
+label.ch{display:grid;gap:4px;font-size:12px;color:var(--gris);font-weight:600}
+label.ch input,label.ch select,label.ch textarea{border:1.5px solid var(--trait);border-radius:12px;padding:10px 12px;background:#fff;font-size:15px;color:var(--encre)}
+.rangee{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.check{display:grid;gap:8px}
+.check label{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--trait);border-radius:14px;background:#fff;font-size:16px;cursor:pointer}
+.check input{width:24px;height:24px;flex:none;accent-color:var(--teal)}
+canvas.sig{width:100%;height:170px;border:1.5px dashed #b9c8bc;border-radius:14px;background:#fff;touch-action:none}
+.fichier input{display:none}
+.mat{display:grid;grid-template-columns:130px 1fr 1fr 1fr 34px;gap:6px;margin-bottom:6px}
+.mat input,.mat select{border:1.5px solid var(--trait);border-radius:10px;padding:8px;background:#fff;min-width:0}
+.x{width:34px;height:34px;border-radius:9px;border:1px solid var(--trait);background:#fff;cursor:pointer}
+.qr svg{width:120px;height:120px}
+.vide{text-align:center;color:var(--gris)}
+.connexion{max-width:380px;margin:40px auto}
+.connexion input{width:100%;border:1.5px solid var(--trait);border-radius:12px;padding:12px;margin:6px 0}
+@media (max-width:700px){.grille2{grid-template-columns:1fr}.mat{grid-template-columns:1fr 1fr}.diag__grille{grid-template-columns:1fr}
+  .rangee>.btn,.rangee>a.btn{flex:1 1 100%;min-height:46px}.rangee label.ch{flex:1 1 100%}
+  .kpis{grid-template-columns:1fr 1fr}.kpi{padding:12px 14px}.kpi b{font-size:1.6rem}.hero-qg__titre{margin-top:14px}.hero-qg h1{font-size:1.6rem}.hero-qg__sous{display:none}}
+
+.etapes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 4px}
+.etapes button{border:0;border-radius:12px;padding:10px 6px;background:#eef2ee;color:var(--gris);font-weight:700;font-size:13px;cursor:pointer;line-height:1.2}
+.etapes button.fait{background:#e7f3e7;color:#14551f}
+.etapes button.ici{background:var(--teal);color:#fff}
+.barre-prog{display:flex;gap:4px;margin-top:6px}.barre-prog i{flex:1;height:6px;border-radius:4px;background:#e3ebe4}.barre-prog i.on{background:var(--teal)}
+.calc{display:grid;gap:8px}
+.ligne-m{display:grid;grid-template-columns:minmax(0,1fr) 90px 110px 34px;gap:8px;align-items:center;background:#fff;border:1px solid var(--trait);border-radius:14px;padding:8px 10px}
+.ligne-m select,.ligne-m input{border:1.5px solid var(--trait);border-radius:10px;padding:8px;background:#fff;min-width:0;width:100%}
+.ligne-m .dispo{font-size:12px;font-weight:700}.ligne-m .dispo.ko{color:var(--rouge)}.ligne-m .dispo.ok{color:#218034}
+.dem{display:grid;grid-template-columns:minmax(0,1fr) 140px 150px;gap:8px;align-items:center;background:#fff;border:1px solid var(--trait);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.dem select,.dem input{border:1.5px solid var(--trait);border-radius:10px;padding:8px;background:#fff;min-width:0}
+.dem.valide{border-left:5px solid #218034}.dem.envoye{border-left:5px solid #2b4b9b}
+dialog{border:0;border-radius:22px;padding:22px;width:min(94vw,560px);box-shadow:0 40px 80px -30px rgba(0,0,0,.6)}
+dialog::backdrop{background:rgba(8,23,13,.6)}
+dialog pre{white-space:pre-wrap;background:#f3f6f2;border-radius:14px;padding:14px;font:14px/1.5 Inter,system-ui,sans-serif;max-height:60vh;overflow:auto}
+@media (max-width:700px){.etapes{grid-template-columns:1fr 1fr}.ligne-m{grid-template-columns:1fr 70px 34px}.ligne-m .dispo{grid-column:1/-1}.dem{grid-template-columns:1fr}}
+/* ===== Habillage aux couleurs du site Cedyan Energy ===== */
+:root{--vert-site:#218034;--vert-fonce:#14551f;--nuit-site:#0d3a16;--bleu-site:#2b4b9b;--menthe:#9fcda1;--menthe-pale:#e7f3e7;--ombre:0 18px 40px -22px rgba(20,60,30,.35);--r-l:22px;--r-xl:32px}
+html,body{background:#f3f6f2}
+.hero-qg{position:relative;isolation:isolate;overflow:hidden;color:#fff;background:radial-gradient(ellipse at 78% 0%,#1d4a28,#08170d 72%);padding:calc(14px + env(safe-area-inset-top,0px)) 0 28px}
+.hero-qg::after{content:"";position:absolute;right:-120px;top:-160px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(251,187,16,.38),rgba(251,187,16,0) 65%);z-index:-1;pointer-events:none}
+.hero-qg__in{max-width:1000px;margin:0 auto;padding:0 18px}
+.hero-qg__haut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hero-qg__logo{width:150px;height:auto;display:block}
+.hero-qg__haut nav{display:flex;gap:6px;flex-wrap:wrap}
+.hero-qg__haut nav a{color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.hero-qg__haut nav a:hover{background:rgba(255,255,255,.1)}
+.hero-qg__haut .esp{flex:1}
+.hero-qg .etat{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+.hero-qg .etat.err{background:#b42318}
+.hero-qg__titre{margin:26px 0 0;max-width:640px}
+.hero-qg__kicker{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:rgba(159,205,161,.16);color:#c8e6c9;font-weight:700;font-size:.88rem}
+.hero-qg__kicker::before{content:"";width:8px;height:8px;border-radius:50%;background:#fbbb10;box-shadow:0 0 0 4px rgba(251,187,16,.25)}
+.hero-qg h1{margin:0;font-size:clamp(1.9rem,4vw,2.8rem);font-weight:900;letter-spacing:-.035em;line-height:1.05}
+.hero-qg__sous{margin:10px 0 0;color:#cfe3d2;font-size:1.02rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:24px}
+.kpi{display:grid;gap:2px;text-align:left;background:#fff;color:#16241a;border:0;border-radius:var(--r-l);padding:16px 18px;box-shadow:0 20px 40px -24px rgba(0,0,0,.6);cursor:pointer;transition:transform .2s,box-shadow .2s;font:inherit}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 24px 44px -22px rgba(0,0,0,.65)}
+.kpi span{font-size:.85rem;color:#56665b;font-weight:600;display:flex;align-items:center;gap:8px}
+.kpi span::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--k,#218034)}
+.kpi b{font-size:2rem;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.kpi small{font-size:.82rem;color:#56665b}
+.kpi.chaud b{color:#9a5b00}
+body.edition .hero-qg__titre,body.edition .kpis{display:none}
+body.edition .hero-qg{padding-bottom:14px}
+.embed .hero-qg{display:none}
+main{padding-top:24px}
+/* Boutons comme sur le site */
+.btn{min-height:46px;padding:0 22px;border-radius:999px;font-weight:700;transition:transform .2s,box-shadow .2s,background-color .2s}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn.vert{background:var(--vert-site);border-color:var(--vert-site);color:#fff;box-shadow:0 12px 24px -14px rgba(33,128,52,.7)}
+.btn.jaune{background:#fbbb10;border-color:#fbbb10;color:#16241a;box-shadow:0 12px 24px -14px rgba(251,187,16,.9)}
+/* Filtres et onglets */
+.puce,.onglet{border:0;background:#fff;box-shadow:inset 0 0 0 1.5px #dfe7e0;color:#14551f;font-weight:700;border-radius:999px;padding:9px 16px;transition:background-color .2s}
+.puce:hover,.onglet:hover{background:#e7f3e7}
+.puce[aria-pressed="true"],.onglet[aria-selected="true"]{background:#14551f;color:#fff;box-shadow:none}
+/* Cartes */
+.carte,.groupe{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.item{border-radius:var(--r-l);border:1px solid #e3ebe4;box-shadow:0 10px 26px -22px rgba(20,60,30,.45);position:relative;overflow:hidden;padding-left:24px;transition:transform .2s,box-shadow .2s}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc,#dfe7e0)}
+.item:hover{transform:translateY(-2px);box-shadow:var(--ombre);border-color:#9fcda1}
+.item[data-st="brouillon"]{--acc:#fbbb10}.item[data-st="valide"]{--acc:#8b5cf6}.item[data-st="envoye"]{--acc:#2b4b9b}.item[data-st="accepte"]{--acc:#218034}.item[data-st="refuse"],.item[data-st="expire"]{--acc:#b9c4bb}
+.item .tot{font-size:1.15rem;font-weight:900;color:#14551f}
+.badge{border-radius:999px;padding:3px 10px;background:#e7f3e7;color:#14551f;font-weight:700}
+.badge.alerte{background:#fff4d6;color:#9a5b00}
+.badge.ok{background:#14551f;color:#fff}
+.tab{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.tab th{background:#e7f3e7;color:#14551f}
+.ligne,.lg{border-radius:18px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
+.pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
+</style>
+</head>
+<body>
+<header class="hero-qg">
+  <div class="hero-qg__in">
+    <div class="hero-qg__haut"><img class="hero-qg__logo" src="logo-cedyan.png" alt="Cedyan Energy" width="150" height="45"><nav><a href="/">← QG</a><a href="sav.html">SAV</a><a href="stock.html">Stock</a></nav><span class="esp"></span><span class="etat" id="etat" hidden></span></div>
+    <div class="hero-qg__titre"><p class="hero-qg__kicker">ENR Pose · Chantiers</p><h1>Du devis signé à la mise en service</h1><p class="hero-qg__sous">Chaque chantier suit 4 étapes. Rien ne s'oublie, le client est tenu au courant.</p></div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
+<main id="app"><p class="vide">Chargement…</p></main>
+<dialog id="fiche"><h2 style="margin:0 0 10px">Fiche pré-remplie</h2><p class="meta">Les informations à reporter dans le dossier. Copiez-les en un clic.</p><pre id="fiche-txt"></pre><div class="rangee" style="margin-top:12px"><button class="btn teal" id="fiche-copier">Copier</button><button class="btn" id="fiche-fermer">Fermer</button></div></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+"use strict";
+const sb = window.supabase.createClient("https://uotqqkhraqxtlssgavlm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvdHFxa2hyYXF4dGxzc2dhdmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDI1NTAsImV4cCI6MjEwNjgxODU1MH0.61NliFrPeWNilEmXPayAONTIVF49tmq3arjgdzSwPpM");
+const app = document.getElementById("app"), etat = document.getElementById("etat");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const dateC = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
+const nb = (n) => (Number(n) || 0).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+function info(t, err) { etat.hidden = !t; etat.textContent = t || ""; etat.classList.toggle("err", !!err); if (t && !err) { clearTimeout(info.t); info.t = setTimeout(() => (etat.hidden = true), 2500); } }
+const ETAPES = [["visite", "Visite technique"], ["demarches", "Démarches"], ["pose", "Pose"], ["mise_en_service", "Mise en service"]];
+const rangEtape = (e) => e === "termine" ? 4 : ETAPES.findIndex(([k]) => k === e);
+const STATUT_DEM = { a_faire: "À faire", envoye: "Envoyée", valide: "Validée" };
+const L = { ch: [], stock: [] };
+let ouvert = new URLSearchParams(location.search).get("c"), filtre = "en_cours";
+
+async function charger() {
+  const [c, s] = await Promise.all([
+    sb.from("chantiers").select("*, devis:devis(numero,total_ttc)").order("created_at", { ascending: false }).limit(500),
+    sb.from("stock_vue").select("ref,libelle,cat,disponible,reel").order("libelle").limit(5000),
+  ]);
+  if (c.error) throw c.error;
+  L.ch = c.data || []; L.stock = s.error ? [] : (s.data || []);
+}
+const prochaine = (c) => {
+  if (c.etape === "visite") return c.date_visite ? "Visite le " + dateC(c.date_visite) : "Visite technique à planifier";
+  if (c.etape === "demarches") { const r = (c.demarches || []).filter((d) => d.statut !== "valide").length; return r ? `${r} démarche(s) en cours` : "Démarches validées : planifier la pose"; }
+  if (c.etape === "pose") return c.date_pose ? "Pose le " + dateC(c.date_pose) : "Pose à planifier";
+  if (c.etape === "mise_en_service") return "Mise en service à faire";
+  return c.etape === "termine" ? "Terminé" + (c.date_mise_en_service ? " le " + dateC(c.date_mise_en_service) : "") : "Annulé";
+};
+
+function chiffres() {
+  const an = new Date().getFullYear(), n = (e) => L.ch.filter((c) => c.etape === e).length;
+  const k = [["visite", "Visites à faire", n("visite"), "#fbbb10", "toiture, compteur, tableau"], ["demarches", "Démarches en cours", n("demarches"), "#2b4b9b", "mairie, EDF, Consuel"],
+    ["pose", "Poses à venir", n("pose") + n("mise_en_service"), "#0E9C8F", "et mises en service"], ["termine", "Terminés en " + an, L.ch.filter((c) => c.etape === "termine" && String(c.date_mise_en_service || c.updated_at).startsWith(String(an))).length, "#218034", "maisons dans le quartier"]];
+  document.getElementById("kpis").innerHTML = k.map(([f, t, v, c, s]) => `<button class="kpi" style="--k:${c}" data-f="${f}"><span>${t}</span><b>${v}</b><small>${esc(s)}</small></button>`).join("");
+  document.querySelectorAll(".kpi").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; ouvert = null; rendre(); }));
+}
+function rendre() {
+  chiffres(); document.body.classList.toggle("edition", !!ouvert);
+  if (ouvert) { const c = L.ch.find((x) => x.id === ouvert); if (c) return vueChantier(c); ouvert = null; }
+  if (ouvert === "nouveau") return;
+  vueListe();
+}
+function vueListe() {
+  const F = { en_cours: (c) => !["termine", "annule"].includes(c.etape), termine: (c) => c.etape === "termine", tous: () => true };
+  const l = L.ch.filter(F[filtre] || ((c) => c.etape === filtre));
+  app.innerHTML = `<div class="tetliste" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="display:flex;gap:8px;flex-wrap:wrap">${[["en_cours", "En cours"], ["termine", "Terminés"], ["tous", "Tous"]].map(([k, t]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${t}</button>`).join("")}</div><button class="btn jaune" id="nouv">+ Nouveau chantier</button></div>
+    <div class="liste">${l.map((c) => { const r = rangEtape(c.etape); return `<button class="item" data-id="${c.id}" data-p="normal"><span><b>${esc(c.client_nom)}</b> <span class="meta">${esc(c.commune || "")}${c.kwc ? " · " + nb(c.kwc) + " kWc" : ""}</span></span><span class="badge">${esc(c.numero)}</span>
+      <span class="meta">${esc(prochaine(c))}</span><span></span><span class="barre-prog" style="grid-column:1/-1">${ETAPES.map((_, i) => `<i class="${i < r || c.etape === "termine" ? "on" : ""}"></i>`).join("")}</span></button>`; }).join("")
+      || `<section class="carte"><h2>Aucun chantier ici</h2><p class="meta">Un chantier se crée tout seul quand un client qui a demandé la pose signe son devis. Vous pouvez aussi en créer un à la main.</p></section>`}</div>`;
+  app.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; vueListe(); }));
+  app.querySelectorAll("[data-id]").forEach((b) => (b.onclick = () => { ouvert = b.dataset.id; history.replaceState(null, "", "?c=" + ouvert); rendre(); scrollTo(0, 0); }));
+  document.getElementById("nouv").onclick = nouveau;
+}
+function nouveau() {
+  document.body.classList.add("edition");
+  app.innerHTML = `<p><button class="btn petit" id="ret">← Tous les chantiers</button></p><section class="carte"><h2>Nouveau chantier</h2><div class="grille2">
+    <label class="ch">Client<input id="n-nom"></label><label class="ch">Téléphone<input id="n-tel" type="tel"></label><label class="ch">E-mail<input id="n-email" type="email"></label><label class="ch">Commune<input id="n-com"></label>
+    <label class="ch">Adresse<input id="n-adr"></label><label class="ch">Puissance visée (kWc)<input id="n-kwc" inputmode="decimal"></label></div>
+    <div class="rangee" style="margin-top:12px"><button class="btn teal" id="creer">Créer le chantier</button></div></section>`;
+  document.getElementById("ret").onclick = () => { ouvert = null; rendre(); };
+  document.getElementById("creer").onclick = async () => {
+    const g = (id) => document.getElementById(id).value.trim(); if (!g("n-nom")) return info("Indiquez le nom du client", true);
+    const { data, error } = await sb.from("chantiers").insert({ client_nom: g("n-nom"), telephone: g("n-tel") || null, email: g("n-email").toLowerCase() || null, commune: g("n-com") || null, adresse: g("n-adr") || null, kwc: g("n-kwc") ? Number(g("n-kwc").replace(",", ".")) : null }).select("id").single();
+    if (error) return info("Erreur : " + error.message, true); await charger(); ouvert = data.id; rendre();
+  };
+}
+
+/* ---------- Un chantier ---------- */
+const puissancePanneau = (lib) => { const m = String(lib).match(/(\d{3})\s*(wc|w)\b/i) || String(lib).match(/\b(3\d\d|4\d\d|5\d\d|6\d\d|7\d\d)\b/); return m ? +m[1] : null; };
+async function vueChantier(c) {
+  const r = rangEtape(c.etape), V = c.visite || {}, mat = (c.materiel || []).map((m) => ({ ...m })), dem = (c.demarches || []).map((d) => ({ ...d })), photos = [...(c.photos || [])];
+  const parRef = new Map(L.stock.map((s) => [s.ref, s]));
+  const optStock = (sel, cats) => `<option value="">Choisir…</option>` + L.stock.filter((s) => !cats || cats.includes(s.cat)).map((s) => `<option value="${esc(s.ref)}" ${s.ref === sel ? "selected" : ""}>${esc(s.libelle)}</option>`).join("");
+  const dt = (d) => d ? new Date(new Date(d).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+  const choix = (id, val, opts) => `<select id="${id}"><option value="">—</option>${opts.map((o) => `<option ${val === o ? "selected" : ""}>${o}</option>`).join("")}</select>`;
+  app.innerHTML = `<p><button class="btn petit" id="ret">← Tous les chantiers</button></p>
+  <section class="carte"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><h2>${esc(c.client_nom)} <span class="meta">${esc(c.numero)}</span></h2><p class="meta">${esc([c.adresse, c.commune].filter(Boolean).join(", "))}${c.kwc ? " · " + nb(c.kwc) + " kWc" : ""}${c.devis?.numero ? " · devis " + esc(c.devis.numero) : ""}</p></div></div>
+    <div class="rangee">${c.telephone ? `<a class="btn teal petit" href="tel:${esc(c.telephone.replace(/\s/g, ""))}">📞 ${esc(c.telephone)}</a>` : ""}${c.email ? `<a class="btn petit" href="mailto:${esc(c.email)}">✉️ ${esc(c.email)}</a>` : ""}${c.email && !(c.notes || "").includes("bienvenue") ? `<button class="btn jaune petit" id="bienvenue">Envoyer le message de bienvenue</button>` : ""}</div>
+    <div class="etapes">${ETAPES.map(([k, t], i) => `<button data-e="${k}" class="${i < r ? "fait" : i === r ? "ici" : ""}">${i < r ? "✓ " : ""}${t}</button>`).join("")}</div>
+    ${c.etape === "termine" ? `<p class="meta">✅ Chantier terminé${c.dossier_envoye_le ? ", dossier envoyé au client le " + dateC(c.dossier_envoye_le) : ""}.</p>` : ""}</section>
+
+  <section class="carte"><h2>1. Visite technique</h2><div class="grille2">
+    <label class="ch">Date de la visite<input type="datetime-local" id="v-date" value="${dt(c.date_visite)}"></label><label class="ch">Puissance visée (kWc)<input id="v-kwc" inputmode="decimal" value="${c.kwc ?? ""}"></label>
+    <label class="ch">Toiture${choix("v-toit", V.toiture, ["Tôle", "Béton (toit plat)", "Tuiles", "Bac acier", "Autre"])}</label><label class="ch">Orientation${choix("v-orient", V.orientation, ["Sud", "Sud-Est", "Sud-Ouest", "Est", "Ouest", "Est-Ouest", "Nord"])}</label>
+    <label class="ch">Inclinaison (°)<input id="v-incl" inputmode="numeric" value="${esc(V.inclinaison ?? "")}"></label><label class="ch">Surface disponible (m²)<input id="v-surf" inputmode="decimal" value="${esc(V.surface ?? "")}"></label>
+    <label class="ch">Ombrage${choix("v-ombre", V.ombrage, ["Aucun", "Partiel", "Important"])}</label><label class="ch">Compteur${choix("v-compteur", V.compteur, ["Monophasé", "Triphasé"])}</label>
+    <label class="ch">Puissance souscrite (kVA)<input id="v-kva" inputmode="numeric" value="${esc(V.kva ?? "")}"></label><label class="ch">Tableau électrique${choix("v-tableau", V.tableau, ["Bon état", "À reprendre"])}</label>
+    <label class="ch">Distance onduleur ↔ tableau (m)<input id="v-dist" inputmode="decimal" value="${esc(V.distance ?? "")}"></label><label class="ch">Accès, hauteur, remarques<input id="v-notes" value="${esc(V.notes ?? "")}"></label></div>
+    <h3>Photos</h3><div class="photos" id="photos"></div><p class="fichier"><label class="btn petit">📷 Ajouter une photo<input type="file" id="photo" accept="image/*" multiple></label></p>
+    <h3>Matériel nécessaire</h3><p class="meta">Choisissez le panneau : le nombre se calcule tout seul à partir de la puissance visée. Ajoutez l'onduleur, les batteries et le reste. Le disponible en stock s'affiche à côté.</p>
+    <div class="calc" id="calc"></div>
+    <div class="rangee" style="margin-top:10px"><button class="btn petit" id="m-ajout">+ Ajouter un produit</button><span style="flex:1"></span><button class="btn teal" id="v-ok">Enregistrer la visite et réserver le matériel</button></div></section>
+
+  <section class="carte"><h2>2. Démarches administratives</h2><p class="meta">Relance automatique : si une démarche « envoyée » n'avance pas pendant 3 semaines, elle apparaît dans le récapitulatif de Yann.</p>
+    ${dem.map((d, i) => `<div class="dem ${d.statut}"><div><b>${esc(d.nom)}</b><br><button class="btn petit" data-fiche="${i}" style="margin-top:6px">Fiche pré-remplie</button></div><select data-d="${i}" data-c="statut">${Object.entries(STATUT_DEM).map(([k, t]) => `<option value="${k}" ${d.statut === k ? "selected" : ""}>${t}</option>`).join("")}</select><input type="date" data-d="${i}" data-c="date" value="${esc((d.date || "").slice(0, 10))}" aria-label="Date"></div>`).join("")}
+    <div class="rangee"><button class="btn teal petit" id="d-ok">Enregistrer les démarches</button></div></section>
+
+  <section class="carte"><h2>3. Pose</h2><div class="rangee"><label class="ch">Date de la pose<input type="date" id="p-date" value="${esc(c.date_pose || "")}"></label><button class="btn teal petit" id="p-ok">Enregistrer</button></div>
+    <p class="meta">Pensez aux photos de la pose (bouton photo de la visite) : elles partent dans le dossier du client.</p></section>
+
+  <section class="carte"><h2>4. Mise en service</h2><p class="meta">Un clic : le matériel sort du stock, la fiche SAV avec son QR code est créée, et le client reçoit son dossier de fin de chantier (matériel, photos, lien SAV).</p>
+    <div class="rangee"><label class="ch">Date de mise en service<input type="date" id="ms-date" value="${esc(c.date_mise_en_service || new Date().toISOString().slice(0, 10))}"></label>
+    <button class="btn jaune" id="ms-ok">${c.etape === "termine" ? "Renvoyer le dossier au client" : "Terminer le chantier"}</button>${c.installation_id ? `<a class="btn petit" href="sav.html?v=installations">Voir la fiche SAV</a>` : ""}</div></section>`;
+
+  document.getElementById("ret").onclick = () => { ouvert = null; history.replaceState(null, "", location.pathname); rendre(); };
+  const maj = async (champs, msg) => { const { error } = await sb.from("chantiers").update({ ...champs, updated_at: new Date().toISOString() }).eq("id", c.id); if (error) { info("Erreur : " + error.message, true); return false; } Object.assign(c, champs); if (msg) info(msg); return true; };
+  app.querySelectorAll("[data-e]").forEach((b) => (b.onclick = async () => { if (await maj({ etape: b.dataset.e }, "Étape changée")) { await charger(); rendre(); } }));
+  document.getElementById("bienvenue")?.addEventListener("click", async (e) => { e.target.disabled = true; const { data, error } = await sb.functions.invoke("chantiers", { body: { action: "bienvenue", chantier_id: c.id } });
+    if (error || !data?.ok) { e.target.disabled = false; return info(data?.erreur || error?.message || "Envoi impossible", true); } info("Message envoyé au client"); await charger(); rendre(); });
+
+  // Photos
+  const dessinerPhotos = async () => { const z = document.getElementById("photos"); z.innerHTML = ""; for (const p of photos) { const { data } = await sb.storage.from("chantiers").createSignedUrl(p, 3600); if (data?.signedUrl) z.insertAdjacentHTML("beforeend", `<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener"><img src="${esc(data.signedUrl)}" alt=""></a>`); } };
+  dessinerPhotos();
+  document.getElementById("photo").onchange = async (e) => { for (const f of [...e.target.files].slice(0, 10)) { const ext = (f.type.split("/")[1] || "jpg").replace("jpeg", "jpg"); const ch = `${c.id}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+    const { error } = await sb.storage.from("chantiers").upload(ch, f, { contentType: f.type }); if (!error) photos.push(ch); } await maj({ photos }, "Photos ajoutées"); dessinerPhotos(); };
+
+  // Matériel : calcul du nombre de panneaux et disponible en stock
+  if (!mat.length) mat.push({ role: "panneau", ref: "", quantite: 0 }, { role: "onduleur", ref: "", quantite: 1 });
+  const dessinerCalc = () => {
+    const kwc = Number(String(document.getElementById("v-kwc").value).replace(",", ".")) || 0;
+    document.getElementById("calc").innerHTML = mat.map((m, i) => { const s = parRef.get(m.ref);
+      if (m.role === "panneau" && s && kwc) { const w = puissancePanneau(s.libelle); if (w) m.quantite = Math.ceil(kwc * 1000 / w); }
+      const manque = s && m.quantite > s.disponible;
+      return `<div class="ligne-m"><select data-m="${i}">${optStock(m.ref, m.role === "panneau" ? ["panneaux"] : m.role === "onduleur" ? ["onduleurs", "convertisseurs"] : null)}</select>
+        <input data-q="${i}" inputmode="numeric" value="${m.quantite || ""}" aria-label="Quantité"><span class="dispo ${s ? (manque ? "ko" : "ok") : ""}">${s ? (manque ? `⚠️ ${nb(s.disponible)} dispo` : `✓ ${nb(s.disponible)} dispo`) : (m.role === "panneau" ? "Panneau" : m.role === "onduleur" ? "Onduleur" : "")}</span><button class="x" data-del="${i}">✕</button></div>`; }).join("");
+    app.querySelectorAll("[data-m]").forEach((el) => (el.onchange = () => { const m = mat[+el.dataset.m]; m.ref = el.value; m.libelle = parRef.get(el.value)?.libelle || ""; dessinerCalc(); }));
+    app.querySelectorAll("[data-q]").forEach((el) => (el.onchange = () => { mat[+el.dataset.q].quantite = Math.max(0, Number(el.value) || 0); if (mat[+el.dataset.q].role === "panneau") mat[+el.dataset.q].role = "panneau_manuel"; dessinerCalc(); }));
+    app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { mat.splice(+b.dataset.del, 1); dessinerCalc(); }));
+  };
+  dessinerCalc();
+  document.getElementById("v-kwc").oninput = dessinerCalc;
+  document.getElementById("m-ajout").onclick = () => { mat.push({ role: "autre", ref: "", quantite: 1 }); dessinerCalc(); };
+  document.getElementById("v-ok").onclick = async (e) => {
+    const g = (id) => document.getElementById(id).value.trim();
+    const visite = { toiture: g("v-toit") || null, orientation: g("v-orient") || null, inclinaison: g("v-incl") || null, surface: g("v-surf") || null, ombrage: g("v-ombre") || null, compteur: g("v-compteur") || null, kva: g("v-kva") || null, tableau: g("v-tableau") || null, distance: g("v-dist") || null, notes: g("v-notes") || null };
+    const materiel = mat.filter((m) => m.ref && m.quantite > 0).map((m) => ({ ref: m.ref, libelle: parRef.get(m.ref)?.libelle || m.libelle || m.ref, quantite: m.quantite, role: m.role }));
+    const champs = { visite, materiel, kwc: g("v-kwc") ? Number(g("v-kwc").replace(",", ".")) : null, date_visite: g("v-date") ? new Date(g("v-date")).toISOString() : null };
+    if (c.etape === "visite" && materiel.length) champs.etape = "demarches";
+    e.target.disabled = true;
+    if (!(await maj(champs))) { e.target.disabled = false; return; }
+    const { data, error } = await sb.rpc("reserver_chantier", { p_chantier: c.id }); e.target.disabled = false;
+    if (error) return info("Visite enregistrée, mais réservation impossible : " + error.message, true);
+    info(`Visite enregistrée, ${data} produit(s) réservé(s) dans le stock`); await charger(); rendre();
+  };
+
+  // Démarches
+  app.querySelectorAll("[data-d]").forEach((el) => (el.onchange = () => { const d = dem[+el.dataset.d]; d[el.dataset.c] = el.value; if (el.dataset.c === "statut" && el.value !== "a_faire" && !d.date) { d.date = new Date().toISOString().slice(0, 10); el.closest(".dem").querySelector('input[type="date"]').value = d.date; } el.closest(".dem").className = "dem " + d.statut; }));
+  document.getElementById("d-ok").onclick = async () => { const champs = { demarches: dem }; if (c.etape === "demarches" && dem.every((d) => d.statut === "valide")) champs.etape = "pose"; if (await maj(champs, champs.etape ? "Démarches validées : passage à la pose" : "Démarches enregistrées")) { await charger(); rendre(); } };
+  const fiche = document.getElementById("fiche");
+  app.querySelectorAll("[data-fiche]").forEach((b) => (b.onclick = () => {
+    const d = dem[+b.dataset.fiche], V2 = c.visite || {}, m = (c.materiel || []).map((x) => `- ${x.quantite} × ${x.libelle}`).join("\n");
+    document.getElementById("fiche-txt").textContent = `${d.nom}\n\nDEMANDEUR\nNom : ${c.client_nom}\nAdresse : ${[c.adresse, c.commune].filter(Boolean).join(", ") || "à compléter"}\nTéléphone : ${c.telephone || ""}\nE-mail : ${c.email || ""}\n\nINSTALLATION\nPuissance : ${c.kwc ? nb(c.kwc) + " kWc" : "à compléter"}\nToiture : ${V2.toiture || "?"}, orientation ${V2.orientation || "?"}, inclinaison ${V2.inclinaison || "?"}°\nCompteur : ${V2.compteur || "?"}${V2.kva ? ", " + V2.kva + " kVA" : ""}\n\nMATÉRIEL\n${m || "à compléter après la visite"}\n\nINSTALLATEUR\nENR Pose, AC Moudong, 97122 Baie-Mahault, 0590 32 15 20\nDossier : ${c.numero}`;
+    fiche.showModal();
+  }));
+  document.getElementById("fiche-fermer").onclick = () => fiche.close();
+  document.getElementById("fiche-copier").onclick = async () => { try { await navigator.clipboard.writeText(document.getElementById("fiche-txt").textContent); info("Fiche copiée"); } catch { info("Sélectionnez le texte pour le copier", true); } };
+
+  // Pose
+  document.getElementById("p-ok").onclick = async () => { const v = document.getElementById("p-date").value || null; const champs = { date_pose: v }; if (v && (c.etape === "pose" || c.etape === "demarches")) champs.etape = "pose"; if (await maj(champs, "Date de pose enregistrée")) { await charger(); rendre(); } };
+
+  // Mise en service : sortie du stock, fiche SAV, dossier client
+  document.getElementById("ms-ok").onclick = async (e) => {
+    if (c.etape !== "termine" && !confirm("Terminer ce chantier ? Le matériel réservé sort du stock et le client reçoit son dossier.")) return;
+    e.target.disabled = true; e.target.textContent = "Envoi…";
+    if (c.etape !== "termine") { const { error } = await sb.rpc("sortir_stock_chantier", { p_chantier: c.id }); if (error) { e.target.disabled = false; return info("Erreur stock : " + error.message, true); }
+      await maj({ etape: "termine", date_mise_en_service: document.getElementById("ms-date").value || new Date().toISOString().slice(0, 10) }); }
+    const { data, error } = await sb.functions.invoke("chantiers", { body: { action: "dossier_fin", chantier_id: c.id } });
+    if (error || !data?.ok) { info(data?.erreur || error?.message || "Dossier non envoyé", true); }
+    else info(data.sans_email ? "Chantier terminé, fiche SAV créée (pas d'e-mail client)" : "Chantier terminé, dossier envoyé au client 🎉");
+    await charger(); rendre();
+  };
+}
+
+/* ---------- Connexion ---------- */
+function connexion(msg) {
+  app.innerHTML = `<form class="carte connexion" id="fco"><h2>Connexion</h2><p class="meta">Même accès que le tableau de bord.</p>${msg ? `<p class="badge alerte">${esc(msg)}</p>` : ""}<input id="em" type="email" placeholder="E-mail" autocomplete="username"><input id="mdp" type="password" placeholder="Mot de passe" autocomplete="current-password"><button class="btn jaune" style="width:100%">Se connecter</button></form>`;
+  document.getElementById("fco").onsubmit = async (e) => { e.preventDefault(); const { error } = await sb.auth.signInWithPassword({ email: document.getElementById("em").value.trim(), password: document.getElementById("mdp").value }); if (error) return connexion("E-mail ou mot de passe incorrect."); demarrer(); };
+}
+async function demarrer() {
+  const { data: { session } } = await sb.auth.getSession(); if (!session) return connexion();
+  const { data: eq } = await sb.from("staff").select("email").limit(1); if (!eq || !eq.length) return connexion("Ce compte n'a pas accès aux chantiers.");
+  try { await charger(); rendre(); } catch (e) { app.innerHTML = `<p class="vide">Erreur : ${esc(e.message || e)}</p>`; }
+}
+demarrer();
+})();
+</script>
+</body>
+</html>
