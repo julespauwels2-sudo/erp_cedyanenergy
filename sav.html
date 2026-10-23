@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.png">
+<title>SAV · QG ENR Pose</title>
+<style>
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("InterVariable.woff2") format("woff2")}
+:root{--teal:#0E9C8F;--teal-f:#0b7a70;--encre:#16241a;--gris:#56665b;--trait:#dfe7e0;--rouge:#b42318;color-scheme:light}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;color:var(--encre);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #fbbb10;outline-offset:2px}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 80px}
+.onglets{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.carte{background:#fff;border:1px solid #e3ebe4;padding:18px;margin-bottom:14px}
+.carte h2{margin:0 0 8px;font-size:1.3rem;font-weight:900;letter-spacing:-.02em}
+.carte h3{margin:16px 0 8px;font-size:1rem}
+.meta{font-size:13px;color:var(--gris)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--trait);background:#fff;cursor:pointer;text-decoration:none;color:var(--encre)}
+.btn.petit{min-height:34px;padding:0 14px;font-size:13px}
+.btn.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn:disabled{opacity:.5;cursor:wait}
+.liste{display:grid;gap:10px}
+.item{display:grid;grid-template-columns:1fr auto;gap:4px 14px;text-align:left;width:100%;background:#fff;cursor:pointer;padding:16px 18px 16px 24px}
+.item[data-p="urgent"]{--acc:#b42318}.item[data-p="normal"]{--acc:#0E9C8F}.item[data-p="faible"]{--acc:#b9c4bb}
+.badge.urgent{background:#fdecea;color:#8c1d13}
+.grille2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos img{width:96px;height:96px;object-fit:cover;border-radius:14px;cursor:zoom-in}
+.diag{background:#e3f4f2;border-radius:16px;padding:14px 16px}
+.diag p{margin:4px 0}
+label.ch{display:grid;gap:4px;font-size:12px;color:var(--gris);font-weight:600}
+label.ch input,label.ch select,label.ch textarea{border:1.5px solid var(--trait);border-radius:12px;padding:10px 12px;background:#fff;font-size:15px;color:var(--encre)}
+.rangee{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.check{display:grid;gap:8px}
+.check label{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--trait);border-radius:14px;background:#fff;font-size:16px;cursor:pointer}
+.check input{width:24px;height:24px;accent-color:var(--teal)}
+canvas.sig{width:100%;height:170px;border:1.5px dashed #b9c8bc;border-radius:14px;background:#fff;touch-action:none}
+.fichier input{display:none}
+.mat{display:grid;grid-template-columns:130px 1fr 1fr 1fr 34px;gap:6px;margin-bottom:6px}
+.mat input,.mat select{border:1.5px solid var(--trait);border-radius:10px;padding:8px;background:#fff;min-width:0}
+.x{width:34px;height:34px;border-radius:9px;border:1px solid var(--trait);background:#fff;cursor:pointer}
+.qr svg{width:120px;height:120px}
+.vide{text-align:center;color:var(--gris)}
+.connexion{max-width:380px;margin:40px auto}
+.connexion input{width:100%;border:1.5px solid var(--trait);border-radius:12px;padding:12px;margin:6px 0}
+@media (max-width:700px){.grille2{grid-template-columns:1fr}.mat{grid-template-columns:1fr 1fr}}
+/* ===== Habillage aux couleurs du site Cedyan Energy ===== */
+:root{--vert-site:#218034;--vert-fonce:#14551f;--nuit-site:#0d3a16;--bleu-site:#2b4b9b;--menthe:#9fcda1;--menthe-pale:#e7f3e7;--ombre:0 18px 40px -22px rgba(20,60,30,.35);--r-l:22px;--r-xl:32px}
+html,body{background:#f3f6f2}
+.hero-qg{position:relative;isolation:isolate;overflow:hidden;color:#fff;background:radial-gradient(ellipse at 78% 0%,#1d4a28,#08170d 72%);padding:calc(14px + env(safe-area-inset-top,0px)) 0 28px}
+.hero-qg::after{content:"";position:absolute;right:-120px;top:-160px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(251,187,16,.38),rgba(251,187,16,0) 65%);z-index:-1;pointer-events:none}
+.hero-qg__in{max-width:1000px;margin:0 auto;padding:0 18px}
+.hero-qg__haut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hero-qg__logo{width:150px;height:auto;display:block}
+.hero-qg__haut nav{display:flex;gap:6px;flex-wrap:wrap}
+.hero-qg__haut nav a{color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.hero-qg__haut nav a:hover{background:rgba(255,255,255,.1)}
+.hero-qg__haut .esp{flex:1}
+.hero-qg .etat{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+.hero-qg .etat.err{background:#b42318}
+.hero-qg__titre{margin:26px 0 0;max-width:640px}
+.hero-qg__kicker{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:rgba(159,205,161,.16);color:#c8e6c9;font-weight:700;font-size:.88rem}
+.hero-qg__kicker::before{content:"";width:8px;height:8px;border-radius:50%;background:#fbbb10;box-shadow:0 0 0 4px rgba(251,187,16,.25)}
+.hero-qg h1{margin:0;font-size:clamp(1.9rem,4vw,2.8rem);font-weight:900;letter-spacing:-.035em;line-height:1.05}
+.hero-qg__sous{margin:10px 0 0;color:#cfe3d2;font-size:1.02rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:24px}
+.kpi{display:grid;gap:2px;text-align:left;background:#fff;color:#16241a;border:0;border-radius:var(--r-l);padding:16px 18px;box-shadow:0 20px 40px -24px rgba(0,0,0,.6);cursor:pointer;transition:transform .2s,box-shadow .2s;font:inherit}
+.kpi:hover{transform:translateY(-3px);box-shadow:0 24px 44px -22px rgba(0,0,0,.65)}
+.kpi span{font-size:.85rem;color:#56665b;font-weight:600;display:flex;align-items:center;gap:8px}
+.kpi span::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--k,#218034)}
+.kpi b{font-size:2rem;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.kpi small{font-size:.82rem;color:#56665b}
+.kpi.chaud b{color:#9a5b00}
+body.edition .hero-qg__titre,body.edition .kpis{display:none}
+body.edition .hero-qg{padding-bottom:14px}
+.embed .hero-qg{display:none}
+main{padding-top:24px}
+/* Boutons comme sur le site */
+.btn{min-height:46px;padding:0 22px;border-radius:999px;font-weight:700;transition:transform .2s,box-shadow .2s,background-color .2s}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn.vert{background:var(--vert-site);border-color:var(--vert-site);color:#fff;box-shadow:0 12px 24px -14px rgba(33,128,52,.7)}
+.btn.jaune{background:#fbbb10;border-color:#fbbb10;color:#16241a;box-shadow:0 12px 24px -14px rgba(251,187,16,.9)}
+/* Filtres et onglets */
+.puce,.onglet{border:0;background:#fff;box-shadow:inset 0 0 0 1.5px #dfe7e0;color:#14551f;font-weight:700;border-radius:999px;padding:9px 16px;transition:background-color .2s}
+.puce:hover,.onglet:hover{background:#e7f3e7}
+.puce[aria-pressed="true"],.onglet[aria-selected="true"]{background:#14551f;color:#fff;box-shadow:none}
+/* Cartes */
+.carte,.groupe{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.item{border-radius:var(--r-l);border:1px solid #e3ebe4;box-shadow:0 10px 26px -22px rgba(20,60,30,.45);position:relative;overflow:hidden;padding-left:24px;transition:transform .2s,box-shadow .2s}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc,#dfe7e0)}
+.item:hover{transform:translateY(-2px);box-shadow:var(--ombre);border-color:#9fcda1}
+.item[data-st="brouillon"]{--acc:#fbbb10}.item[data-st="valide"]{--acc:#8b5cf6}.item[data-st="envoye"]{--acc:#2b4b9b}.item[data-st="accepte"]{--acc:#218034}.item[data-st="refuse"],.item[data-st="expire"]{--acc:#b9c4bb}
+.item .tot{font-size:1.15rem;font-weight:900;color:#14551f}
+.badge{border-radius:999px;padding:3px 10px;background:#e7f3e7;color:#14551f;font-weight:700}
+.badge.alerte{background:#fff4d6;color:#9a5b00}
+.badge.ok{background:#14551f;color:#fff}
+.tab{border-radius:var(--r-l);box-shadow:var(--ombre);border-color:#e3ebe4}
+.tab th{background:#e7f3e7;color:#14551f}
+.ligne,.lg{border-radius:18px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
+.vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
+.pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
+</style>
+</head>
+<body>
+<header class="hero-qg">
+  <div class="hero-qg__in">
+    <div class="hero-qg__haut"><img class="hero-qg__logo" src="logo-cedyan.png" alt="Cedyan Energy" width="150" height="45"><nav><a href="/">← QG</a><a href="stock.html">Stock</a></nav><span class="esp"></span><span class="etat" id="etat" hidden></span></div>
+    <div class="hero-qg__titre"><p class="hero-qg__kicker">ENR Pose · SAV</p><h1>Le SAV, sans courir après personne</h1><p class="hero-qg__sous">Les clients scannent le QR code de leur onduleur : la demande arrive ici, déjà triée et diagnostiquée.</p></div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
+<main id="app"><p class="vide">Chargement…</p></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(() => {
+"use strict";
+const sb = window.supabase.createClient("https://uotqqkhraqxtlssgavlm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvdHFxa2hyYXF4dGxzc2dhdmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDI1NTAsImV4cCI6MjEwNjgxODU1MH0.61NliFrPeWNilEmXPayAONTIVF49tmq3arjgdzSwPpM");
+const SAV_URL = "https://cedyan-energy.net/sav.html?i=";
+const PORTAILS = { VRM: "https://vrm.victronenergy.com", FusionSolar: "https://eu5.fusionsolar.huawei.com", "BYD Be Connect": "https://www.bydbatterybox.com", SEMS: "https://www.semsportal.com" };
+const app = document.getElementById("app"), etat = document.getElementById("etat");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const dateC = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
+const dateH = (d) => d ? new Date(d).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+function info(t, err) { etat.hidden = !t; etat.textContent = t || ""; etat.classList.toggle("err", !!err); if (t && !err) { clearTimeout(info.t); info.t = setTimeout(() => (etat.hidden = true), 2500); } }
+const STATUT = { nouveau: "À traiter", planifie: "Planifiée", en_cours: "En cours", resolu: "Terminée", annule: "Annulée" };
+const PRIO = { urgent: "Urgent", normal: "Normal", faible: "Faible" };
+const CHECKLIST = ["Photo de l'installation avant intervention", "Relever les codes erreur de l'onduleur", "Contrôler les protections (disjoncteurs, parafoudre)", "Contrôler les batteries (état, connexions, températures)", "Tester la production après intervention", "Expliquer au client ce qui a été fait"];
+const L = { sav: [], inst: [] };
+const params = new URLSearchParams(location.search);
+let onglet = params.get("v") || "demandes", filtre = "a_traiter", ouvert = params.get("s");
+
+async function charger() {
+  const [s, i] = await Promise.all([
+    sb.from("sav").select("*, installation:installations(*)").order("created_at", { ascending: false }).limit(300),
+    sb.from("installations").select("*").order("client_nom").limit(3000),
+  ]);
+  if (s.error) throw s.error; if (i.error) throw i.error;
+  L.sav = s.data || []; L.inst = i.data || [];
+}
+const rang = (x) => ({ urgent: 0, normal: 1, faible: 2 }[x.priorite] ?? 1);
+
+function chiffres() {
+  const mois = new Date(); mois.setDate(1); mois.setHours(0, 0, 0, 0);
+  const at = L.sav.filter((x) => x.statut === "nouveau"), urg = at.filter((x) => x.priorite === "urgent").length;
+  const k = [["demandes", "a_traiter", "À traiter", at.length, "#b42318", urg ? `dont ${urg} urgente(s)` : "aucune urgence"],
+    ["demandes", "planifie", "Interventions prévues", L.sav.filter((x) => x.statut === "planifie" || x.statut === "en_cours").length, "#2b4b9b", "créneaux confirmés"],
+    ["demandes", "resolu", "Réglées ce mois", L.sav.filter((x) => x.statut === "resolu" && x.rapport?.termine_le && new Date(x.rapport.termine_le) >= mois).length, "#218034", "rapports envoyés"],
+    ["installations", "", "Installations suivies", L.inst.length, "#0E9C8F", "avec leur QR code"]];
+  document.getElementById("kpis").innerHTML = k.map(([o, f, t, v, c, s], i) => `<button class="kpi ${i === 0 && v ? "chaud" : ""}" style="--k:${c}" data-o="${o}" data-f="${f}"><span>${t}</span><b>${v}</b><small>${esc(s)}</small></button>`).join("");
+  document.querySelectorAll(".kpi").forEach((b) => (b.onclick = () => { onglet = b.dataset.o; if (b.dataset.f) filtre = b.dataset.f; ouvert = null; rendre(); }));
+}
+
+function rendre() {
+  chiffres();
+  document.body.classList.toggle("edition", !!ouvert);
+  app.innerHTML = `<div class="onglets">${[["demandes", "Demandes"], ["installations", "Installations et QR codes"]].map(([k, l]) => `<button class="onglet" data-o="${k}" aria-selected="${onglet === k}">${l}</button>`).join("")}</div><div id="zone"></div>`;
+  app.querySelectorAll(".onglet").forEach((b) => (b.onclick = () => { onglet = b.dataset.o; ouvert = null; rendre(); }));
+  if (onglet === "installations") return vueInstallations();
+  if (ouvert) { const s = L.sav.find((x) => x.id === ouvert); if (s) return vueDemande(s); ouvert = null; }
+  vueDemandes();
+}
+
+/* ---------- Demandes, triées par priorité ---------- */
+function vueDemandes() {
+  const z = document.getElementById("zone");
+  const F = { a_traiter: ["nouveau"], planifie: ["planifie", "en_cours"], resolu: ["resolu"], tous: Object.keys(STATUT) };
+  const l = L.sav.filter((x) => F[filtre].includes(x.statut)).sort((a, b) => rang(a) - rang(b) || new Date(b.created_at) - new Date(a.created_at));
+  z.innerHTML = `<div class="puces" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${[["a_traiter", "À traiter"], ["planifie", "Planifiées"], ["resolu", "Terminées"], ["tous", "Toutes"]].map(([k, t]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${t}</button>`).join("")}</div>
+    <div class="liste">${l.map((s) => `<button class="item" data-id="${s.id}" data-p="${s.priorite}"><span><b>${esc(s.nom || s.installation?.client_nom || s.telephone || "Client")}</b> <span class="meta">${esc(s.commune || s.installation?.commune || "")}</span></span>
+      <span>${s.priorite === "urgent" ? `<span class="badge urgent">Urgent</span>` : `<span class="badge">${PRIO[s.priorite]}</span>`}</span>
+      <span class="meta">${esc(s.numero)} · ${dateC(s.created_at)} · ${esc((s.diagnostic?.resume || s.description).slice(0, 110))}</span>
+      <span class="meta">${s.statut === "planifie" ? "📅 " + dateH(s.creneau) : STATUT[s.statut]}</span></button>`).join("") || `<p class="vide">Aucune demande ici.</p>`}</div>`;
+  z.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; vueDemandes(); }));
+  z.querySelectorAll("[data-id]").forEach((b) => (b.onclick = () => { ouvert = b.dataset.id; history.replaceState(null, "", "?s=" + ouvert); rendre(); scrollTo(0, 0); }));
+}
+
+async function lienPhoto(chemin) { const { data } = await sb.storage.from("sav").createSignedUrl(chemin, 3600); return data?.signedUrl || ""; }
+
+/* ---------- Une demande : diagnostic, planification, intervention ---------- */
+async function vueDemande(s) {
+  const z = document.getElementById("zone"), i = s.installation || {}, d = s.diagnostic || {}, R = s.rapport || {};
+  const tel = s.telephone || i.telephone;
+  const mat = (i.materiel || []).map((m) => [m.type, m.marque, m.modele, m.numero_serie ? "n° " + m.numero_serie : ""].filter(Boolean).join(" ")).join(" · ");
+  const checklist = R.checklist || [...CHECKLIST, ...(d.a_verifier || [])].map((t) => ({ texte: t, fait: false }));
+  z.innerHTML = `<p><button class="btn petit" id="ret">← Toutes les demandes</button></p>
+  <section class="carte"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><h2>${esc(s.nom || i.client_nom || "Client")} <span class="meta">${esc(s.numero)}</span></h2>
+    <p class="meta">${esc(s.commune || i.commune || "")} · reçue le ${dateH(s.created_at)}</p></div>
+    <label class="ch">Priorité<select id="prio">${Object.entries(PRIO).map(([k, t]) => `<option value="${k}" ${s.priorite === k ? "selected" : ""}>${t}</option>`).join("")}</select></label></div>
+    <div class="rangee" style="margin-top:8px">${tel ? `<a class="btn teal petit" href="tel:${esc(tel.replace(/\s/g, ""))}">📞 Appeler ${esc(tel)}</a>` : ""}${s.email ? `<a class="btn petit" href="mailto:${esc(s.email)}">✉️ ${esc(s.email)}</a>` : ""}${i.portail ? `<a class="btn petit" target="_blank" rel="noopener" href="${esc(PORTAILS[i.portail] || "#")}">Voir sur ${esc(i.portail)}</a>` : ""}</div>
+    ${mat ? `<p class="meta" style="margin-top:10px"><b>Installation :</b> ${esc(mat)}${i.date_pose ? " · posée le " + dateC(i.date_pose) : ""}</p>` : `<p class="meta" style="margin-top:10px">Demande sans QR code : pas d'installation reliée.</p>`}
+    <h3>Ce que dit le client</h3><p>${esc(s.description)}</p>
+    <p class="meta">${s.reponses?.coupure ? "⚠️ Plus de courant du tout. " : ""}${s.reponses?.danger ? "🔥 Odeur, chaleur ou fumée signalée. " : ""}${s.reponses?.depuis ? "Depuis : " + esc(s.reponses.depuis) : ""}</p>
+    <div class="photos" id="ph"></div>
+    ${d.resume ? `<h3>Pré-diagnostic</h3><div class="diag"><p><b>${esc(d.resume)}</b></p>${d.cause_probable ? `<p>Cause probable : ${esc(d.cause_probable)}</p>` : ""}${(d.pieces || []).length ? `<p>À emporter : ${esc(d.pieces.join(", "))}</p>` : ""}${(d.a_verifier || []).length ? `<p>À vérifier : ${esc(d.a_verifier.join(" · "))}</p>` : ""}</div>` : ""}
+  </section>
+  <section class="carte"><h2>Planifier</h2><div class="rangee">
+    <label class="ch">Date et heure<input type="datetime-local" id="cr" value="${s.creneau ? new Date(new Date(s.creneau).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}"></label>
+    <label class="ch">Technicien<input id="tech" value="${esc(s.technicien || "")}" placeholder="Nom"></label>
+    <button class="btn teal petit" id="plan">Enregistrer le créneau</button><button class="btn petit" id="prev" ${s.creneau ? "" : "disabled"}>Prévenir le client par e-mail</button></div></section>
+  <section class="carte"><h2>Intervention</h2><p class="meta">À remplir sur place, depuis le téléphone.</p>
+    <div class="check">${checklist.map((c, k) => `<label><input type="checkbox" data-k="${k}" ${c.fait ? "checked" : ""}>${esc(c.texte)}</label>`).join("")}</div>
+    <h3>Ce qui a été fait</h3><label class="ch"><textarea id="notes" rows="4" placeholder="Pièces changées, réglages, conseils donnés…">${esc(R.notes || "")}</textarea></label>
+    <h3>Photos</h3><div class="photos" id="rph"></div><p class="fichier"><label class="btn petit">📷 Ajouter une photo<input type="file" id="rphoto" accept="image/*" capture="environment" multiple></label></p>
+    <h3>Signature du client</h3><canvas class="sig" id="sig"></canvas>
+    <div class="rangee" style="margin-top:8px"><label class="ch">Nom du signataire<input id="signe" value="${esc(R.signe_par || s.nom || "")}"></label><button class="btn petit" id="effacer">Effacer la signature</button></div>
+    <div class="rangee" style="margin-top:14px"><button class="btn petit" id="sauver">Enregistrer</button><button class="btn teal" id="terminer">${s.statut === "resolu" ? "Mettre à jour" : "Terminer l'intervention"}</button>
+    ${s.statut === "resolu" ? `<button class="btn" id="rapport">${s.rapport_envoye_le ? "Renvoyer" : "Envoyer"} le rapport au client</button>` : ""}</div>
+    ${s.rapport_envoye_le ? `<p class="meta">Rapport envoyé le ${dateH(s.rapport_envoye_le)}.</p>` : ""}</section>`;
+  document.getElementById("ret").onclick = () => { ouvert = null; history.replaceState(null, "", location.pathname); rendre(); };
+  // Photos du client et de l'intervention
+  for (const c of s.photos || []) { const u = await lienPhoto(c); if (u) document.getElementById("ph").insertAdjacentHTML("beforeend", `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Photo du client"></a>`); }
+  const photosRapport = [...(R.photos || [])];
+  const dessinerPhotos = async () => { const zz = document.getElementById("rph"); zz.innerHTML = ""; for (const c of photosRapport) { const u = await lienPhoto(c); if (u) zz.insertAdjacentHTML("beforeend", `<img src="${esc(u)}" alt="">`); } };
+  dessinerPhotos();
+  document.getElementById("rphoto").onchange = async (e) => {
+    for (const f of [...e.target.files].slice(0, 6)) {
+      const ext = (f.type.split("/")[1] || "jpg").replace("jpeg", "jpg"); const chemin = `rapports/${s.id}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+      const { error } = await sb.storage.from("sav").upload(chemin, f, { contentType: f.type }); if (!error) photosRapport.push(chemin); else info("Photo non envoyée : " + error.message, true);
+    }
+    dessinerPhotos(); sauverRapport(false);
+  };
+  // Signature au doigt
+  const cv = document.getElementById("sig"), ctx = cv.getContext("2d"); let trace = false, signe = !!R.signature;
+  const taille = () => { const r = cv.getBoundingClientRect(); cv.width = r.width * devicePixelRatio; cv.height = r.height * devicePixelRatio; ctx.scale(devicePixelRatio, devicePixelRatio); ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.strokeStyle = "#16241a";
+    if (R.signature) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = R.signature; } };
+  taille();
+  const pos = (e) => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.onpointerdown = (e) => { trace = true; signe = true; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pos(e)); };
+  cv.onpointermove = (e) => { if (!trace) return; ctx.lineTo(...pos(e)); ctx.stroke(); };
+  cv.onpointerup = () => (trace = false);
+  document.getElementById("effacer").onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); signe = false; };
+  const lireRapport = (fini) => ({ checklist: checklist.map((c, k) => ({ texte: c.texte, fait: document.querySelector(`[data-k="${k}"]`).checked })), notes: document.getElementById("notes").value.trim(),
+    photos: photosRapport, signe_par: document.getElementById("signe").value.trim() || null, signature: signe ? cv.toDataURL("image/png") : null, termine_le: fini ? new Date().toISOString() : (R.termine_le || null) });
+  async function sauverRapport(fini) {
+    const rapport = lireRapport(fini); const champs = { rapport, updated_at: new Date().toISOString() };
+    if (fini) champs.statut = "resolu"; else if (s.statut === "planifie" || s.statut === "nouveau") champs.statut = s.creneau ? "en_cours" : s.statut;
+    const { error } = await sb.from("sav").update(champs).eq("id", s.id); if (error) return info("Erreur : " + error.message, true);
+    Object.assign(s, champs); info(fini ? "Intervention terminée" : "Enregistré");
+  }
+  document.getElementById("sauver").onclick = () => sauverRapport(false);
+  document.getElementById("terminer").onclick = async () => { await sauverRapport(true); await charger(); rendre(); };
+  document.getElementById("rapport")?.addEventListener("click", async (e) => { e.target.disabled = true; const { data, error } = await sb.functions.invoke("sav", { body: { action: "envoyer_rapport", sav_id: s.id } });
+    if (error || !data?.ok) { e.target.disabled = false; return info(data?.erreur || error?.message || "Envoi impossible", true); } info("Rapport envoyé au client"); await charger(); rendre(); });
+  document.getElementById("prio").onchange = async (e) => { await sb.from("sav").update({ priorite: e.target.value }).eq("id", s.id); s.priorite = e.target.value; info("Priorité changée"); };
+  document.getElementById("plan").onclick = async () => {
+    const v = document.getElementById("cr").value; if (!v) return info("Choisissez la date et l'heure", true);
+    const champs = { creneau: new Date(v).toISOString(), technicien: document.getElementById("tech").value.trim() || null, statut: s.statut === "resolu" ? "resolu" : "planifie" };
+    const { error } = await sb.from("sav").update(champs).eq("id", s.id); if (error) return info("Erreur : " + error.message, true);
+    Object.assign(s, champs); document.getElementById("prev").disabled = false; info("Créneau enregistré");
+  };
+  document.getElementById("prev").onclick = async (e) => { e.target.disabled = true; const { data, error } = await sb.functions.invoke("sav", { body: { action: "confirmer_creneau", sav_id: s.id } });
+    e.target.disabled = false; if (error || !data?.ok) return info(data?.erreur || error?.message || "Envoi impossible", true); info("Client prévenu par e-mail"); };
+}
+
+/* ---------- Installations et QR codes ---------- */
+let instOuverte = null;
+const svgQR = (code, taille = 4) => { const q = qrcode(0, "M"); q.addData(SAV_URL + code); q.make(); return q.createSvgTag({ cellSize: taille, margin: 2, scalable: true }); };
+function etiquette(i) { return `<div class="etq"><div class="t">Un souci avec votre installation ?</div><div class="qr">${svgQR(i.code)}</div><div class="s">Scannez-moi ou appelez le 0590 32 15 20</div><div class="c">ENR Pose · ${esc(i.code)}</div></div>`; }
+function imprimer(liste) {
+  const w = open("", "_blank"); if (!w) return info("Autorisez les fenêtres pour imprimer", true);
+  w.document.write(`<!doctype html><title>Étiquettes SAV</title><style>body{font-family:Arial,sans-serif;margin:10mm}.feuille{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}.etq{border:1px dashed #999;border-radius:4mm;padding:4mm;text-align:center;break-inside:avoid}.t{font-weight:bold;font-size:11pt}.qr svg{width:38mm;height:38mm}.s{font-size:9pt}.c{font-size:8pt;color:#0b7a70;font-weight:bold;margin-top:1mm}</style><div class="feuille">${liste.map(etiquette).join("")}</div><script>onload=()=>print()<\/script>`);
+  w.document.close();
+}
+function vueInstallations() {
+  const z = document.getElementById("zone");
+  if (instOuverte !== null) return vueUneInstallation(instOuverte === "nouvelle" ? null : L.inst.find((x) => x.id === instOuverte));
+  z.innerHTML = `<div class="rangee" style="margin-bottom:12px"><button class="btn jaune" id="nouv">+ Ajouter une installation</button>${L.inst.length ? `<button class="btn" id="tout">🖨️ Imprimer toutes les étiquettes</button>` : ""}</div>
+    <div class="liste">${L.inst.map((i) => `<button class="item" data-i="${i.id}" data-p="normal"><span><b>${esc(i.client_nom)}</b> <span class="meta">${esc(i.commune || "")}</span></span><span class="badge">${esc(i.code)}</span>
+      <span class="meta">${esc((i.materiel || []).map((m) => [m.marque, m.modele].filter(Boolean).join(" ")).join(" · ") || "Matériel à compléter")}${i.date_pose ? " · posée le " + dateC(i.date_pose) : ""}</span><span class="meta">${L.sav.filter((x) => x.installation_id === i.id).length} SAV</span></button>`).join("")
+      || `<section class="carte"><h2>Aucune installation pour l'instant</h2><p class="meta">Ajoutez les installations au fur et à mesure (ou envoyez la liste à Claude pour un import). Chaque installation reçoit son QR code à coller sur l'onduleur.</p></section>`}</div>`;
+  document.getElementById("nouv").onclick = () => { instOuverte = "nouvelle"; vueInstallations(); };
+  document.getElementById("tout")?.addEventListener("click", () => imprimer(L.inst));
+  z.querySelectorAll("[data-i]").forEach((b) => (b.onclick = () => { instOuverte = b.dataset.i; vueInstallations(); }));
+}
+function vueUneInstallation(i) {
+  const z = document.getElementById("zone"), v = i || { materiel: [] }, mat = (v.materiel || []).map((m) => ({ ...m }));
+  const TYPES = ["Onduleur", "Batterie", "Panneaux", "Régulateur", "Autre"];
+  const dessiner = () => {
+    z.innerHTML = `<p><button class="btn petit" id="ret">← Toutes les installations</button></p><section class="carte"><div class="grille2"><div>
+      <h2>${i ? esc(i.client_nom) : "Nouvelle installation"}</h2>
+      <div class="grille2"><label class="ch">Client<input id="f-nom" value="${esc(v.client_nom || "")}"></label><label class="ch">Téléphone<input id="f-tel" value="${esc(v.telephone || "")}"></label>
+      <label class="ch">E-mail<input id="f-email" value="${esc(v.email || "")}"></label><label class="ch">Commune<input id="f-com" value="${esc(v.commune || "")}"></label>
+      <label class="ch">Adresse<input id="f-adr" value="${esc(v.adresse || "")}"></label><label class="ch">Date de pose<input type="date" id="f-date" value="${esc(v.date_pose || "")}"></label>
+      <label class="ch">Puissance (kWc)<input id="f-kwc" inputmode="decimal" value="${esc(v.puissance_kwc ?? "")}"></label><label class="ch">Suivi à distance<select id="f-port"><option value="">Aucun</option>${Object.keys(PORTAILS).map((p) => `<option ${v.portail === p ? "selected" : ""}>${p}</option>`).join("")}</select></label></div></div>
+      <div style="text-align:center">${i ? `<div class="qr">${svgQR(i.code)}</div><p class="meta">Code ${esc(i.code)}</p><button class="btn petit" id="imp">🖨️ Imprimer l'étiquette</button>` : `<p class="meta">Le QR code apparaît après l'enregistrement.</p>`}</div></div>
+      <h3>Matériel posé</h3>${mat.map((m, k) => `<div class="mat"><select data-k="${k}" data-c="type">${TYPES.map((t) => `<option ${m.type === t ? "selected" : ""}>${t}</option>`).join("")}</select><input data-k="${k}" data-c="marque" placeholder="Marque" value="${esc(m.marque || "")}"><input data-k="${k}" data-c="modele" placeholder="Modèle" value="${esc(m.modele || "")}"><input data-k="${k}" data-c="numero_serie" placeholder="N° de série" value="${esc(m.numero_serie || "")}"><button class="x" data-del="${k}">✕</button></div>`).join("")}
+      <button class="btn petit" id="ajout">+ Ajouter du matériel</button>
+      <label class="ch" style="margin-top:12px">Notes<textarea id="f-notes" rows="2">${esc(v.notes || "")}</textarea></label>
+      <div class="rangee" style="margin-top:12px"><button class="btn teal" id="ok">Enregistrer</button></div></section>`;
+    document.getElementById("ret").onclick = () => { instOuverte = null; vueInstallations(); };
+    document.getElementById("imp")?.addEventListener("click", () => imprimer([i]));
+    z.querySelectorAll("[data-c]").forEach((el) => (el.onchange = () => (mat[+el.dataset.k][el.dataset.c] = el.value.trim())));
+    z.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { mat.splice(+b.dataset.del, 1); dessiner(); }));
+    document.getElementById("ajout").onclick = () => { mat.push({ type: "Onduleur" }); dessiner(); };
+    document.getElementById("ok").onclick = async () => {
+      const g = (id) => document.getElementById(id).value.trim();
+      if (!g("f-nom")) return info("Indiquez le nom du client", true);
+      const champs = { client_nom: g("f-nom"), telephone: g("f-tel") || null, email: g("f-email").toLowerCase() || null, commune: g("f-com") || null, adresse: g("f-adr") || null,
+        date_pose: g("f-date") || null, puissance_kwc: g("f-kwc") ? Number(g("f-kwc").replace(",", ".")) : null, portail: g("f-port") || null, notes: g("f-notes") || null, materiel: mat.filter((m) => m.marque || m.modele || m.numero_serie) };
+      const r = i ? await sb.from("installations").update(champs).eq("id", i.id).select("*").single() : await sb.from("installations").insert(champs).select("*").single();
+      if (r.error) return info("Erreur : " + r.error.message, true);
+      info("Installation enregistrée"); await charger(); instOuverte = r.data.id; rendre();
+    };
+  };
+  dessiner();
+}
+
+/* ---------- Connexion ---------- */
+function connexion(msg) {
+  app.innerHTML = `<form class="carte connexion" id="fco"><h2>Connexion</h2><p class="meta">Même accès que le tableau de bord.</p>${msg ? `<p class="badge alerte">${esc(msg)}</p>` : ""}
+    <input id="em" type="email" placeholder="E-mail" autocomplete="username"><input id="mdp" type="password" placeholder="Mot de passe" autocomplete="current-password"><button class="btn jaune" style="width:100%">Se connecter</button></form>`;
+  document.getElementById("fco").onsubmit = async (e) => { e.preventDefault(); const { error } = await sb.auth.signInWithPassword({ email: document.getElementById("em").value.trim(), password: document.getElementById("mdp").value }); if (error) return connexion("E-mail ou mot de passe incorrect."); demarrer(); };
+}
+async function demarrer() {
+  const { data: { session } } = await sb.auth.getSession(); if (!session) return connexion();
+  const { data: eq } = await sb.from("staff").select("email").limit(1); if (!eq || !eq.length) return connexion("Ce compte n'a pas accès au SAV.");
+  try { await charger(); rendre(); } catch (e) { app.innerHTML = `<p class="vide">Erreur : ${esc(e.message || e)}</p>`; }
+}
+demarrer();
+})();
+</script>
+</body>
+</html>

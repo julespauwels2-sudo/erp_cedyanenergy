@@ -221,6 +221,7 @@ a.ghost{color:inherit}
     <a class="chip chip--jaune" href="devis.html?nouveau">Faire un devis</a>
     <a class="chip" href="devis.html">Devis</a>
     <a class="chip" href="stock.html">Stock</a>
+    <a class="chip" href="sav.html">SAV</a>
     <a class="chip" href="https://cedyan-energy.net/dashboard.html" target="_blank" rel="noopener">Tableau de bord</a>
     <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/4</b></button>
     <button class="chip" id="btnCyclone" aria-pressed="false">Alerte cyclone</button>
@@ -271,7 +272,7 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const euroD = (n) => (Number(n) || 0).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 const dateC = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
 const S = { open:null, cyclone:false, moi:null };
-const DATA = { demandes:[], devis:[], kbis:[], produits:[], pose:[], stock:[], receptions:0 };
+const DATA = { demandes:[], devis:[], kbis:[], produits:[], pose:[], stock:[], receptions:0, sav:[] };
 
 // Le stock est rangé par familles du catalogue (les quantités arriveront avec l'étape Stock)
 const BAIES = {
@@ -294,17 +295,21 @@ const devisSt = (st) => DATA.devis.filter((d) => d.statut === st);
 const aAppeler = () => DATA.devis.filter((d) => d.statut === "envoye" && d.a_appeler);
 const clientDe = (d) => { const c = d.demande?.contact || d.contact || {}; return c.entreprise || c.nom || c.telephone || "Client"; };
 const debutMois = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1).toISOString(); };
+const savATraiter = () => DATA.sav.filter((x) => x.statut === "nouveau");
+const savUrgent = () => savATraiter().filter((x) => x.priorite === "urgent");
 const signesMois = () => DATA.devis.filter((d) => d.statut === "accepte" && d.accepte_le && d.accepte_le >= debutMois());
 
 async function charger() {
-  const [dm, dv, kb, pr, st, rc] = await Promise.all([
+  const [dm, dv, kb, pr, st, rc, sv] = await Promise.all([
     sb.from("demandes").select("id,created_at,type,statut,contact,installateur,profil,pour_quand").order("created_at", { ascending: false }).limit(300),
     sb.from("devis").select("id,numero,statut,total_ttc,created_at,envoye_le,accepte_le,valide_jusqu,a_appeler,vu_le,demande:demandes(contact)").order("created_at", { ascending: false }).limit(500),
     sb.from("comptes_pro").select("id,entreprise,nom,metier,statut,created_at").eq("statut", "en_attente").order("created_at"),
     sb.from("produits").select("id,cat,actif,produits_prive(dispo)").limit(3000),
     sb.from("stock_vue").select("ref,libelle,cat,reel,reserve,disponible,seuil_alerte,en_alerte").limit(5000),
     sb.from("stock_receptions").select("id", { count: "exact", head: true }).eq("statut", "a_valider"),
+    sb.from("sav").select("id,numero,nom,commune,priorite,statut,creneau,created_at,diagnostic").in("statut", ["nouveau", "planifie", "en_cours"]).order("created_at", { ascending: false }).limit(200),
   ]);
+  DATA.sav = sv.error ? [] : (sv.data || []);
   const err = [dm, dv, kb, pr].find((r) => r.error); if (err) throw err.error;
   DATA.stock = st.error ? [] : (st.data || []); DATA.receptions = rc.error ? 0 : (rc.count || 0);
   DATA.demandes = dm.data || []; DATA.devis = dv.data || []; DATA.kbis = kb.data || [];
@@ -328,11 +333,11 @@ const HOT = {
   kbis:    {zone:'cedyan', at:V3(3.9,2.0,-4.6),  txt:()=>DATA.kbis.length?`${DATA.kbis.length} Kbis à valider`:'Kbis à jour', alert:()=>false},
   prevus:  {zone:'enr',    at:V3(2.3,3.1,2.6),   txt:()=>DATA.pose.length?pl(DATA.pose.length,'demande')+' de pose':'Aucune demande de pose', alert:()=>false},
   encours: {zone:'enr',    at:V3(9.3,3.0,2.2),   txt:()=>'Chantiers : bientôt', alert:()=>false},
-  sav:     {zone:'enr',    at:V3(2.0,1.9,6.9),   txt:()=>'SAV : bientôt', alert:()=>false},
+  sav:     {zone:'enr',    at:V3(2.0,1.9,6.9),   txt:()=>savATraiter().length?pl(savATraiter().length,'SAV','SAV')+' à traiter'+(savUrgent().length?' dont '+savUrgent().length+' urgent':''):'SAV à jour', alert:()=>savUrgent().length>0},
 };
-const TODO = { recv:()=>DATA.receptions>0, demandes:()=>devisSt('brouillon').length>0 || devisSt('valide').length>0, kbis:()=>DATA.kbis.length>0, prevus:()=>DATA.pose.length>0 };
+const TODO = { sav:()=>savATraiter().length>0, recv:()=>DATA.receptions>0, demandes:()=>devisSt('brouillon').length>0 || devisSt('valide').length>0, kbis:()=>DATA.kbis.length>0, prevus:()=>DATA.pose.length>0 };
 const needs = id => HOT[id].alert() || (TODO[id] ? TODO[id]() : false);
-const HOTSEC = {pv:'stock', ond:'stock', bat:'stock', small:'stock', recv:'recv', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'bientot', sav:'bientot'};
+const HOTSEC = {pv:'stock', ond:'stock', bat:'stock', small:'stock', recv:'recv', demandes:'todo', kbis:'todo', pipe:'pipe', prevus:'prevus', encours:'bientot', sav:'sav'};
 
 /* =============== Three.js =============== */
 const canvas = document.getElementById('c');
@@ -577,6 +582,8 @@ function rebuild(){
   g=grp(Z.cedyan.dyn,'demandes'); devisSt('brouillon').slice(0,6).forEach((d,i)=>box(g,.36,.03,.24,0xFDE68A,4.6+(i%3)*.45,1.26+Math.floor(i/3)*.04,-3));
   // Drapeaux sur la maison : un par demande de pose
   g=grp(Z.enr.dyn,'prevus'); DATA.pose.slice(0,4).forEach((p,i)=>{ const x=1.6+i*.7; box(g,.03,.55,.03,0x334155,x,1.95,2.6); box(g,.28,.17,.02,0x0E9C8F,x+.15,2.3,2.6); });
+  // Gyrophare au-dessus de la caisse SAV : une demande urgente attend
+  if(savUrgent().length){ const gb=grp(Z.enr.dyn,'sav'); const bc=box(gb,.16,.22,.16,null,1.6,.71,7.2,new THREE.MeshStandardMaterial({color:0xF97316,emissive:0xF97316,emissiveIntensity:.8})); beacons.push(bc); }
   collect();
 }
 
@@ -642,7 +649,7 @@ Object.entries(HOT).forEach(([id,h])=>{
 function counts(){ return {
   stock: alertesStock().length + DATA.receptions,
   cedyan: devisSt('brouillon').length + devisSt('valide').length + aAppeler().length + DATA.kbis.length,
-  enr: DATA.pose.length };
+  enr: DATA.pose.length + savATraiter().length };
 }
 function updateLabels(){
   const c=counts();
@@ -743,7 +750,9 @@ function render(){
   }
   if(id==='enr'){
     h+=`<div class="sec" id="h-prevus"><h3>Demandes de pose <small>clients qui veulent une installation</small></h3>`+(DATA.pose.length?`<ul class="rows">${DATA.pose.map(d=>{ const c=d.contact||{}; return `<li class="row line"><div><b>${esc(c.nom||c.telephone||'Client')}</b><span class="meta">${esc(c.commune||'')}${c.commune?', ':''}demande du ${dateC(d.created_at)}${c.telephone?', tél. '+esc(c.telephone):''}</span></div>${lien(SITE+'/dashboard.html','Voir','cta sm',true)}</li>`; }).join('')}</ul>`:empty('Aucune demande de pose pour le moment.'))+`</div>`;
-    h+=`<div class="sec" id="h-bientot"><h3>Chantiers et SAV</h3>${empty("Le suivi des chantiers et du SAV arrive avec les prochaines étapes. Les objets de cette zone s'animeront à ce moment-là.")}</div>`;
+    const sv=[...DATA.sav].sort((a,b)=>({urgent:0,normal:1,faible:2}[a.priorite]-{urgent:0,normal:1,faible:2}[b.priorite]));
+    h+=`<div class="sec" id="h-sav"><h3>SAV <small>${savATraiter().length} à traiter</small></h3>`+(sv.length?`<ul class="rows">${sv.slice(0,8).map(x=>`<li class="row line ${x.priorite==='urgent'?'warn':''}"><div><b>${esc(x.nom||'Client')}</b><span class="meta">${x.priorite==='urgent'?'🔴 Urgent · ':''}${esc(x.diagnostic?.resume||x.numero)}${x.statut==='planifie'&&x.creneau?' · prévu le '+dateC(x.creneau):''}</span></div>${lien('sav.html?s='+x.id,'Ouvrir')}</li>`).join('')}</ul>`:empty('Aucune demande SAV en cours.'))+`<p style="margin-top:8px">${lien('sav.html','Ouvrir le SAV','ghost')}</p></div>`;
+    h+=`<div class="sec" id="h-bientot"><h3>Chantiers</h3>${empty("Le suivi des chantiers (et le quartier ENR Pose) arrive avec l'étape suivante.")}</div>`;
   }
   pbody.innerHTML=h+'<div class="pad"></div>';
 }
