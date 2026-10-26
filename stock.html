@@ -122,6 +122,8 @@ main{padding-top:24px}
 .outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
 .vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
 .pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
+.btn.danger{background:#fff;border-color:#f3c7c2;color:#b42318}.btn.danger:hover{background:#fdecea}
+.zone-danger{margin-top:18px;padding-top:14px;border-top:1px dashed #e3ebe4;display:flex;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -194,12 +196,19 @@ function vueStock() {
     <p class="meta" id="impinfo"></p>
     <table class="tab"><thead><tr><th>Produit</th><th class="n">Réel</th><th class="n cache-mobile">Réservé</th><th class="n">Disponible</th><th class="n cache-mobile">Seuil</th></tr></thead>
     <tbody>${liste.slice(0, 400).map((a) => `<tr class="clic ${a.en_alerte ? "alerte" : ""}" data-r="${esc(a.ref)}"><td><b>${esc(a.libelle)}</b> ${a.en_alerte ? `<span class="badge alerte">À commander</span>` : ""}<div class="ref">${esc(a.ref)}${a.fournisseur ? " · " + esc(a.fournisseur) : ""}</div>
-      ${ouvert === a.ref ? `<div class="edit"><label>Quantité réelle<input id="e-q" inputmode="decimal" value="${nb(a.reel)}"></label><label>Seuil d'alerte<input id="e-s" inputmode="decimal" value="${a.seuil_alerte ?? ""}"></label><label>Stock désiré<input id="e-d" inputmode="decimal" value="${a.stock_desire ?? ""}"></label><label>Fournisseur<input id="e-f" value="${esc(a.fournisseur || "")}"></label><label>Délai (jours)<input id="e-j" inputmode="numeric" value="${a.delai_jours ?? ""}"></label><button class="btn vert petit" id="e-ok">Enregistrer</button></div>` : ""}</td>
+      ${ouvert === a.ref ? `<div class="edit"><label>Quantité réelle<input id="e-q" inputmode="decimal" value="${nb(a.reel)}"></label><label>Seuil d'alerte<input id="e-s" inputmode="decimal" value="${a.seuil_alerte ?? ""}"></label><label>Stock désiré<input id="e-d" inputmode="decimal" value="${a.stock_desire ?? ""}"></label><label>Fournisseur<input id="e-f" value="${esc(a.fournisseur || "")}"></label><label>Délai (jours)<input id="e-j" inputmode="numeric" value="${a.delai_jours ?? ""}"></label><button class="btn vert petit" id="e-ok">Enregistrer</button><button class="btn petit danger" id="e-suppr">🗑 Retirer du stock</button></div>` : ""}</td>
       <td class="n">${nb(a.reel)}</td><td class="n cache-mobile">${a.reserve ? nb(a.reserve) : "–"}</td><td class="n dispo">${nb(a.disponible)}</td><td class="n cache-mobile">${a.seuil_alerte ?? "–"}</td></tr>`).join("") || `<tr><td colspan="5" class="vide">Aucun produit.</td></tr>`}</tbody></table>
     ${liste.length > 400 ? `<p class="meta">400 premiers résultats affichés : précisez la recherche.</p>` : ""}`;
   const qi = document.getElementById("q"); qi.oninput = () => { cherche = qi.value; clearTimeout(qi.t); qi.t = setTimeout(() => { vueStock(); const n = document.getElementById("q"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
   z.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; vueStock(); }));
   z.querySelectorAll("tr[data-r]").forEach((tr) => (tr.onclick = (e) => { if (e.target.closest(".edit")) return; ouvert = ouvert === tr.dataset.r ? null : tr.dataset.r; vueStock(); }));
+  document.getElementById("e-suppr")?.addEventListener("click", async () => {
+    const a = L.articles.find((x) => x.ref === ouvert);
+    if (!confirm(`Retirer « ${a.libelle} » du stock du QG ?\n\nSes réservations et son historique de mouvements sont aussi effacés. Rien ne change dans Dolibarr. C'est définitif.`)) return;
+    const { error } = await sb.from("stock_articles").delete().eq("ref", a.ref);
+    if (error) return info("Suppression impossible : " + error.message, true);
+    info("Produit retiré"); ouvert = null; await charger(); rendre();
+  });
   const ok = document.getElementById("e-ok");
   if (ok) ok.onclick = async () => {
     const a = L.articles.find((x) => x.ref === ouvert), v = (id) => document.getElementById(id).value.trim(), num = (s) => s === "" ? null : Number(s.replace(",", "."));

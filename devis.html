@@ -179,6 +179,9 @@ main{padding-top:24px}
 .outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
 .vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
 .pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
+.btn.danger{background:#fff;border:1.5px solid #f3c7c2;color:#b42318}.btn.danger:hover{background:#fdecea}
+.btn.petit{min-height:36px;padding:0 14px;font-size:13px}
+.zone-danger{margin-top:22px;padding-top:14px;border-top:1px dashed #dfe7e0;display:flex;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -450,9 +453,11 @@ function rendre() {
   </section>
   <div class="cols" aria-hidden="true"><span>Produit</span><span>Quantité</span><span>Prix unitaire</span><span>Total</span><span></span></div>
   <div class="lignes" id="lignes">${D.lignes.map(ligneHtml).join("") || `<p class="vide">Aucune ligne. Ajoutez des produits ci-dessous.</p>`}</div>
-  ${fige ? "" : `<div class="ajout"><input id="cherche" type="search" placeholder="Ajouter un produit : tapez un nom, une marque ou une référence" autocomplete="off" aria-label="Ajouter un produit"><button class="libre" id="libre">Ligne libre</button><div class="resultats" id="res" hidden></div></div>`}`;
+  ${fige ? "" : `<div class="ajout"><input id="cherche" type="search" placeholder="Ajouter un produit : tapez un nom, une marque ou une référence" autocomplete="off" aria-label="Ajouter un produit"><button class="libre" id="libre">Ligne libre</button><div class="resultats" id="res" hidden></div></div>`}
+  <div class="zone-danger"><button class="btn danger petit" id="suppr-devis" type="button">🗑 Supprimer ce devis</button></div>`;
   document.getElementById("retour").onclick = ecranListe;
   document.getElementById("editclient").onclick = editerClient;
+  document.getElementById("suppr-devis").onclick = supprimerDevis;
   afficherPieces(demande);
   app.querySelectorAll("[data-grille]").forEach((b) => (b.onclick = () => changerGrille(b.dataset.grille)));
   brancherLignes();
@@ -678,6 +683,18 @@ function piedFige() {
 }
 
 // Envoi au client : on fabrique le PDF ici, on le dépose dans l'espace privé, puis le serveur envoie l'e-mail
+// Supprimer le devis (la demande du client reste dans le tableau de bord)
+async function supprimerDevis() {
+  const d = D.devis, nom = (D.demande.contact || {}).nom || (D.demande.contact || {}).entreprise || "ce client";
+  const avert = d.statut === "accepte" ? "\n\nAttention : ce devis a été ACCEPTÉ par le client. Le matériel réservé sera libéré." : d.statut === "envoye" ? "\n\nCe devis a déjà été envoyé au client : son lien d'acceptation ne fonctionnera plus." : "";
+  if (!confirm(`Supprimer le devis ${d.numero || "(brouillon)"} de ${nom} ?${avert}\n\nC'est définitif. La demande du client reste dans le tableau de bord.`)) return;
+  if (d.pdf_path) await sb.storage.from("devis").remove([d.pdf_path]);
+  const { error } = await sb.from("devis").delete().eq("id", d.id);
+  if (error) return afficherEtat("Suppression impossible : " + error.message, true);
+  if (D.demande.id && ["a_valider", "attente_kbis", "devis_envoye"].includes(D.demande.statut)) await sb.from("demandes").update({ statut: "en_cours" }).eq("id", D.demande.id);
+  afficherEtat("Devis supprimé"); prevenir(); ecranListe();
+}
+
 async function envoyerAuClient() {
   const c = D.demande.contact || {};
   let email = (c.email || "").trim();

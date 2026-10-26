@@ -134,6 +134,8 @@ main{padding-top:24px}
 .outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
 .vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
 .pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
+.btn.danger{background:#fff;border-color:#f3c7c2;color:#b42318}.btn.danger:hover{background:#fdecea}
+.zone-danger{margin-top:18px;padding-top:14px;border-top:1px dashed #e3ebe4;display:flex;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -251,7 +253,8 @@ async function vueChantier(c) {
 
   <section class="carte"><h2>4. Mise en service</h2><p class="meta">Un clic : le matériel sort du stock, la fiche SAV avec son QR code est créée, et le client reçoit son dossier de fin de chantier (matériel, photos, lien SAV).</p>
     <div class="rangee"><label class="ch">Date de mise en service<input type="date" id="ms-date" value="${esc(c.date_mise_en_service || new Date().toISOString().slice(0, 10))}"></label>
-    <button class="btn jaune" id="ms-ok">${c.etape === "termine" ? "Renvoyer le dossier au client" : "Terminer le chantier"}</button>${c.installation_id ? `<a class="btn petit" href="sav.html?v=installations">Voir la fiche SAV</a>` : ""}</div></section>`;
+    <button class="btn jaune" id="ms-ok">${c.etape === "termine" ? "Renvoyer le dossier au client" : "Terminer le chantier"}</button>${c.installation_id ? `<a class="btn petit" href="sav.html?v=installations">Voir la fiche SAV</a>` : ""}</div>
+    <div class="zone-danger"><button class="btn petit danger" id="suppr">🗑 Supprimer ce chantier</button></div></section>`;
 
   document.getElementById("ret").onclick = () => { ouvert = null; history.replaceState(null, "", location.pathname); rendre(); };
   const maj = async (champs, msg) => { const { error } = await sb.from("chantiers").update({ ...champs, updated_at: new Date().toISOString() }).eq("id", c.id); if (error) { info("Erreur : " + error.message, true); return false; } Object.assign(c, champs); if (msg) info(msg); return true; };
@@ -309,6 +312,14 @@ async function vueChantier(c) {
   // Pose
   document.getElementById("p-ok").onclick = async () => { const v = document.getElementById("p-date").value || null; const champs = { date_pose: v }; if (v && (c.etape === "pose" || c.etape === "demarches")) champs.etape = "pose"; if (await maj(champs, "Date de pose enregistrée")) { await charger(); rendre(); } };
 
+  // Supprimer le chantier (et ses photos) : le matériel réservé est libéré
+  document.getElementById("suppr").onclick = async () => {
+    if (!confirm(`Supprimer le chantier ${c.numero} de ${c.client_nom} ?\n\nSes photos sont effacées et le matériel réservé retourne dans le stock disponible. C'est définitif.`)) return;
+    if (photos.length) await sb.storage.from("chantiers").remove(photos);
+    const { error } = await sb.from("chantiers").delete().eq("id", c.id);
+    if (error) return info("Suppression impossible : " + error.message, true);
+    info("Chantier supprimé"); ouvert = null; history.replaceState(null, "", location.pathname); await charger(); rendre();
+  };
   // Mise en service : sortie du stock, fiche SAV, dossier client
   document.getElementById("ms-ok").onclick = async (e) => {
     if (c.etape !== "termine" && !confirm("Terminer ce chantier ? Le matériel réservé sort du stock et le client reçoit son dossier.")) return;

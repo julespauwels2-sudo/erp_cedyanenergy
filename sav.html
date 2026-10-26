@@ -117,6 +117,8 @@ main{padding-top:24px}
 .outils input[type=search],.ajout input{border-radius:999px;box-shadow:0 8px 20px -18px rgba(20,60,30,.5)}
 .vide{background:#fff;border-radius:var(--r-l);box-shadow:var(--ombre);padding:30px}
 .pied{background:radial-gradient(ellipse at 80% 0%,#1d4a28,#08170d 75%)}
+.btn.danger{background:#fff;border-color:#f3c7c2;color:#b42318}.btn.danger:hover{background:#fdecea}
+.zone-danger{margin-top:18px;padding-top:14px;border-top:1px dashed #e3ebe4;display:flex;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -234,7 +236,8 @@ async function vueDemande(s) {
     <div class="rangee" style="margin-top:8px"><label class="ch">Nom du signataire<input id="signe" value="${esc(R.signe_par || s.nom || "")}"></label><button class="btn petit" id="effacer">Effacer la signature</button></div>
     <div class="rangee" style="margin-top:14px"><button class="btn petit" id="sauver">Enregistrer</button><button class="btn teal" id="terminer">${s.statut === "resolu" ? "Mettre à jour" : "Terminer l'intervention"}</button>
     ${s.statut === "resolu" ? `<button class="btn" id="rapport">${s.rapport_envoye_le ? "Renvoyer" : "Envoyer"} le rapport au client</button>` : ""}</div>
-    ${s.rapport_envoye_le ? `<p class="meta">Rapport envoyé le ${dateH(s.rapport_envoye_le)}.</p>` : ""}</section>`;
+    ${s.rapport_envoye_le ? `<p class="meta">Rapport envoyé le ${dateH(s.rapport_envoye_le)}.</p>` : ""}
+    <div class="zone-danger"><button class="btn petit danger" id="suppr">🗑 Supprimer cette demande</button></div></section>`;
   document.getElementById("ret").onclick = () => { ouvert = null; history.replaceState(null, "", location.pathname); rendre(); };
   // Photos du client et de l'intervention
   for (const c of s.photos || []) { const u = await lienPhoto(c); if (u) document.getElementById("ph").insertAdjacentHTML("beforeend", `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Photo du client"></a>`); }
@@ -270,6 +273,13 @@ async function vueDemande(s) {
   document.getElementById("terminer").onclick = async () => { await sauverRapport(true); await charger(); rendre(); };
   document.getElementById("rapport")?.addEventListener("click", async (e) => { e.target.disabled = true; const { data, error } = await sb.functions.invoke("sav", { body: { action: "envoyer_rapport", sav_id: s.id } });
     if (error || !data?.ok) { e.target.disabled = false; return info(data?.erreur || error?.message || "Envoi impossible", true); } info("Rapport envoyé au client"); await charger(); rendre(); });
+  document.getElementById("suppr").onclick = async () => {
+    if (!confirm(`Supprimer la demande ${s.numero} de ${s.nom || "ce client"} ?\n\nSes photos et son rapport sont effacés. C'est définitif.`)) return;
+    const fichiers = [...(s.photos || []), ...((s.rapport || {}).photos || [])]; if (fichiers.length) await sb.storage.from("sav").remove(fichiers);
+    const { error } = await sb.from("sav").delete().eq("id", s.id);
+    if (error) return info("Suppression impossible : " + error.message, true);
+    info("Demande supprimée"); ouvert = null; history.replaceState(null, "", location.pathname); await charger(); rendre();
+  };
   document.getElementById("prio").onchange = async (e) => { await sb.from("sav").update({ priorite: e.target.value }).eq("id", s.id); s.priorite = e.target.value; info("Priorité changée"); };
   document.getElementById("plan").onclick = async () => {
     const v = document.getElementById("cr").value; if (!v) return info("Choisissez la date et l'heure", true);
@@ -315,9 +325,16 @@ function vueUneInstallation(i) {
       <h3>Matériel posé</h3>${mat.map((m, k) => `<div class="mat"><select data-k="${k}" data-c="type">${TYPES.map((t) => `<option ${m.type === t ? "selected" : ""}>${t}</option>`).join("")}</select><input data-k="${k}" data-c="marque" placeholder="Marque" value="${esc(m.marque || "")}"><input data-k="${k}" data-c="modele" placeholder="Modèle" value="${esc(m.modele || "")}"><input data-k="${k}" data-c="numero_serie" placeholder="N° de série" value="${esc(m.numero_serie || "")}"><button class="x" data-del="${k}">✕</button></div>`).join("")}
       <button class="btn petit" id="ajout">+ Ajouter du matériel</button>
       <label class="ch" style="margin-top:12px">Notes<textarea id="f-notes" rows="2">${esc(v.notes || "")}</textarea></label>
-      <div class="rangee" style="margin-top:12px"><button class="btn teal" id="ok">Enregistrer</button></div></section>`;
+      <div class="rangee" style="margin-top:12px"><button class="btn teal" id="ok">Enregistrer</button></div>
+      ${i ? `<div class="zone-danger"><button class="btn petit danger" id="suppr-i">🗑 Supprimer cette installation</button></div>` : ""}</section>`;
     document.getElementById("ret").onclick = () => { instOuverte = null; vueInstallations(); };
     document.getElementById("imp")?.addEventListener("click", () => imprimer([i]));
+    document.getElementById("suppr-i")?.addEventListener("click", async () => {
+      if (!confirm(`Supprimer l'installation de ${i.client_nom} ?\n\nSon QR code ne fonctionnera plus (le client pourra toujours faire une demande SAV, sans fiche reliée). Les demandes SAV passées sont gardées. C'est définitif.`)) return;
+      const { error } = await sb.from("installations").delete().eq("id", i.id);
+      if (error) return info("Suppression impossible : " + error.message, true);
+      info("Installation supprimée"); instOuverte = null; await charger(); rendre();
+    });
     z.querySelectorAll("[data-c]").forEach((el) => (el.onchange = () => (mat[+el.dataset.k][el.dataset.c] = el.value.trim())));
     z.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { mat.splice(+b.dataset.del, 1); dessiner(); }));
     document.getElementById("ajout").onclick = () => { mat.push({ type: "Onduleur" }); dessiner(); };
