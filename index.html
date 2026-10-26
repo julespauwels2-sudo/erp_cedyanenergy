@@ -204,6 +204,9 @@ a.ghost{color:inherit}
   .hint{white-space:normal;text-align:center;width:max-content;max-width:calc(100% - 32px)}
 }
 .seul-mobile,.nav-bas{display:none}
+#recentrer{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:5;pointer-events:auto}
+#recentrer[hidden]{display:none}
+canvas{touch-action:none}
 /* Étiquettes des maisons du quartier */
 .mtg{position:absolute;left:0;top:0;pointer-events:auto;border:0;cursor:pointer;background:var(--surface);color:var(--ink);font:700 12px/1.2 inherit;padding:6px 10px;border-radius:999px;box-shadow:var(--shadow);white-space:nowrap;display:none;border-left:4px solid #0E9C8F}
 .mtg.show{display:block}.mtg.cours{border-left-color:#F08C00}
@@ -235,6 +238,7 @@ a.ghost{color:inherit}
   #toasts{top:calc(76px + env(safe-area-inset-top,0px))!important;bottom:auto!important}
   #cycloneBanner{top:calc(76px + env(safe-area-inset-top,0px))!important}
   .tg .tx{font-size:11px}
+  #recentrer{right:10px;bottom:calc(86px + env(safe-area-inset-bottom,0px))}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 </style>
@@ -259,6 +263,7 @@ a.ghost{color:inherit}
     <a class="chip doublon" href="chantiers.html">Chantiers</a>
     <a class="chip doublon" href="sav.html">SAV</a>
     <a class="chip" href="https://cedyan-energy.net/dashboard.html" target="_blank" rel="noopener">Tableau de bord</a>
+    <a class="chip" href="terrain.html">Équipe terrain</a>
     <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/4</b></button>
     <button class="chip" id="btnCyclone" aria-pressed="false">Alerte cyclone</button>
     <button class="chip" id="btnSortir">Quitter</button>
@@ -272,6 +277,7 @@ a.ghost{color:inherit}
 
 <div id="cycloneBanner" role="status" hidden>Vigilance cyclonique : chantiers suspendus, stock à sécuriser.</div>
 <div id="labels"></div>
+<button class="chip" id="recentrer" hidden aria-label="Revenir à la vue d'ensemble">⤾ Vue d'ensemble</button>
 <nav class="nav-bas" aria-label="Accès rapide">
   <a href="devis.html"><span aria-hidden="true">📄</span>Devis</a>
   <a href="stock.html"><span aria-hidden="true">📦</span>Stock</a>
@@ -733,7 +739,7 @@ function rebuild(){
   ZONES.quartier.center.set(ref[0],0,ref[1]); HOT.quartier.at.set(ref[0],3.4,ref[1]);
   ZONES.quartier.zoom=1.25;
   vueGenerale.x=0; vueGenerale.zoom=etendue?Math.max(.38,Math.min(1,16/etendue)):1;     // le QG et toute la ville construite à l'écran
-  if(!S.open){ goal.target.set(0,0,0); goal.zoom=vueGenerale.zoom; }
+  if(!S.open && !S.libre){ goal.target.set(0,0,0); goal.zoom=vueGenerale.zoom; }
   etiquettesMaisons();
   collect();
 }
@@ -775,12 +781,31 @@ function focusZone(id){
 
 /* Interaction */
 let hovered=null, drag=null;
-canvas.addEventListener('pointerdown',e=>{ drag={x:e.clientX,moved:false,yaw:goal.yaw}; canvas.setPointerCapture(e.pointerId); });
+// Gestes : souris = glisser pour tourner, molette pour zoomer ; doigt = glisser pour se déplacer, pincer pour zoomer
+const doigts=new Map(); let pince=null;
+const ZMIN=.35, ZMAX=3.2, borne=(z)=>Math.max(ZMIN,Math.min(ZMAX,z));
+function libre(){ S.libre=true; document.getElementById('recentrer').hidden=false; }
+function deplacer(dx,dy){
+  const wpp=2*(BASE/view.zoom)*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))/innerHeight;
+  const droite=V3().setFromMatrixColumn(camera.matrixWorld,0); droite.y=0; droite.normalize();
+  const avant=V3(0,1,0).cross(droite).normalize();
+  goal.target.addScaledVector(droite,-dx*wpp).addScaledVector(avant,-dy*wpp*1.4);
+  goal.target.x=Math.max(-46,Math.min(46,goal.target.x)); goal.target.z=Math.max(-44,Math.min(44,goal.target.z)); goal.target.y=0;
+}
+canvas.addEventListener('pointerdown',e=>{ doigts.set(e.pointerId,{x:e.clientX,y:e.clientY}); canvas.setPointerCapture(e.pointerId);
+  if(doigts.size===2){ const [a,b]=[...doigts.values()]; pince={d:Math.hypot(a.x-b.x,a.y-b.y),z:goal.zoom}; drag={moved:true,touch:true,x:a.x,y:a.y}; return; }
+  drag={x:e.clientX,y:e.clientY,moved:false,yaw:goal.yaw,touch:e.pointerType!=='mouse'}; });
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); goal.zoom=borne(goal.zoom*Math.exp(-e.deltaY*.0015)); libre(); hideHint(); },{passive:false});
+canvas.addEventListener('pointercancel',e=>{ doigts.delete(e.pointerId); if(doigts.size<2) pince=null; });
 canvas.addEventListener('pointermove',e=>{
-  if(drag){ const dx=e.clientX-drag.x; if(Math.abs(dx)>5) drag.moved=true; if(drag.moved){ goal.yaw=Math.max(-.85,Math.min(.85,drag.yaw-dx*.006)); hideHint(); } }
+  const avantDoigt=doigts.get(e.pointerId); if(avantDoigt) doigts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pince && doigts.size===2){ const [a,b]=[...doigts.values()]; goal.zoom=borne(pince.z*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(1,pince.d)); libre(); hideHint(); }
+  else if(drag && drag.touch && avantDoigt){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.hypot(dx,dy)>6) drag.moved=true;
+    if(drag.moved){ deplacer(e.clientX-avantDoigt.x,e.clientY-avantDoigt.y); libre(); hideHint(); } }
+  else if(drag && !drag.touch){ const dx=e.clientX-drag.x; if(Math.abs(dx)>5) drag.moved=true; if(drag.moved){ goal.yaw=Math.max(-.85,Math.min(.85,drag.yaw-dx*.006)); hideHint(); } }
   if(e.pointerType==='mouse'){ hovered=pick(e.clientX,e.clientY); canvas.style.cursor=hovered?'pointer':(drag&&drag.moved?'grabbing':'grab'); }
 });
-canvas.addEventListener('pointerup',e=>{ if(drag && !drag.moved){ const p=pick(e.clientX,e.clientY); if(p&&p.chantier) ouvrirChantier(p.chantier); else if(p){ if(p.zone==='quartier') S.chantier=null; openZone(p.zone,p.hot); } else if(S.open) closePanel(); } drag=null; });
+canvas.addEventListener('pointerup',e=>{ doigts.delete(e.pointerId); if(doigts.size<2) pince=null; if(doigts.size) return; if(drag && !drag.moved){ const p=pick(e.clientX,e.clientY); if(p&&p.chantier) ouvrirChantier(p.chantier); else if(p){ if(p.zone==='quartier') S.chantier=null; openZone(p.zone,p.hot); } else if(S.open) closePanel(); } drag=null; });
 canvas.addEventListener('pointerleave',()=>{ hovered=null; });
 addEventListener('keydown',e=>{ if(e.key==='Escape' && S.open) closePanel(); });
 
@@ -822,14 +847,15 @@ function placeLabels(){
   });
   Object.entries(HOT).forEach(([id,h])=>{
     const el=tagEls[id], hov=!!hovered&&hovered.hot===id;
-    const full=S.open===h.zone || (!S.open&&hov), pin=!S.open&&!hov, show=full||pin;
+    const loin=MOBILE() && view.zoom<vueGenerale.zoom*1.5;    // de loin sur téléphone : seulement ce qui demande une action
+    const full=S.open===h.zone || (!S.open&&hov), pin=!S.open&&!hov&&(!loin||needs(id)), show=full||pin;
     el.classList.toggle('show',show); el.classList.toggle('pin',pin); el.classList.toggle('hl',false);
     if(!show) return;
     tmp.copy(h.at); tmp.y+=Z[h.zone].lift; tmp.project(camera);
     items.push({el,x:(tmp.x*.5+.5)*W,y:(-tmp.y*.5+.5)*H,prio:pin?2:1});
   });
   // Noms des maisons : toujours visibles s'il y en a peu, sinon quand le quartier est ouvert
-  const voirMaisons=S.open==='quartier' || (!S.open && MAISONS.length<=12);
+  const voirMaisons=S.open==='quartier' || (!S.open && MAISONS.length<=12 && (!MOBILE() || view.zoom>=vueGenerale.zoom*1.5));
   MAISONS.forEach(({c,x,z})=>{ const el=maisonEls.get(c.id); if(!el) return; el.classList.toggle('show',voirMaisons); if(!voirMaisons) return;
     tmp.set(x,4.1,z); tmp.project(camera); if(tmp.z>1){ el.classList.remove('show'); return; }
     items.push({el,x:(tmp.x*.5+.5)*W,y:(-tmp.y*.5+.5)*H,prio:3}); });
@@ -871,7 +897,7 @@ function openZone(id,hot){
 }
 function closePanel(){
   const was=S.open; S.open=null; S.chantier=null; panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
-  goal.target.set(vueGenerale.x,0,0); goal.zoom=vueGenerale.zoom; if(mWasOpen && !MOBILE()){ mBox.hidden=false; syncMissionBtn(); }
+  if(!S.libre){ goal.target.set(vueGenerale.x,0,0); goal.zoom=vueGenerale.zoom; } if(mWasOpen && !MOBILE()){ mBox.hidden=false; syncMissionBtn(); }
   if(was) labelEls[was].focus({preventScroll:true});
 }
 const head=z=>`<header class="p-head"><div><h2 id="ptitle">${z.name}</h2><p>${z.sub}</p></div><button class="x" data-act="close" aria-label="Fermer">✕</button></header>`;
@@ -977,6 +1003,7 @@ document.getElementById('mlist').addEventListener('click',e=>{ const b=e.target.
 function syncMissionBtn(){ mBtn.setAttribute('aria-expanded',String(!mBox.hidden)); }
 if(MOBILE()){ mBox.hidden=true; syncMissionBtn(); }
 mBtn.addEventListener('click',()=>{ mBox.hidden=!mBox.hidden; syncMissionBtn(); });
+document.getElementById('recentrer').addEventListener('click',()=>{ S.libre=false; document.getElementById('recentrer').hidden=true; if(S.open) closePanel(); goal.target.set(vueGenerale.x,0,0); goal.zoom=vueGenerale.zoom; goal.yaw=0; });
 document.getElementById('btnMissions2').addEventListener('click',()=>{ menuAct.classList.remove('ouvert'); mBtn.click(); });
 const menuAct=document.getElementById('menu-actions'), bMenu=document.getElementById('btnMenu');
 bMenu.addEventListener('click',(e)=>{ e.stopPropagation(); const o=menuAct.classList.toggle('ouvert'); bMenu.setAttribute('aria-expanded',String(o)); });

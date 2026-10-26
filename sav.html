@@ -146,7 +146,7 @@ function info(t, err) { etat.hidden = !t; etat.textContent = t || ""; etat.class
 const STATUT = { nouveau: "À traiter", planifie: "Planifiée", en_cours: "En cours", resolu: "Terminée", annule: "Annulée" };
 const PRIO = { urgent: "Urgent", normal: "Normal", faible: "Faible" };
 const CHECKLIST = ["Photo de l'installation avant intervention", "Relever les codes erreur de l'onduleur", "Contrôler les protections (disjoncteurs, parafoudre)", "Contrôler les batteries (état, connexions, températures)", "Tester la production après intervention", "Expliquer au client ce qui a été fait"];
-const L = { sav: [], inst: [] };
+const L = { sav: [], inst: [], equipe: [] };
 const params = new URLSearchParams(location.search);
 let onglet = params.get("v") || "demandes", filtre = "a_traiter", ouvert = params.get("s");
 
@@ -157,6 +157,8 @@ async function charger() {
   ]);
   if (s.error) throw s.error; if (i.error) throw i.error;
   L.sav = s.data || []; L.inst = i.data || [];
+  const { data: eqT } = await sb.from("equipe_terrain").select("email,nom,metier,actif").eq("actif", true).order("nom");
+  L.equipe = (eqT || []).filter((m) => m.metier !== "poseur");
 }
 const rang = (x) => ({ urgent: 0, normal: 1, faible: 2 }[x.priorite] ?? 1);
 
@@ -226,7 +228,8 @@ async function vueDemande(s) {
   </section>
   <section class="carte"><h2>Planifier</h2><div class="rangee">
     <label class="ch">Date et heure<input type="datetime-local" id="cr" value="${s.creneau ? new Date(new Date(s.creneau).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}"></label>
-    <label class="ch">Technicien<input id="tech" value="${esc(s.technicien || "")}" placeholder="Nom"></label>
+    <label class="ch">Technicien<select id="tech"><option value="">Choisir…</option>${L.equipe.map((m) => `<option value="${esc(m.email)}" ${s.technicien_email === m.email ? "selected" : ""}>${esc(m.nom)}</option>`).join("")}<option value="__autre" ${s.technicien && !s.technicien_email ? "selected" : ""}>${s.technicien && !s.technicien_email ? esc(s.technicien) : "Autre (hors application)"}</option></select></label>
+    ${L.equipe.length ? "" : `<p class="meta" style="flex-basis:100%">Ajoutez vos techniciens dans <a href="terrain.html?v=equipe">Équipe terrain</a> : ils verront leurs interventions sur leur téléphone.</p>`}
     <button class="btn teal petit" id="plan">Enregistrer le créneau</button><button class="btn petit" id="prev" ${s.creneau ? "" : "disabled"}>Prévenir le client par e-mail</button></div></section>
   <section class="carte"><h2>Intervention</h2><p class="meta">À remplir sur place, depuis le téléphone.</p>
     <div class="check">${checklist.map((c, k) => `<label><input type="checkbox" data-k="${k}" ${c.fait ? "checked" : ""}>${esc(c.texte)}</label>`).join("")}</div>
@@ -283,7 +286,8 @@ async function vueDemande(s) {
   document.getElementById("prio").onchange = async (e) => { await sb.from("sav").update({ priorite: e.target.value }).eq("id", s.id); s.priorite = e.target.value; info("Priorité changée"); };
   document.getElementById("plan").onclick = async () => {
     const v = document.getElementById("cr").value; if (!v) return info("Choisissez la date et l'heure", true);
-    const champs = { creneau: new Date(v).toISOString(), technicien: document.getElementById("tech").value.trim() || null, statut: s.statut === "resolu" ? "resolu" : "planifie" };
+    const t = document.getElementById("tech").value, m = L.equipe.find((x) => x.email === t);
+    const champs = { creneau: new Date(v).toISOString(), technicien: m ? m.nom : (t === "__autre" ? s.technicien : null), technicien_email: m ? m.email : null, statut: s.statut === "resolu" ? "resolu" : "planifie" };
     const { error } = await sb.from("sav").update(champs).eq("id", s.id); if (error) return info("Erreur : " + error.message, true);
     Object.assign(s, champs); document.getElementById("prev").disabled = false; info("Créneau enregistré");
   };

@@ -161,7 +161,7 @@ function info(t, err) { etat.hidden = !t; etat.textContent = t || ""; etat.class
 const ETAPES = [["visite", "Visite technique"], ["demarches", "Démarches"], ["pose", "Pose"], ["mise_en_service", "Mise en service"]];
 const rangEtape = (e) => e === "termine" ? 4 : ETAPES.findIndex(([k]) => k === e);
 const STATUT_DEM = { a_faire: "À faire", envoye: "Envoyée", valide: "Validée" };
-const L = { ch: [], stock: [] };
+const L = { ch: [], stock: [], equipe: [] };
 let ouvert = new URLSearchParams(location.search).get("c"), filtre = "en_cours";
 
 async function charger() {
@@ -171,6 +171,8 @@ async function charger() {
   ]);
   if (c.error) throw c.error;
   L.ch = c.data || []; L.stock = s.error ? [] : (s.data || []);
+  const { data: eqT } = await sb.from("equipe_terrain").select("email,nom,metier,actif").eq("actif", true).order("nom");
+  L.equipe = (eqT || []).filter((m) => m.metier !== "technicien");
 }
 const prochaine = (c) => {
   if (c.etape === "visite") return c.date_visite ? "Visite le " + dateC(c.date_visite) : "Visite technique à planifier";
@@ -249,6 +251,9 @@ async function vueChantier(c) {
     <div class="rangee"><button class="btn teal petit" id="d-ok">Enregistrer les démarches</button></div></section>
 
   <section class="carte"><h2>3. Pose</h2><div class="rangee"><label class="ch">Date de la pose<input type="date" id="p-date" value="${esc(c.date_pose || "")}"></label><button class="btn teal petit" id="p-ok">Enregistrer</button></div>
+    <h3>Équipe de pose</h3>${L.equipe.length ? `<div class="check">${L.equipe.map((m) => `<label><input type="checkbox" data-poseur="${esc(m.email)}" ${(c.poseurs || []).includes(m.email) ? "checked" : ""}>${esc(m.nom)}</label>`).join("")}</div><p class="meta">Les poseurs cochés voient ce chantier sur leur téléphone (adresse, matériel, relevés de la visite) et peuvent y ajouter leurs photos.</p>`
+      : `<p class="meta">Ajoutez vos poseurs dans <a href="terrain.html?v=equipe">Équipe terrain</a> : ils verront leurs chantiers sur leur téléphone.</p>`}
+    ${(c.pose || {}).terminee_le ? `<p class="meta">✅ Pose déclarée terminée le ${dateC(c.pose.terminee_le)}${c.pose.par ? " par " + esc(c.pose.par) : ""}.${c.pose.notes ? " Notes : " + esc(c.pose.notes) : ""}</p>` : ""}
     <p class="meta">Pensez aux photos de la pose (bouton photo de la visite) : elles partent dans le dossier du client.</p></section>
 
   <section class="carte"><h2>4. Mise en service</h2><p class="meta">Un clic : le matériel sort du stock, la fiche SAV avec son QR code est créée, et le client reçoit son dossier de fin de chantier (matériel, photos, lien SAV).</p>
@@ -310,6 +315,7 @@ async function vueChantier(c) {
   document.getElementById("fiche-copier").onclick = async () => { try { await navigator.clipboard.writeText(document.getElementById("fiche-txt").textContent); info("Fiche copiée"); } catch { info("Sélectionnez le texte pour le copier", true); } };
 
   // Pose
+  app.querySelectorAll("[data-poseur]").forEach((cb) => (cb.onchange = async () => { const p = new Set(c.poseurs || []); cb.checked ? p.add(cb.dataset.poseur) : p.delete(cb.dataset.poseur); await maj({ poseurs: [...p] }, "Équipe de pose mise à jour"); }));
   document.getElementById("p-ok").onclick = async () => { const v = document.getElementById("p-date").value || null; const champs = { date_pose: v }; if (v && (c.etape === "pose" || c.etape === "demarches")) champs.etape = "pose"; if (await maj(champs, "Date de pose enregistrée")) { await charger(); rendre(); } };
 
   // Supprimer le chantier (et ses photos) : le matériel réservé est libéré

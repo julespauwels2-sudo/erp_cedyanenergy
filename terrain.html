@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#062a27">
+<link rel="icon" href="favicon.png">
+<title>Terrain · ENR Pose</title>
+<style>
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("InterVariable.woff2") format("woff2")}
+:root{--teal:#0E9C8F;--teal-f:#0b7a70;--nuit:#062a27;--soleil:#fbbb10;--encre:#16241a;--gris:#56665b;--trait:#dfe7e0;--fond:#f3f6f2;--rouge:#b42318;color-scheme:light}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+html,body{margin:0;background:var(--fond);color:var(--encre);font:16px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--soleil);outline-offset:2px}
+.haut{background:radial-gradient(ellipse at 80% 0%,#0f5c55,var(--nuit) 75%);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 18px}
+.haut .l1{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.marque{font-weight:900;letter-spacing:-.02em}.marque span{color:var(--soleil)}
+.haut h1{margin:12px 0 2px;font-size:1.5rem;font-weight:900;letter-spacing:-.02em}
+.haut p{margin:0;color:#cde9e5;font-size:.95rem}
+.lien-blanc{background:none;border:0;color:#cde9e5;text-decoration:underline;cursor:pointer;font-size:.9rem;padding:8px 0}
+main{max-width:680px;margin:0 auto;padding:14px 12px calc(96px + env(safe-area-inset-bottom,0px))}
+.carte{background:#fff;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 14px 34px -22px rgba(20,60,30,.4)}
+.carte h2{margin:0 0 8px;font-size:1.15rem;font-weight:800}
+.carte h3{margin:16px 0 8px;font-size:1rem}
+.titre-sec{margin:18px 4px 8px;font-size:.85rem;font-weight:800;color:var(--gris);text-transform:uppercase;letter-spacing:.04em}
+.item{display:block;width:100%;text-align:left;border:0;background:#fff;border-radius:18px;padding:14px 16px 14px 20px;margin-bottom:10px;box-shadow:0 10px 26px -20px rgba(20,60,30,.5);position:relative;overflow:hidden;cursor:pointer}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc,var(--teal))}
+.item.urgent{--acc:#b42318}.item.fini{--acc:#b9c4bb;opacity:.8}
+.item b{font-size:1.05rem}.item .meta{display:block;margin-top:2px}
+.heure{display:inline-block;background:#e3f4f2;color:var(--teal-f);font-weight:800;border-radius:999px;padding:2px 10px;font-size:.85rem;margin-bottom:6px}
+.badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;background:#e3f4f2;color:var(--teal-f)}
+.badge.urgent{background:#fdecea;color:#8c1d13}
+.meta{font-size:.88rem;color:var(--gris)}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:52px;padding:0 16px;border-radius:16px;border:1.5px solid var(--trait);background:#fff;font-weight:800;cursor:pointer;text-decoration:none;color:var(--encre);text-align:center}
+.btn.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.jaune{background:var(--soleil);border-color:var(--soleil)}
+.btn.large{width:100%}
+.btn.danger{color:var(--rouge);border-color:#f3c7c2}
+.btn:disabled{opacity:.55}
+.diag{background:#e3f4f2;border-radius:16px;padding:12px 14px}
+.diag p{margin:4px 0}
+.liste-mat{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.liste-mat li{display:flex;justify-content:space-between;gap:10px;background:var(--fond);border-radius:12px;padding:10px 12px}
+.liste-mat b{white-space:nowrap}
+.releves{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.releves div{background:var(--fond);border-radius:12px;padding:8px 10px;font-size:.9rem}.releves span{display:block;font-size:.75rem;color:var(--gris)}
+.check{display:grid;gap:8px}
+.check label{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--trait);border-radius:14px;background:#fff;cursor:pointer;min-height:52px}
+.check input{width:26px;height:26px;flex:none;accent-color:var(--teal)}
+textarea,input[type=text],input[type=email],input[type=tel],input[type=password],select{width:100%;min-height:50px;border:1.5px solid var(--trait);border-radius:14px;padding:12px 14px;background:#fff;font-size:16px}
+textarea{min-height:100px;resize:vertical}
+label.champ{display:grid;gap:6px;font-weight:700;font-size:.92rem;margin-bottom:10px}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos img{width:84px;height:84px;object-fit:cover;border-radius:14px}
+.fichier input{display:none}
+canvas.sig{width:100%;height:180px;border:1.5px dashed #b9c8bc;border-radius:14px;background:#fff;touch-action:none;display:block}
+.nav{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:#fff;border-radius:22px;box-shadow:0 14px 34px -14px rgba(0,0,0,.35);padding:4px;z-index:10;max-width:680px;margin:0 auto}
+.nav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:60px;justify-content:center;font-size:.78rem;font-weight:800;border-radius:16px;cursor:pointer;color:var(--gris)}
+.nav button span{font-size:1.4rem}
+.nav button[aria-current="true"]{background:#e3f4f2;color:var(--teal-f)}
+.vide{text-align:center;color:var(--gris);padding:22px}
+.etat{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--encre);color:#fff;border-radius:999px;padding:10px 16px;font-weight:700;z-index:30;max-width:calc(100% - 24px);text-align:center}
+.etat.err{background:var(--rouge)}
+.membre{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--trait)}
+.membre:last-child{border:0}
+.connexion{max-width:420px;margin:30px auto}
+dialog{border:0;border-radius:22px;padding:20px;width:min(94vw,420px)}dialog::backdrop{background:rgba(6,42,39,.6)}
+</style>
+</head>
+<body>
+<header class="haut"><div class="l1"><div class="marque">ENR <span>Pose</span> · Terrain</div><button class="lien-blanc" id="sortir" hidden>Se déconnecter</button></div>
+  <h1 id="bonjour">Bonjour</h1><p id="sous">Vos missions du jour, sur votre téléphone.</p></header>
+<main id="app"><p class="vide">Chargement…</p></main>
+<nav class="nav" id="nav" hidden></nav>
+<div class="etat" id="etat" hidden></div>
+<dialog id="dlg-mdp"><form id="form-mdp"><h2 style="margin:0 0 6px">Choisissez votre mot de passe</h2><p class="meta">8 caractères minimum. Ensuite, vous vous connecterez sans lien.</p>
+  <input type="password" id="mdp1" placeholder="Nouveau mot de passe" autocomplete="new-password" style="margin:8px 0"><input type="password" id="mdp2" placeholder="Retapez-le" autocomplete="new-password">
+  <p class="meta" id="mdp-msg"></p><div class="actions"><button type="button" class="btn" id="mdp-plus-tard">Plus tard</button><button class="btn teal">Enregistrer</button></div></form></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+"use strict";
+const sb = window.supabase.createClient("https://uotqqkhraqxtlssgavlm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvdHFxa2hyYXF4dGxzc2dhdmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDI1NTAsImV4cCI6MjEwNjgxODU1MH0.61NliFrPeWNilEmXPayAONTIVF49tmq3arjgdzSwPpM");
+const app = document.getElementById("app"), nav = document.getElementById("nav"), etat = document.getElementById("etat");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const heure = (d) => d ? new Date(d).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
+const jourTxt = (d) => d ? new Date(d).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }) : "";
+const memeJour = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
+function info(t, err) { etat.hidden = !t; etat.textContent = t || ""; etat.classList.toggle("err", !!err); clearTimeout(info.t); info.t = setTimeout(() => (etat.hidden = true), err ? 4000 : 2200); }
+const itineraire = (adresse) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adresse + ", Guadeloupe")}`;
+const telLien = (t) => `tel:${String(t).replace(/[^\d+]/g, "")}`;
+const CHECK_SAV = ["Photo de l'installation avant intervention", "Relever les codes erreur de l'onduleur", "Contrôler les protections (disjoncteurs, parafoudre)", "Contrôler les batteries (état, connexions)", "Tester la production après intervention", "Expliquer au client ce qui a été fait"];
+const CHECK_POSE = ["Matériel vérifié avant le départ", "Structure fixée, étanchéité contrôlée", "Panneaux posés et câblés", "Onduleur et protections installés", "Mise à la terre faite", "Tests et mesures OK", "Chantier propre et rangé", "Explications données au client"];
+const ETAPE = { visite: "Visite technique", demarches: "Démarches", pose: "Pose", mise_en_service: "Mise en service", termine: "Terminé" };
+let MOI = null, onglet = new URLSearchParams(location.search).get("v") || "", L = { sav: [], ch: [], equipe: [] }, ouvert = null;
+
+/* ---------- Connexion ---------- */
+function connexion(msg) {
+  nav.hidden = true; document.getElementById("sortir").hidden = true;
+  document.getElementById("bonjour").textContent = "Bienvenue"; document.getElementById("sous").textContent = "Connectez-vous avec l'e-mail que vous a donné Yann.";
+  app.innerHTML = `<form class="carte connexion" id="fco"><h2>Connexion</h2>${msg ? `<p class="badge urgent" style="display:block;padding:8px 12px">${esc(msg)}</p>` : ""}
+    <label class="champ">E-mail<input type="email" id="em" autocomplete="username" required></label>
+    <label class="champ">Mot de passe<input type="password" id="mdp" autocomplete="current-password"></label>
+    <button class="btn teal large">Se connecter</button>
+    <p style="margin:14px 0 0"><button type="button" class="lien-blanc" style="color:var(--gris)" id="lien">Première connexion ou mot de passe oublié ? Recevoir un lien par e-mail</button></p><p class="meta" id="co-msg"></p></form>`;
+  document.getElementById("fco").onsubmit = async (e) => { e.preventDefault();
+    const em = document.getElementById("em").value.trim().toLowerCase(), mdp = document.getElementById("mdp").value;
+    if (!mdp) return (document.getElementById("co-msg").textContent = "Saisissez votre mot de passe, ou recevez un lien juste au-dessus.");
+    const { error } = await sb.auth.signInWithPassword({ email: em, password: mdp });
+    if (error) return (document.getElementById("co-msg").textContent = "E-mail ou mot de passe incorrect.");
+    demarrer(); };
+  document.getElementById("lien").onclick = async () => {
+    const em = document.getElementById("em").value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) return (document.getElementById("co-msg").textContent = "Saisissez d'abord votre e-mail.");
+    try { localStorage.setItem("terrain_mdp", "1"); } catch {}
+    await sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: location.origin + location.pathname } });
+    document.getElementById("co-msg").textContent = "C'est envoyé : ouvrez l'e-mail sur ce téléphone et touchez le lien.";
+  };
+}
+document.getElementById("sortir").onclick = async () => { await sb.auth.signOut(); location.href = location.pathname; };
+const dlg = document.getElementById("dlg-mdp");
+document.getElementById("mdp-plus-tard").onclick = () => dlg.close();
+document.getElementById("form-mdp").onsubmit = async (e) => { e.preventDefault(); const a = document.getElementById("mdp1").value, b = document.getElementById("mdp2").value, m = document.getElementById("mdp-msg");
+  if (a.length < 8) return (m.textContent = "8 caractères minimum."); if (a !== b) return (m.textContent = "Les deux ne sont pas identiques.");
+  const { error } = await sb.auth.updateUser({ password: a }); if (error) return (m.textContent = "Impossible : " + error.message); dlg.close(); info("Mot de passe enregistré"); };
+
+async function demarrer() {
+  const { data: { session } } = await sb.auth.getSession(); if (!session) return connexion();
+  const email = session.user.email.toLowerCase();
+  const [{ data: st }, { data: te }] = await Promise.all([sb.from("staff").select("email,nom,role").ilike("email", email).maybeSingle(), sb.from("equipe_terrain").select("*").eq("email", email).maybeSingle()]);
+  if (!st && !te) { await sb.auth.signOut(); return connexion("Ce compte n'a pas encore accès. Demandez à Yann de vous ajouter à l'équipe terrain."); }
+  MOI = { email, nom: (te || st).nom || email, bureau: !!st, metier: te ? te.metier : "les_deux" };
+  try { if (localStorage.getItem("terrain_mdp") === "1") { localStorage.removeItem("terrain_mdp"); dlg.showModal(); } } catch {}
+  document.getElementById("sortir").hidden = false;
+  document.getElementById("bonjour").textContent = "Bonjour " + String(MOI.nom).split(" ")[0];
+  const auj = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  document.getElementById("sous").textContent = auj.charAt(0).toUpperCase() + auj.slice(1) + (MOI.bureau ? " · vue du bureau (toute l'équipe)" : "");
+  const tabs = [];
+  if (MOI.metier !== "poseur") tabs.push(["sav", "🛠️", "Interventions"]);
+  if (MOI.metier !== "technicien") tabs.push(["ch", "🏠", "Chantiers"]);
+  if (MOI.bureau) tabs.push(["equipe", "👥", "Équipe"]);
+  if (!tabs.some(([k]) => k === onglet)) onglet = tabs[0][0];
+  nav.innerHTML = tabs.map(([k, i, t]) => `<button data-o="${k}" aria-current="${onglet === k}"><span aria-hidden="true">${i}</span>${t}</button>`).join("");
+  nav.hidden = tabs.length < 2;
+  nav.querySelectorAll("[data-o]").forEach((b) => (b.onclick = () => { onglet = b.dataset.o; ouvert = null; nav.querySelectorAll("[data-o]").forEach((x) => x.setAttribute("aria-current", String(x === b))); rendre(); scrollTo(0, 0); }));
+  await charger(); rendre();
+  setInterval(async () => { if (document.hidden || ouvert) return; await charger(); rendre(); }, 120000);
+}
+async function charger() {
+  const t = [];
+  if (MOI.metier !== "poseur") t.push(sb.from("sav").select("*, installation:installations(*)").in("statut", ["planifie", "en_cours", "resolu"]).not("technicien_email", "is", null).order("creneau").limit(300).then((r) => (L.sav = r.data || [])));
+  if (MOI.metier !== "technicien") t.push(sb.from("chantiers").select("*").not("etape", "in", "(annule)").order("date_pose", { nullsFirst: false }).limit(300).then((r) => (L.ch = (r.data || []).filter((c) => (c.poseurs || []).length || !MOI.bureau))));
+  if (MOI.bureau) t.push(sb.from("equipe_terrain").select("*").order("nom").then((r) => (L.equipe = r.data || [])));
+  await Promise.all(t);
+}
+function rendre() { ({ sav: listeSav, ch: listeCh, equipe: vueEquipe })[onglet](); }
+
+/* ---------- Interventions SAV ---------- */
+function listeSav() {
+  if (ouvert) { const s = L.sav.find((x) => x.id === ouvert); if (s) return ficheSav(s); ouvert = null; }
+  const now = new Date(), semaine = new Date(Date.now() - 7 * 864e5);
+  const actifs = L.sav.filter((s) => s.statut !== "resolu"), auj = actifs.filter((s) => s.creneau && memeJour(s.creneau, now)), avenir = actifs.filter((s) => !auj.includes(s));
+  const finis = L.sav.filter((s) => s.statut === "resolu" && s.rapport?.termine_le && new Date(s.rapport.termine_le) > semaine);
+  const carte = (s) => `<button class="item ${s.priorite === "urgent" ? "urgent" : ""} ${s.statut === "resolu" ? "fini" : ""}" data-id="${s.id}">${s.creneau ? `<span class="heure">${memeJour(s.creneau, now) ? heure(s.creneau) : jourTxt(s.creneau) + " · " + heure(s.creneau)}</span><br>` : ""}<b>${esc(s.nom || s.installation?.client_nom || "Client")}</b> ${s.priorite === "urgent" ? '<span class="badge urgent">Urgent</span>' : ""}
+    <span class="meta">${esc(s.installation?.commune || s.commune || "")}${MOI.bureau && s.technicien ? " · " + esc(s.technicien) : ""}</span><span class="meta">${esc(s.diagnostic?.resume || s.description.slice(0, 90))}</span></button>`;
+  app.innerHTML = `<p class="titre-sec">Aujourd'hui</p>${auj.map(carte).join("") || `<p class="vide carte">Aucune intervention aujourd'hui.</p>`}
+    ${avenir.length ? `<p class="titre-sec">À venir</p>${avenir.map(carte).join("")}` : ""}${finis.length ? `<p class="titre-sec">Terminées cette semaine</p>${finis.map(carte).join("")}` : ""}`;
+  app.querySelectorAll("[data-id]").forEach((b) => (b.onclick = () => { ouvert = b.dataset.id; rendre(); scrollTo(0, 0); }));
+}
+async function lien(bucket, chemin) { const { data } = await sb.storage.from(bucket).createSignedUrl(chemin, 3600); return data?.signedUrl || ""; }
+function signature(cv, existante) {
+  const ctx = cv.getContext("2d"); let trace = false, signe = !!existante;
+  const r = cv.getBoundingClientRect(); cv.width = r.width * devicePixelRatio; cv.height = r.height * devicePixelRatio; ctx.scale(devicePixelRatio, devicePixelRatio); ctx.lineWidth = 2.6; ctx.lineCap = "round"; ctx.strokeStyle = "#16241a";
+  if (existante) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = existante; }
+  const pos = (e) => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+  cv.onpointerdown = (e) => { trace = true; signe = true; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pos(e)); };
+  cv.onpointermove = (e) => { if (trace) { ctx.lineTo(...pos(e)); ctx.stroke(); } };
+  cv.onpointerup = () => (trace = false);
+  return { effacer: () => { ctx.clearRect(0, 0, cv.width, cv.height); signe = false; }, image: () => (signe ? cv.toDataURL("image/png") : null) };
+}
+async function ficheSav(s) {
+  const i = s.installation || {}, d = s.diagnostic || {}, R = s.rapport || {}, tel = s.telephone || i.telephone, adresse = [i.adresse, i.commune || s.commune].filter(Boolean).join(", ");
+  const checklist = R.checklist || [...CHECK_SAV, ...(d.a_verifier || [])].map((t) => ({ texte: t, fait: false }));
+  const photos = [...(R.photos || [])];
+  const mat = (i.materiel || []).map((m) => [m.type, m.marque, m.modele].filter(Boolean).join(" ") + (m.numero_serie ? " (n° " + m.numero_serie + ")" : "")).filter(Boolean);
+  app.innerHTML = `<button class="btn" id="ret" style="min-height:44px;margin-bottom:10px">← Mes interventions</button>
+  <section class="carte"><h2>${esc(s.nom || i.client_nom || "Client")} ${s.priorite === "urgent" ? '<span class="badge urgent">Urgent</span>' : ""}</h2>
+    <p class="meta">${esc(s.numero)}${s.creneau ? " · " + jourTxt(s.creneau) + " à " + heure(s.creneau) : ""}${adresse ? "<br>" + esc(adresse) : ""}</p>
+    <div class="actions">${tel ? `<a class="btn teal" href="${telLien(tel)}">📞 Appeler</a>` : ""}${adresse ? `<a class="btn" href="${itineraire(adresse)}" target="_blank" rel="noopener">🧭 Itinéraire</a>` : ""}</div>
+    ${s.statut === "planifie" ? `<button class="btn jaune large" id="commencer">▶ Je commence l'intervention</button>` : ""}
+    <h3>Le problème</h3><p style="margin:0">${esc(s.description)}</p>
+    ${s.reponses?.danger ? `<p class="badge urgent" style="display:block;margin-top:8px;padding:8px 12px">🔥 Odeur, chaleur ou fumée signalée</p>` : ""}
+    <div class="photos" id="ph" style="margin-top:8px"></div>
+    ${d.resume ? `<h3>Pré-diagnostic</h3><div class="diag"><p><b>${esc(d.resume)}</b></p>${d.cause_probable ? `<p>🔎 ${esc(d.cause_probable)}</p>` : ""}${(d.pieces || []).length ? `<p>🧰 À emporter : ${esc(d.pieces.join(", "))}</p>` : ""}</div>` : ""}
+    ${mat.length ? `<h3>Matériel installé</h3><ul class="liste-mat">${mat.map((m) => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}</section>
+  <section class="carte"><h2>Sur place</h2><div class="check">${checklist.map((c, k) => `<label><input type="checkbox" data-k="${k}" ${c.fait ? "checked" : ""}>${esc(c.texte)}</label>`).join("")}</div>
+    <h3>Ce qui a été fait</h3><textarea id="notes" placeholder="Pièces changées, réglages, conseils…">${esc(R.notes || "")}</textarea>
+    <h3>Photos</h3><div class="photos" id="rph"></div><p class="fichier"><label class="btn">📷 Ajouter une photo<input type="file" id="rphoto" accept="image/*"></label></p>
+    <h3>Signature du client</h3><canvas class="sig" id="sig"></canvas>
+    <div class="actions"><input type="text" id="signe" placeholder="Nom du client" value="${esc(R.signe_par || s.nom || "")}" style="grid-column:1/-1"><button class="btn" id="effacer" type="button">Effacer</button><button class="btn" id="sauver" type="button">Enregistrer</button></div>
+    <button class="btn teal large" id="terminer" style="margin-top:6px">${s.statut === "resolu" ? "Mettre à jour le rapport" : "✅ Terminer l'intervention"}</button>
+    ${s.statut === "resolu" ? `<button class="btn jaune large" id="rapport" style="margin-top:8px">${s.rapport_envoye_le ? "Renvoyer" : "Envoyer"} le rapport au client</button>` : ""}</section>`;
+  document.getElementById("ret").onclick = () => { ouvert = null; rendre(); };
+  for (const c of s.photos || []) { const u = await lien("sav", c); if (u) document.getElementById("ph").insertAdjacentHTML("beforeend", `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Photo du client"></a>`); }
+  const dessiner = async () => { const z = document.getElementById("rph"); z.innerHTML = ""; for (const c of photos) { const u = await lien("sav", c); if (u) z.insertAdjacentHTML("beforeend", `<img src="${esc(u)}" alt="">`); } };
+  dessiner();
+  const sig = signature(document.getElementById("sig"), R.signature);
+  document.getElementById("effacer").onclick = sig.effacer;
+  const lire = (fini) => ({ checklist: checklist.map((c, k) => ({ texte: c.texte, fait: document.querySelector(`[data-k="${k}"]`).checked })), notes: document.getElementById("notes").value.trim(), photos,
+    signe_par: document.getElementById("signe").value.trim() || null, signature: sig.image(), termine_le: fini ? new Date().toISOString() : (R.termine_le || null), par: MOI.nom });
+  const sauver = async (fini) => { const ch = { rapport: lire(fini), updated_at: new Date().toISOString() }; if (fini) ch.statut = "resolu"; else if (s.statut === "planifie") ch.statut = "en_cours";
+    const { error } = await sb.from("sav").update(ch).eq("id", s.id); if (error) { info("Erreur : " + error.message, true); return false; } Object.assign(s, ch); info(fini ? "Intervention terminée 👍" : "Enregistré"); return true; };
+  document.getElementById("rphoto").onchange = async (e) => { const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    const ch = `rapports/${s.id}/${Date.now()}.${(f.type.split("/")[1] || "jpg").replace("jpeg", "jpg")}`; const { error } = await sb.storage.from("sav").upload(ch, f, { contentType: f.type });
+    if (error) return info("Photo non envoyée : " + error.message, true); photos.push(ch); dessiner(); sauver(false); };
+  document.getElementById("commencer")?.addEventListener("click", async () => { if (await sauver(false)) { await charger(); rendre(); } });
+  document.getElementById("sauver").onclick = () => sauver(false);
+  document.getElementById("terminer").onclick = async () => { if (await sauver(true)) { await charger(); rendre(); } };
+  document.getElementById("rapport")?.addEventListener("click", async (e) => { e.target.disabled = true;
+    const { data, error } = await sb.functions.invoke("sav", { body: { action: "envoyer_rapport", sav_id: s.id } });
+    e.target.disabled = false; if (error || !data?.ok) return info(data?.erreur || "Envoi impossible", true); info("Rapport envoyé au client"); await charger(); rendre(); });
+}
+
+/* ---------- Chantiers ---------- */
+function listeCh() {
+  if (ouvert) { const c = L.ch.find((x) => x.id === ouvert); if (c) return ficheCh(c); ouvert = null; }
+  const enCours = L.ch.filter((c) => c.etape !== "termine"), finis = L.ch.filter((c) => c.etape === "termine").slice(0, 10);
+  const carte = (c) => `<button class="item ${c.etape === "termine" ? "fini" : ""}" data-id="${c.id}">${c.date_pose ? `<span class="heure">Pose le ${jourTxt(c.date_pose)}</span><br>` : ""}<b>${esc(c.client_nom)}</b>
+    <span class="meta">${esc(c.commune || "")}${c.kwc ? " · " + c.kwc + " kWc" : ""} · ${esc(ETAPE[c.etape] || "")}${(c.pose || {}).terminee_le ? " · pose terminée ✓" : ""}</span></button>`;
+  app.innerHTML = `<p class="titre-sec">Mes chantiers</p>${enCours.map(carte).join("") || `<p class="vide carte">Aucun chantier pour l'instant.</p>`}${finis.length ? `<p class="titre-sec">Terminés</p>${finis.map(carte).join("")}` : ""}`;
+  app.querySelectorAll("[data-id]").forEach((b) => (b.onclick = () => { ouvert = b.dataset.id; rendre(); scrollTo(0, 0); }));
+}
+async function ficheCh(c) {
+  const V = c.visite || {}, P = c.pose || {}, adresse = [c.adresse, c.commune].filter(Boolean).join(", "), photos = [...(c.photos || [])];
+  const checklist = P.checklist || CHECK_POSE.map((t) => ({ texte: t, fait: false }));
+  const rel = [["Toiture", V.toiture], ["Orientation", V.orientation], ["Inclinaison", V.inclinaison ? V.inclinaison + "°" : ""], ["Surface", V.surface ? V.surface + " m²" : ""], ["Ombrage", V.ombrage], ["Compteur", V.compteur], ["Puissance souscrite", V.kva ? V.kva + " kVA" : ""], ["Tableau", V.tableau], ["Distance onduleur ↔ tableau", V.distance ? V.distance + " m" : ""]].filter(([, v]) => v);
+  app.innerHTML = `<button class="btn" id="ret" style="min-height:44px;margin-bottom:10px">← Mes chantiers</button>
+  <section class="carte"><h2>${esc(c.client_nom)}</h2><p class="meta">${esc(c.numero)}${c.kwc ? " · " + c.kwc + " kWc" : ""}${c.date_pose ? " · pose le " + jourTxt(c.date_pose) : ""}${adresse ? "<br>" + esc(adresse) : ""}</p>
+    <div class="actions">${c.telephone ? `<a class="btn teal" href="${telLien(c.telephone)}">📞 Appeler</a>` : ""}${adresse ? `<a class="btn" href="${itineraire(adresse)}" target="_blank" rel="noopener">🧭 Itinéraire</a>` : ""}</div>
+    ${(c.materiel || []).length ? `<h3>Matériel à poser</h3><ul class="liste-mat">${c.materiel.map((m) => `<li><span>${esc(m.libelle)}</span><b>× ${esc(m.quantite)}</b></li>`).join("")}</ul>` : ""}
+    ${rel.length ? `<h3>Relevés de la visite</h3><div class="releves">${rel.map(([k, v]) => `<div><span>${k}</span>${esc(v)}</div>`).join("")}</div>${V.notes ? `<p class="meta">📝 ${esc(V.notes)}</p>` : ""}` : ""}</section>
+  <section class="carte"><h2>La pose</h2><div class="check">${checklist.map((x, k) => `<label><input type="checkbox" data-k="${k}" ${x.fait ? "checked" : ""}>${esc(x.texte)}</label>`).join("")}</div>
+    <h3>Notes</h3><textarea id="notes" placeholder="Ce qui s'est passé, ce qui reste à faire…">${esc(P.notes || "")}</textarea>
+    <h3>Photos du chantier</h3><div class="photos" id="ph"></div><p class="fichier"><label class="btn">📷 Ajouter une photo<input type="file" id="photo" accept="image/*"></label></p>
+    <div class="actions"><button class="btn" id="sauver" type="button" style="grid-column:1/-1">Enregistrer</button></div>
+    <button class="btn teal large" id="fini">${P.terminee_le ? "Mettre à jour" : "✅ Pose terminée"}</button>
+    ${P.terminee_le ? `<p class="meta" style="text-align:center">Pose déclarée terminée le ${jourTxt(P.terminee_le)}${P.par ? " par " + esc(P.par) : ""}. Yann s'occupe de la mise en service.</p>` : ""}</section>`;
+  document.getElementById("ret").onclick = () => { ouvert = null; rendre(); };
+  const dessiner = async () => { const z = document.getElementById("ph"); z.innerHTML = ""; for (const p of photos) { const u = await lien("chantiers", p); if (u) z.insertAdjacentHTML("beforeend", `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt=""></a>`); } };
+  dessiner();
+  const lire = (fini) => ({ checklist: checklist.map((x, k) => ({ texte: x.texte, fait: document.querySelector(`[data-k="${k}"]`).checked })), notes: document.getElementById("notes").value.trim(), terminee_le: fini ? new Date().toISOString() : (P.terminee_le || null), par: fini ? MOI.nom : (P.par || null) });
+  const sauver = async (fini) => { const ch = { pose: lire(fini), photos, updated_at: new Date().toISOString() }; if (fini && ["pose", "demarches", "visite"].includes(c.etape)) ch.etape = "mise_en_service";
+    const { error } = await sb.from("chantiers").update(ch).eq("id", c.id); if (error) { info("Erreur : " + error.message, true); return false; } Object.assign(c, ch); info(fini ? "Pose terminée, bravo 👍" : "Enregistré"); return true; };
+  document.getElementById("photo").onchange = async (e) => { const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    const ch = `${c.id}/${Date.now()}.${(f.type.split("/")[1] || "jpg").replace("jpeg", "jpg")}`; const { error } = await sb.storage.from("chantiers").upload(ch, f, { contentType: f.type });
+    if (error) return info("Photo non envoyée : " + error.message, true); photos.push(ch); dessiner(); sauver(false); };
+  document.getElementById("sauver").onclick = () => sauver(false);
+  document.getElementById("fini").onclick = async () => { if (!P.terminee_le && !confirm("La pose est bien terminée ? Yann sera prêt pour la mise en service.")) return; if (await sauver(true)) { await charger(); rendre(); } };
+}
+
+/* ---------- Équipe (bureau) ---------- */
+function vueEquipe() {
+  const METIER = { technicien: "Technicien SAV", poseur: "Poseur", les_deux: "SAV et pose" };
+  app.innerHTML = `<section class="carte"><h2>Équipe terrain</h2><p class="meta">Chaque personne ne voit que ses interventions et ses chantiers : jamais les devis, les prix ou les autres clients.</p>
+    ${L.equipe.map((m) => `<div class="membre"><div><b>${esc(m.nom)}</b><br><span class="meta">${esc(METIER[m.metier])} · ${esc(m.email)}${m.actif ? "" : " · désactivé"}</span></div><div style="display:flex;gap:6px"><button class="btn" style="min-height:40px;padding:0 12px" data-actif="${esc(m.email)}">${m.actif ? "Désactiver" : "Réactiver"}</button><button class="btn danger" style="min-height:40px;padding:0 12px" data-suppr="${esc(m.email)}" aria-label="Retirer">🗑</button></div></div>`).join("") || `<p class="vide">Personne pour l'instant.</p>`}</section>
+  <form class="carte" id="ajout"><h2>Ajouter quelqu'un</h2>
+    <label class="champ">Nom<input type="text" id="a-nom" required></label><label class="champ">E-mail<input type="email" id="a-email" required></label><label class="champ">Téléphone<input type="tel" id="a-tel"></label>
+    <label class="champ">Il s'occupe de<select id="a-metier"><option value="technicien">SAV (interventions)</option><option value="poseur">Pose (chantiers)</option><option value="les_deux">Les deux</option></select></label>
+    <button class="btn teal large">Ajouter</button>
+    <p class="meta" style="margin-top:10px">Ensuite, envoyez-lui ce lien : <b>${esc(location.origin + location.pathname)}</b>. Il tape son e-mail, touche « Première connexion », ouvre le lien reçu, puis choisit son mot de passe.</p></form>`;
+  app.querySelectorAll("[data-actif]").forEach((b) => (b.onclick = async () => { const m = L.equipe.find((x) => x.email === b.dataset.actif); await sb.from("equipe_terrain").update({ actif: !m.actif }).eq("email", m.email); await charger(); rendre(); }));
+  app.querySelectorAll("[data-suppr]").forEach((b) => (b.onclick = async () => { if (!confirm("Retirer cette personne de l'équipe ? Elle n'aura plus accès à l'application.")) return; await sb.from("equipe_terrain").delete().eq("email", b.dataset.suppr); await charger(); rendre(); }));
+  document.getElementById("ajout").onsubmit = async (e) => { e.preventDefault(); const g = (id) => document.getElementById(id).value.trim();
+    const { error } = await sb.from("equipe_terrain").insert({ nom: g("a-nom"), email: g("a-email").toLowerCase(), telephone: g("a-tel") || null, metier: g("a-metier") });
+    if (error) return info(error.code === "23505" ? "Cette adresse est déjà dans l'équipe." : "Erreur : " + error.message, true); info("Ajouté à l'équipe"); await charger(); rendre(); };
+}
+
+sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN" && !MOI) demarrer(); });
+demarrer();
+})();
+</script>
+</body>
+</html>
