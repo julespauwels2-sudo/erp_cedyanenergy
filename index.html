@@ -203,6 +203,39 @@ a.ghost{color:inherit}
   #cycloneBanner{top:calc(150px + env(safe-area-inset-top,0px))}
   .hint{white-space:normal;text-align:center;width:max-content;max-width:calc(100% - 32px)}
 }
+.seul-mobile,.nav-bas{display:none}
+/* Étiquettes des maisons du quartier */
+.mtg{position:absolute;left:0;top:0;pointer-events:auto;border:0;cursor:pointer;background:var(--surface);color:var(--ink);font:700 12px/1.2 inherit;padding:6px 10px;border-radius:999px;box-shadow:var(--shadow);white-space:nowrap;display:none;border-left:4px solid #0E9C8F}
+.mtg.show{display:block}.mtg.cours{border-left-color:#F08C00}
+.mtg:hover,.mtg:focus-visible{outline:2px solid #0E9C8F}
+.fiche-ch{display:grid;gap:10px}
+.fiche-ch .etapes-ch{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.fiche-ch .etapes-ch span{font-size:11px;font-weight:700;text-align:center;padding:6px 2px;border-radius:8px;background:rgba(14,156,143,.08);color:var(--ink-2)}
+.fiche-ch .etapes-ch span.fait{background:rgba(14,156,143,.18);color:#0b7a70}.fiche-ch .etapes-ch span.ici{background:#0E9C8F;color:#fff}
+@media (max-width:760px){
+  .hud{flex-direction:row;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 10px 0}
+  .who{flex:1;min-width:0;padding:8px 12px 8px 8px;gap:10px}
+  .who h1{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .avatar{width:38px;height:38px;font-size:18px}
+  #xptxt{display:none}
+  .lvl{white-space:nowrap;gap:6px}.lvl b{font-size:12px}.xpbar{width:56px!important}
+  .seul-mobile{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:48px;min-height:48px;pointer-events:auto;font-size:16px}
+  .actions{display:none;position:fixed;top:calc(74px + env(safe-area-inset-top,0px));left:10px;right:10px;flex-direction:column;align-items:stretch;gap:6px;background:var(--surface);padding:10px;border-radius:20px;box-shadow:var(--shadow);z-index:9;pointer-events:auto}
+  .actions.ouvert{display:flex}
+  .actions .chip{box-shadow:none;text-align:left;min-height:48px;font-size:15px;background:rgba(127,140,160,.1)}
+  .actions .doublon{display:none}
+  .nav-bas{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));background:var(--surface);border-radius:22px;box-shadow:var(--shadow);z-index:5;padding:4px}
+  .nav-bas a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;font-size:11px;font-weight:700;color:var(--ink);text-decoration:none;border-radius:16px;text-align:center;line-height:1.1}
+  .nav-bas a:active{background:rgba(127,140,160,.15)}
+  .nav-bas span{font-size:21px;line-height:1}
+  .nav-bas .plus span{width:38px;height:38px;border-radius:50%;background:var(--sun);color:#14213D;display:grid;place-items:center;font-weight:800;font-size:24px}
+  .missions{top:auto!important;bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;max-height:52vh;overflow:auto;z-index:7}
+  #panel{z-index:10;height:74vh!important}
+  .hint{bottom:calc(86px + env(safe-area-inset-bottom,0px))!important}
+  #toasts{top:calc(76px + env(safe-area-inset-top,0px))!important;bottom:auto!important}
+  #cycloneBanner{top:calc(76px + env(safe-area-inset-top,0px))!important}
+  .tg .tx{font-size:11px}
+}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
@@ -217,12 +250,14 @@ a.ghost{color:inherit}
       <p class="lvl"><b id="lvl">Niveau 4</b><span class="xpbar"><i id="xpfill"></i></span><span id="xptxt"></span></p>
     </div>
   </div>
-  <div class="actions">
-    <a class="chip chip--jaune" href="devis.html?nouveau">Faire un devis</a>
-    <a class="chip" href="devis.html">Devis</a>
-    <a class="chip" href="stock.html">Stock</a>
-    <a class="chip" href="chantiers.html">Chantiers</a>
-    <a class="chip" href="sav.html">SAV</a>
+  <button class="chip seul-mobile" id="btnMissions2" aria-label="Missions du jour">🎯 <b id="mcount2">0/4</b></button>
+  <button class="chip seul-mobile" id="btnMenu" aria-expanded="false" aria-controls="menu-actions" aria-label="Menu">☰</button>
+  <div class="actions" id="menu-actions">
+    <a class="chip chip--jaune doublon" href="devis.html?nouveau">Faire un devis</a>
+    <a class="chip doublon" href="devis.html">Devis</a>
+    <a class="chip doublon" href="stock.html">Stock</a>
+    <a class="chip doublon" href="chantiers.html">Chantiers</a>
+    <a class="chip doublon" href="sav.html">SAV</a>
     <a class="chip" href="https://cedyan-energy.net/dashboard.html" target="_blank" rel="noopener">Tableau de bord</a>
     <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/4</b></button>
     <button class="chip" id="btnCyclone" aria-pressed="false">Alerte cyclone</button>
@@ -237,6 +272,13 @@ a.ghost{color:inherit}
 
 <div id="cycloneBanner" role="status" hidden>Vigilance cyclonique : chantiers suspendus, stock à sécuriser.</div>
 <div id="labels"></div>
+<nav class="nav-bas" aria-label="Accès rapide">
+  <a href="devis.html"><span aria-hidden="true">📄</span>Devis</a>
+  <a href="stock.html"><span aria-hidden="true">📦</span>Stock</a>
+  <a class="plus" href="devis.html?nouveau"><span aria-hidden="true">＋</span>Nouveau</a>
+  <a href="chantiers.html"><span aria-hidden="true">🏠</span>Chantiers</a>
+  <a href="sav.html"><span aria-hidden="true">🛠️</span>SAV</a>
+</nav>
 <aside id="panel" aria-hidden="true" aria-labelledby="ptitle"><div id="pbody"></div></aside>
 <p class="hint" id="hint">Les points orange demandent ton attention. Clique dessus pour voir.</p>
 <div id="toasts" aria-live="polite"></div>
@@ -311,7 +353,7 @@ async function charger() {
     sb.from("stock_vue").select("ref,libelle,cat,reel,reserve,disponible,seuil_alerte,en_alerte").limit(5000),
     sb.from("stock_receptions").select("id", { count: "exact", head: true }).eq("statut", "a_valider"),
     sb.from("sav").select("id,numero,nom,commune,priorite,statut,creneau,created_at,diagnostic").in("statut", ["nouveau", "planifie", "en_cours"]).order("created_at", { ascending: false }).limit(200),
-    sb.from("chantiers").select("id,numero,client_nom,commune,kwc,etape,date_visite,date_pose,date_mise_en_service,created_at").neq("etape", "annule").order("created_at").limit(500),
+    sb.from("chantiers").select("id,numero,client_nom,telephone,commune,kwc,etape,date_visite,date_pose,date_mise_en_service,created_at").neq("etape", "annule").order("created_at").limit(500),
   ]);
   DATA.chantiers = ch.error ? [] : (ch.data || []);
   DATA.sav = sv.error ? [] : (sv.data || []);
@@ -500,6 +542,18 @@ const PARCELLES=(()=>{ const L=[];
   return L.sort((p,q)=>(Math.hypot(...p)+(p[0]+p[1])*.12)-(Math.hypot(...q)+(q[0]+q[1])*.12));
 })();
 function emplacements(n){ return PARCELLES.slice(0,n); }
+// Étiquettes des maisons : le nom du chantier, cliquable
+const MAISONS=[], maisonEls=new Map();
+function etiquettesMaisons(){
+  const box=document.getElementById('labels'), vus=new Set();
+  MAISONS.forEach(({c})=>{ vus.add(c.id); let el=maisonEls.get(c.id);
+    if(!el){ el=document.createElement('button'); el.type='button'; el.className='mtg'; el.addEventListener('click',()=>ouvrirChantier(c.id)); box.appendChild(el); maisonEls.set(c.id,el); }
+    const nom='Chantier '+String(c.client_nom||'').replace(/^(m\.|mme|mr|monsieur|madame)\s+/i,'').slice(0,22);
+    el.textContent=nom; el.classList.toggle('cours',c.etape!=='termine'); el.setAttribute('aria-label',nom+(c.etape==='termine'?', terminé':', en cours'));
+  });
+  maisonEls.forEach((el,id)=>{ if(!vus.has(id)){ el.remove(); maisonEls.delete(id); } });
+}
+function ouvrirChantier(id){ S.chantier=id; if(S.open==='quartier'){ render(); panel.scrollTop=0; } else openZone('quartier','fiche'); }
 
 const ville=grp(scene);
 (function construireVille(){
@@ -670,7 +724,8 @@ function rebuild(){
   // Quartier : chaque chantier construit une maison sur la parcelle libre la plus proche du QG (60 au maximum)
   const maisons=DATA.chantiers.slice(-(PARCELLES.length-1)), pos=emplacements(maisons.length+1), gq=Z.quartier.dyn, gm=grp(gq,'quartier');
   let etendue=0;
-  maisons.forEach((c,i)=>{ const [x,z]=pos[i], hg=new THREE.Group(); hg.position.set(x,.08,z); hg.scale.setScalar(1.55); hg.rotation.y=(Math.abs(x)>Math.abs(z)*1.2)?(x>0?-Math.PI/2:Math.PI/2):(z>0?Math.PI:0); gm.add(hg);
+  MAISONS.length=0;
+  maisons.forEach((c,i)=>{ const [x,z]=pos[i], hg=new THREE.Group(); hg.position.set(x,.08,z); hg.userData.chantier=c.id; MAISONS.push({c,x,z}); hg.scale.setScalar(1.55); hg.rotation.y=(Math.abs(x)>Math.abs(z)*1.2)?(x>0?-Math.PI/2:Math.PI/2):(z>0?Math.PI:0); gm.add(hg);
     maison(hg,0,0,c.etape==='termine',i); etendue=Math.max(etendue,Math.abs(x)/1.3+3,Math.abs(z)+3); });
   // La prochaine parcelle : un terrain à bâtir avec son panneau
   const [px,pz]=pos[maisons.length]; box(gm,.08,.9,.08,0x6B4F3A,px,.08,pz); box(gm,1,.55,.06,0xFFFFFF,px,.85,pz+.05); box(gm,.9,.09,.07,0x0E9C8F,px,1.2,pz+.06);
@@ -679,6 +734,7 @@ function rebuild(){
   ZONES.quartier.zoom=1.25;
   vueGenerale.x=0; vueGenerale.zoom=etendue?Math.max(.38,Math.min(1,16/etendue)):1;     // le QG et toute la ville construite à l'écran
   if(!S.open){ goal.target.set(0,0,0); goal.zoom=vueGenerale.zoom; }
+  etiquettesMaisons();
   collect();
 }
 
@@ -696,7 +752,7 @@ const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
 function pick(cx,cy){
   const r=canvas.getBoundingClientRect(); ndc.set(((cx-r.left)/r.width)*2-1, -((cy-r.top)/r.height)*2+1);
   ray.setFromCamera(ndc,camera); const hit=ray.intersectObjects(pickables,false)[0]; if(!hit) return null;
-  let o=hit.object, hot=null; while(o){ if(!hot && o.userData.hot) hot=o.userData.hot; if(o.userData.zone) return {zone:o.userData.zone, hot}; o=o.parent; }
+  let o=hit.object, hot=null, chantier=null; while(o){ if(!chantier && o.userData.chantier) chantier=o.userData.chantier; if(!hot && o.userData.hot) hot=o.userData.hot; if(o.userData.zone) return {zone:o.userData.zone, hot, chantier}; o=o.parent; }
   return null;
 }
 
@@ -724,7 +780,7 @@ canvas.addEventListener('pointermove',e=>{
   if(drag){ const dx=e.clientX-drag.x; if(Math.abs(dx)>5) drag.moved=true; if(drag.moved){ goal.yaw=Math.max(-.85,Math.min(.85,drag.yaw-dx*.006)); hideHint(); } }
   if(e.pointerType==='mouse'){ hovered=pick(e.clientX,e.clientY); canvas.style.cursor=hovered?'pointer':(drag&&drag.moved?'grabbing':'grab'); }
 });
-canvas.addEventListener('pointerup',e=>{ if(drag && !drag.moved){ const p=pick(e.clientX,e.clientY); if(p) openZone(p.zone,p.hot); else if(S.open) closePanel(); } drag=null; });
+canvas.addEventListener('pointerup',e=>{ if(drag && !drag.moved){ const p=pick(e.clientX,e.clientY); if(p&&p.chantier) ouvrirChantier(p.chantier); else if(p){ if(p.zone==='quartier') S.chantier=null; openZone(p.zone,p.hot); } else if(S.open) closePanel(); } drag=null; });
 canvas.addEventListener('pointerleave',()=>{ hovered=null; });
 addEventListener('keydown',e=>{ if(e.key==='Escape' && S.open) closePanel(); });
 
@@ -772,6 +828,11 @@ function placeLabels(){
     tmp.copy(h.at); tmp.y+=Z[h.zone].lift; tmp.project(camera);
     items.push({el,x:(tmp.x*.5+.5)*W,y:(-tmp.y*.5+.5)*H,prio:pin?2:1});
   });
+  // Noms des maisons : toujours visibles s'il y en a peu, sinon quand le quartier est ouvert
+  const voirMaisons=S.open==='quartier' || (!S.open && MAISONS.length<=12);
+  MAISONS.forEach(({c,x,z})=>{ const el=maisonEls.get(c.id); if(!el) return; el.classList.toggle('show',voirMaisons); if(!voirMaisons) return;
+    tmp.set(x,4.1,z); tmp.project(camera); if(tmp.z>1){ el.classList.remove('show'); return; }
+    items.push({el,x:(tmp.x*.5+.5)*W,y:(-tmp.y*.5+.5)*H,prio:3}); });
   // Anti-chevauchement : chaque étiquette prend la place libre la plus proche de son objet
   items.forEach(i=>{ i.w=i.el.offsetWidth; i.h=i.el.offsetHeight; });
   items.sort((a,b)=>a.prio-b.prio || b.y-a.y);
@@ -809,7 +870,7 @@ function openZone(id,hot){
   });
 }
 function closePanel(){
-  const was=S.open; S.open=null; panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
+  const was=S.open; S.open=null; S.chantier=null; panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
   goal.target.set(vueGenerale.x,0,0); goal.zoom=vueGenerale.zoom; if(mWasOpen && !MOBILE()){ mBox.hidden=false; syncMissionBtn(); }
   if(was) labelEls[was].focus({preventScroll:true});
 }
@@ -845,10 +906,22 @@ function render(){
     h+=`<div class="sec" id="h-pipe"><h3>Ventes <small>signé ce mois : ${euroD(signesMois().reduce((a,d)=>a+(+d.total_ttc||0),0))}</small></h3><div class="board">${Object.entries(STAGES).map(([st,[l,c]])=>{ const L=st==='accepte'?signesMois():devisSt(st);
       return `<div style="--c:${c}"><b>${L.length}</b><span>${l}${st==='accepte'?' (ce mois)':''}</span><span>${euroD(L.reduce((a,d)=>a+(+d.total_ttc||0),0))}</span></div>`; }).join('')}</div></div>`;
   }
+  if(id==='quartier' && S.chantier){
+    const c=DATA.chantiers.find(x=>x.id===S.chantier);
+    if(c){ const ET=['visite','demarches','pose','mise_en_service'], r=c.etape==='termine'?4:ET.indexOf(c.etape);
+      h+=`<div class="sec fiche-ch" id="h-fiche"><h3>${c.etape==='termine'?'🏡':'🚧'} Chantier ${esc(c.client_nom)} <small>${esc(c.numero||'')}</small></h3>
+        <div class="etapes-ch">${['Visite','Démarches','Pose','Mise en service'].map((t,i)=>`<span class="${i<r?'fait':i===r?'ici':''}">${i<r?'✓ ':''}${t}</span>`).join('')}</div>
+        <ul class="rows">${[['Commune',c.commune],['Puissance',c.kwc?nbFr(c.kwc)+' kWc':''],['Visite technique',c.date_visite?dateC(c.date_visite):''],['Pose',c.date_pose?dateC(c.date_pose):''],['Mise en service',c.date_mise_en_service?dateC(c.date_mise_en_service):''],['Téléphone',c.telephone]].filter(([,v])=>v).map(([k,v])=>`<li class="row line"><span class="meta">${k}</span><b>${esc(v)}</b></li>`).join('')}</ul>
+        <div class="line">${lien('chantiers.html?c='+c.id,'Ouvrir le chantier','cta')}${c.telephone?`<a class="ghost" href="tel:${esc(String(c.telephone).replace(/\s/g,''))}">📞 Appeler</a>`:''}<button class="ghost" type="button" id="retour-quartier">← Tout le quartier</button></div></div>`;
+      pbody.innerHTML=h+'<div class="pad"></div>';
+      document.getElementById('retour-quartier').onclick=()=>{ S.chantier=null; render(); };
+      return;
+    }
+  }
   if(id==='quartier'){
     const fin=DATA.chantiers.filter(c=>c.etape==='termine'), ce=chEnCours();
     h+=`<div class="sec" id="h-quartier"><div class="grid"><div class="tile"><span class="tn">Maisons finies</span><b class="big">${fin.length}</b><span class="tu">installations en service</span></div><div class="tile"><span class="tn">En construction</span><b class="big">${ce.length}</b><span class="tu">chantiers en cours</span></div><div class="tile"><span class="tn">Puissance posée</span><b class="big">${nbFr(fin.reduce((a,c)=>a+(+c.kwc||0),0))}</b><span class="tu">kWc</span></div></div></div>`;
-    h+=`<div class="sec"><h3>En construction</h3>`+(ce.length?`<ul class="rows">${ce.map(c=>`<li class="row line"><div><b>${esc(c.client_nom)}</b><span class="meta">${esc(ETAPE_TXT[c.etape]||'')}${c.commune?' · '+esc(c.commune):''}${c.kwc?' · '+nbFr(c.kwc)+' kWc':''}</span></div>${lien('chantiers.html?c='+c.id,'Ouvrir')}</li>`).join('')}</ul>`:empty('Aucun chantier en cours.'))+`<p style="margin-top:8px">${lien('chantiers.html','Ouvrir les chantiers','cta')}</p></div>`;
+    h+=`<div class="sec"><h3>En construction</h3>`+(ce.length?`<ul class="rows">${ce.map(c=>`<li class="row line"><div><b>${esc(c.client_nom)}</b><span class="meta">${esc(ETAPE_TXT[c.etape]||'')}${c.commune?' · '+esc(c.commune):''}${c.kwc?' · '+nbFr(c.kwc)+' kWc':''}</span></div><button class="cta sm" type="button" data-chantier="${c.id}">Voir</button></li>`).join('')}</ul>`:empty('Aucun chantier en cours.'))+`<p style="margin-top:8px">${lien('chantiers.html','Ouvrir les chantiers','cta')}</p></div>`;
   }
   if(id==='enr'){
     h+=`<div class="sec" id="h-prevus"><h3>Demandes de pose <small>clients qui veulent une installation</small></h3>`+(DATA.pose.length?`<ul class="rows">${DATA.pose.map(d=>{ const c=d.contact||{}; return `<li class="row line"><div><b>${esc(c.nom||c.telephone||'Client')}</b><span class="meta">${esc(c.commune||'')}${c.commune?', ':''}demande du ${dateC(d.created_at)}${c.telephone?', tél. '+esc(c.telephone):''}</span></div>${lien(SITE+'/dashboard.html','Voir','cta sm',true)}</li>`; }).join('')}</ul>`:empty('Aucune demande de pose pour le moment.'))+`</div>`;
@@ -860,7 +933,7 @@ function render(){
   pbody.innerHTML=h+'<div class="pad"></div>';
 }
 
-pbody.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(b&&b.dataset.act==='close') closePanel(); });
+pbody.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(b&&b.dataset.act==='close') closePanel(); const ch=e.target.closest('[data-chantier]'); if(ch) ouvrirChantier(ch.dataset.chantier); });
 
 /* Jeu : XP et missions */
 const toasts=document.getElementById('toasts');
@@ -893,7 +966,7 @@ function refresh(){
   const ms=missions(); let done=0;
   document.getElementById('mlist').innerHTML=ms.map(m=>{ const rien=m.n===0, ok=rien||m.p>=m.n; if(ok) done++;
     return `<li class="${ok?'done':''}"><button data-z="${m.z}" data-h="${m.h}"><span class="ck">${ok?'✓':''}</span><span class="t">${m.t}</span><small>${rien?'rien à faire':m.p+'/'+m.n}</small></button></li>`; }).join('');
-  document.getElementById('mcount').textContent=done+'/'+ms.length;
+  document.getElementById('mcount').textContent=done+'/'+ms.length; document.getElementById('mcount2').textContent=done+'/'+ms.length;
   ms.forEach(m=>{
     const avant=J.vu[m.id]||0; if(m.p>avant){ gain((m.p-avant)*15, m.t); J.vu[m.id]=m.p; }
     if(m.n>0 && m.p>=m.n && !J.fait[m.id]){ J.fait[m.id]=true; setTimeout(()=>gain(50,'Mission terminée : '+m.t.toLowerCase()),800); }
@@ -904,6 +977,10 @@ document.getElementById('mlist').addEventListener('click',e=>{ const b=e.target.
 function syncMissionBtn(){ mBtn.setAttribute('aria-expanded',String(!mBox.hidden)); }
 if(MOBILE()){ mBox.hidden=true; syncMissionBtn(); }
 mBtn.addEventListener('click',()=>{ mBox.hidden=!mBox.hidden; syncMissionBtn(); });
+document.getElementById('btnMissions2').addEventListener('click',()=>{ menuAct.classList.remove('ouvert'); mBtn.click(); });
+const menuAct=document.getElementById('menu-actions'), bMenu=document.getElementById('btnMenu');
+bMenu.addEventListener('click',(e)=>{ e.stopPropagation(); const o=menuAct.classList.toggle('ouvert'); bMenu.setAttribute('aria-expanded',String(o)); });
+document.addEventListener('click',(e)=>{ if(menuAct.classList.contains('ouvert') && !menuAct.contains(e.target) && e.target!==bMenu){ menuAct.classList.remove('ouvert'); bMenu.setAttribute('aria-expanded','false'); } });
 
 /* Alerte cyclone */
 const cBtn=document.getElementById('btnCyclone'), banner=document.getElementById('cycloneBanner');
