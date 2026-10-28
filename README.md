@@ -4,6 +4,7 @@ Outil interne de Yann, séparé du site public. Même base Supabase que le site 
 
 - `index.html` : le magasin en 3D, branché sur les vraies données (devis, ventes, Kbis, catalogue, demandes de pose).
 - `devis.html` : la gestion des devis (même fichier que sur le site cedyan-energy.net).
+- `agenda.html` : l'agenda de Yann (rendez-vous, tâches, et automatiquement les interventions SAV, visites et poses).
 - `terrain.html` : l'application des techniciens SAV et des poseurs (leurs interventions, leurs chantiers, rien d'autre), et la gestion de l'équipe terrain pour le bureau.
 - `chantiers.html` : les chantiers ENR Pose (visite technique sur téléphone, matériel calculé et réservé, démarches, pose, mise en service et dossier client).
 - `sav.html` : le SAV ENR Pose (demandes triées par priorité, pré-diagnostic, planification, intervention sur téléphone avec signature, installations et QR codes).

@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="favicon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QG Cedyan">
+
 <meta name="robots" content="noindex, nofollow">
 <title>QG de Yann, le magasin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,11 +264,13 @@ canvas{touch-action:none}
   <div class="actions" id="menu-actions">
     <a class="chip chip--jaune doublon" href="devis.html?nouveau">Faire un devis</a>
     <a class="chip doublon" href="devis.html">Devis</a>
-    <a class="chip doublon" href="stock.html">Stock</a>
+    <a class="chip doublon" href="agenda.html">Agenda</a>
+    <a class="chip" href="stock.html">Stock</a>
     <a class="chip doublon" href="chantiers.html">Chantiers</a>
     <a class="chip doublon" href="sav.html">SAV</a>
     <a class="chip" href="https://cedyan-energy.net/dashboard.html" target="_blank" rel="noopener">Tableau de bord</a>
     <a class="chip" href="terrain.html">Équipe terrain</a>
+    <button class="chip" id="btnNotifs" type="button">🔔 Notifications</button>
     <button class="chip" id="btnMissions" aria-expanded="true" aria-controls="missions">Missions du jour <b id="mcount">0/4</b></button>
     <button class="chip" id="btnCyclone" aria-pressed="false">Alerte cyclone</button>
     <button class="chip" id="btnSortir">Quitter</button>
@@ -280,7 +287,7 @@ canvas{touch-action:none}
 <button class="chip" id="recentrer" hidden aria-label="Revenir à la vue d'ensemble">⤾ Vue d'ensemble</button>
 <nav class="nav-bas" aria-label="Accès rapide">
   <a href="devis.html"><span aria-hidden="true">📄</span>Devis</a>
-  <a href="stock.html"><span aria-hidden="true">📦</span>Stock</a>
+  <a href="agenda.html"><span aria-hidden="true">📅</span>Agenda</a>
   <a class="plus" href="devis.html?nouveau"><span aria-hidden="true">＋</span>Nouveau</a>
   <a href="chantiers.html"><span aria-hidden="true">🏠</span>Chantiers</a>
   <a href="sav.html"><span aria-hidden="true">🛠️</span>SAV</a>
@@ -302,6 +309,7 @@ canvas{touch-action:none}
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="mdp.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
@@ -789,7 +797,7 @@ function deplacer(dx,dy){
   const wpp=2*(BASE/view.zoom)*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))/innerHeight;
   const droite=V3().setFromMatrixColumn(camera.matrixWorld,0); droite.y=0; droite.normalize();
   const avant=V3(0,1,0).cross(droite).normalize();
-  goal.target.addScaledVector(droite,-dx*wpp).addScaledVector(avant,-dy*wpp*1.4);
+  goal.target.addScaledVector(droite,-dx*wpp).addScaledVector(avant,dy*wpp*1.4);   // la carte suit le doigt
   goal.target.x=Math.max(-46,Math.min(46,goal.target.x)); goal.target.z=Math.max(-44,Math.min(44,goal.target.z)); goal.target.y=0;
 }
 canvas.addEventListener('pointerdown',e=>{ doigts.set(e.pointerId,{x:e.clientX,y:e.clientY}); canvas.setPointerCapture(e.pointerId);
@@ -1062,6 +1070,7 @@ document.getElementById('co-lien').addEventListener('click',async()=>{
   await sb.auth.signInWithOtp({ email:em, options:{ shouldCreateUser:false, emailRedirectTo:location.origin+location.pathname } });
   msg.textContent='Si cette adresse a accès, un lien de connexion vient de partir.';
 });
+document.getElementById('btnNotifs').addEventListener('click',()=>{ menuAct.classList.remove('ouvert'); window.QGNotifs && QGNotifs.ouvrir(sb); });
 document.getElementById('btnSortir').addEventListener('click',async()=>{ await sb.auth.signOut(); location.reload(); });
 
 async function demarrer(){
@@ -1070,6 +1079,7 @@ async function demarrer(){
   const { data:eq }=await sb.from('staff').select('email,nom').ilike('email',session.user.email).maybeSingle();
   if(!eq){ await sb.auth.signOut(); return montrerConnexion("Ce compte n'a pas accès au QG."); }
   ecranCo.hidden=true; S.moi=eq;
+  if(window.QGMotDePasse) QGMotDePasse.siBesoin(sb);
   document.querySelector('.who h1').textContent='QG de '+(eq.nom||'Yann').split(' ')[0];
   try{ await charger(); }catch(err){ toast('Oups','Données indisponibles : '+(err.message||err),'warn'); }
   hud(); refresh();
@@ -1080,5 +1090,6 @@ requestAnimationFrame(loop);
 demarrer();
 })();
 </script>
+<script src="notifs.js"></script>
 </body>
 </html>

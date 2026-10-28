@@ -352,7 +352,7 @@ async function ecranNouveau() {
       <div><label for="n-nom">Nom</label><input id="n-nom" autocomplete="off"></div>
       <div><label for="n-ent">Entreprise</label><input id="n-ent" autocomplete="off"></div>
       <div><label for="n-tel">Téléphone</label><input id="n-tel" inputmode="tel" autocomplete="off"></div>
-      <div><label for="n-mail">E-mail</label><input id="n-mail" type="email" autocomplete="off"></div>
+      <div><label for="n-mail">E-mail <span style="color:#b42318">*</span></label><input id="n-mail" type="email" autocomplete="off" required></div>
       <div><label for="n-com">Commune</label><input id="n-com" autocomplete="off"></div>
     </div>
     <div>
@@ -394,6 +394,7 @@ async function ecranNouveau() {
     const err = f("nerr"); err.hidden = true;
     const client = { nom: f("n-nom").value, entreprise: f("n-ent").value, telephone: f("n-tel").value, email: f("n-mail").value, commune: f("n-com").value };
     if (!client.nom.trim() && !client.entreprise.trim()) { err.textContent = "Indiquez au moins un nom ou une entreprise."; err.hidden = false; f("n-nom").focus(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(client.email || "").trim())) { err.textContent = "L'e-mail du client est obligatoire : c'est par lui que partent le devis et les relances."; err.hidden = false; f("n-mail").focus(); return; }
     const texte = f("n-texte").value.trim();
     f("nok").disabled = true; f("nattente").textContent = texte ? "Lecture de la liste et calcul des prix…" : "Création du devis…";
     const { data, error } = await sb.functions.invoke("devis", { body: { action: "creer", client, profil, grille: profil === "pro" ? "pro" : "public", texte, compte_pro_id: compteId } });
@@ -532,13 +533,14 @@ function brancherLignes() {
 function editerClient() {
   const z = document.getElementById("zoneclient"); if (z.innerHTML) { z.innerHTML = ""; return; }
   const c = D.demande.contact || {};
-  const champs = [["nom", "Nom"], ["entreprise", "Entreprise"], ["telephone", "Téléphone"], ["email", "E-mail"], ["commune", "Commune"]];
+  const champs = [["nom", "Nom"], ["entreprise", "Entreprise"], ["telephone", "Téléphone"], ["email", "E-mail (obligatoire)"], ["commune", "Commune"]];
   z.innerHTML = `<div class="client-edit">${champs.map(([k, l]) => `<input data-c="${k}" placeholder="${l}" aria-label="${l}" value="${esc(c[k] || "")}">`).join("")}<div class="bas"><button class="petit" id="okclient">Enregistrer</button><button class="petit" id="annclient">Annuler</button></div></div>`;
   z.querySelector("[data-c]").focus();
   document.getElementById("annclient").onclick = () => (z.innerHTML = "");
   document.getElementById("okclient").onclick = async () => {
     const contact = { ...c };
     z.querySelectorAll("[data-c]").forEach((i) => { const v = i.value.trim(); if (v) contact[i.dataset.c] = v; else delete contact[i.dataset.c]; });
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contact.email || "")) { afficherEtat("L'e-mail du client est obligatoire", true); z.querySelector('[data-c="email"]').focus(); return; }
     D.demande.contact = contact;
     await ecrire(sb.from("demandes").update({ contact, updated_at: new Date().toISOString() }).eq("id", D.demande.id));
     rendre();

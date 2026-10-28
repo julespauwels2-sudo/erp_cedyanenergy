@@ -6,6 +6,11 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#062a27">
 <link rel="icon" href="favicon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QG Cedyan">
+
 <title>Terrain · ENR Pose</title>
 <style>
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("InterVariable.woff2") format("woff2")}
@@ -72,7 +77,7 @@ dialog{border:0;border-radius:22px;padding:20px;width:min(94vw,420px)}dialog::ba
 </style>
 </head>
 <body>
-<header class="haut"><div class="l1"><div class="marque">ENR <span>Pose</span> · Terrain</div><button class="lien-blanc" id="sortir" hidden>Se déconnecter</button></div>
+<header class="haut"><div class="l1"><div class="marque">ENR <span>Pose</span> · Terrain</div><span><button class="lien-blanc" id="cloche" hidden aria-label="Notifications" style="text-decoration:none;font-size:1.3rem;margin-right:10px">🔔</button><button class="lien-blanc" id="sortir" hidden>Se déconnecter</button></span></div>
   <h1 id="bonjour">Bonjour</h1><p id="sous">Vos missions du jour, sur votre téléphone.</p></header>
 <main id="app"><p class="vide">Chargement…</p></main>
 <nav class="nav" id="nav" hidden></nav>
@@ -81,6 +86,7 @@ dialog{border:0;border-radius:22px;padding:20px;width:min(94vw,420px)}dialog::ba
   <input type="password" id="mdp1" placeholder="Nouveau mot de passe" autocomplete="new-password" style="margin:8px 0"><input type="password" id="mdp2" placeholder="Retapez-le" autocomplete="new-password">
   <p class="meta" id="mdp-msg"></p><div class="actions"><button type="button" class="btn" id="mdp-plus-tard">Plus tard</button><button class="btn teal">Enregistrer</button></div></form></dialog>
 
+<script src="mdp.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (() => {
@@ -135,8 +141,9 @@ async function demarrer() {
   const [{ data: st }, { data: te }] = await Promise.all([sb.from("staff").select("email,nom,role").ilike("email", email).maybeSingle(), sb.from("equipe_terrain").select("*").eq("email", email).maybeSingle()]);
   if (!st && !te) { await sb.auth.signOut(); return connexion("Ce compte n'a pas encore accès. Demandez à Yann de vous ajouter à l'équipe terrain."); }
   MOI = { email, nom: (te || st).nom || email, bureau: !!st, metier: te ? te.metier : "les_deux" };
-  try { if (localStorage.getItem("terrain_mdp") === "1") { localStorage.removeItem("terrain_mdp"); dlg.showModal(); } } catch {}
+  try { if (localStorage.getItem("terrain_mdp") === "1" || (window.QGMotDePasse && QGMotDePasse.viaLien)) { localStorage.removeItem("terrain_mdp"); dlg.showModal(); } } catch {}
   document.getElementById("sortir").hidden = false;
+  const cl = document.getElementById("cloche"); cl.hidden = false; cl.onclick = () => window.QGNotifs && QGNotifs.ouvrir(sb);
   document.getElementById("bonjour").textContent = "Bonjour " + String(MOI.nom).split(" ")[0];
   const auj = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   document.getElementById("sous").textContent = auj.charAt(0).toUpperCase() + auj.slice(1) + (MOI.bureau ? " · vue du bureau (toute l'équipe)" : "");
@@ -284,5 +291,6 @@ sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN" && !MOI) demarrer(); 
 demarrer();
 })();
 </script>
+<script src="notifs.js"></script>
 </body>
 </html>

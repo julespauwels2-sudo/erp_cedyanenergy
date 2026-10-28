@@ -130,6 +130,7 @@ main{padding-top:24px}
   </div>
 </header>
 <main id="app"><p class="vide">Chargement…</p></main>
+<script src="calendrier.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
@@ -146,7 +147,11 @@ function info(t, err) { etat.hidden = !t; etat.textContent = t || ""; etat.class
 const STATUT = { nouveau: "À traiter", planifie: "Planifiée", en_cours: "En cours", resolu: "Terminée", annule: "Annulée" };
 const PRIO = { urgent: "Urgent", normal: "Normal", faible: "Faible" };
 const CHECKLIST = ["Photo de l'installation avant intervention", "Relever les codes erreur de l'onduleur", "Contrôler les protections (disjoncteurs, parafoudre)", "Contrôler les batteries (état, connexions, températures)", "Tester la production après intervention", "Expliquer au client ce qui a été fait"];
-const L = { sav: [], inst: [], equipe: [] };
+const L = { sav: [], inst: [], equipe: [], tarifs: { deplacement: 50, intervention: 60 } };
+const CANAL = { qr: "QR code", site: "Site", appel: "Appel", sms: "SMS", whatsapp: "WhatsApp", email: "E-mail", sur_place: "Sur place" };
+const PEC = { payant: "Payant", garantie: "Sous garantie (gratuit)", geste: "Geste commercial (gratuit)" };
+const FSTAT = { a_facturer: "À facturer", facture: "Facturé", paye: "Payé" };
+const eur = (n) => (Number(n) || 0).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 const params = new URLSearchParams(location.search);
 let onglet = params.get("v") || "demandes", filtre = "a_traiter", ouvert = params.get("s");
 
@@ -159,6 +164,7 @@ async function charger() {
   L.sav = s.data || []; L.inst = i.data || [];
   const { data: eqT } = await sb.from("equipe_terrain").select("email,nom,metier,actif").eq("actif", true).order("nom");
   L.equipe = (eqT || []).filter((m) => m.metier !== "poseur");
+  const { data: rg } = await sb.from("reglages").select("valeur").eq("cle", "sav_tarifs").maybeSingle(); if (rg?.valeur) L.tarifs = { ...L.tarifs, ...rg.valeur };
 }
 const rang = (x) => ({ urgent: 0, normal: 1, faible: 2 }[x.priorite] ?? 1);
 
@@ -168,7 +174,7 @@ function chiffres() {
   const k = [["demandes", "a_traiter", "À traiter", at.length, "#b42318", urg ? `dont ${urg} urgente(s)` : "aucune urgence"],
     ["demandes", "planifie", "Interventions prévues", L.sav.filter((x) => x.statut === "planifie" || x.statut === "en_cours").length, "#2b4b9b", "créneaux confirmés"],
     ["demandes", "resolu", "Réglées ce mois", L.sav.filter((x) => x.statut === "resolu" && x.rapport?.termine_le && new Date(x.rapport.termine_le) >= mois).length, "#218034", "rapports envoyés"],
-    ["installations", "", "Installations suivies", L.inst.length, "#0E9C8F", "avec leur QR code"]];
+    ["demandes", "facturer", "À facturer", L.sav.filter((x) => x.facture && x.facture.prise_en_charge === "payant" && (x.facture.statut || "a_facturer") !== "paye").length, "#fbbb10", eur(L.sav.filter((x) => x.facture && x.facture.prise_en_charge === "payant" && (x.facture.statut || "a_facturer") !== "paye").reduce((a, x) => a + (+x.facture.total || 0), 0)) + " en attente"]];
   document.getElementById("kpis").innerHTML = k.map(([o, f, t, v, c, s], i) => `<button class="kpi ${i === 0 && v ? "chaud" : ""}" style="--k:${c}" data-o="${o}" data-f="${f}"><span>${t}</span><b>${v}</b><small>${esc(s)}</small></button>`).join("");
   document.querySelectorAll(".kpi").forEach((b) => (b.onclick = () => { onglet = b.dataset.o; if (b.dataset.f) filtre = b.dataset.f; ouvert = null; rendre(); }));
 }
@@ -187,14 +193,50 @@ function rendre() {
 function vueDemandes() {
   const z = document.getElementById("zone");
   const F = { a_traiter: ["nouveau"], planifie: ["planifie", "en_cours"], resolu: ["resolu"], tous: Object.keys(STATUT) };
-  const l = L.sav.filter((x) => F[filtre].includes(x.statut)).sort((a, b) => rang(a) - rang(b) || new Date(b.created_at) - new Date(a.created_at));
-  z.innerHTML = `<div class="puces" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${[["a_traiter", "À traiter"], ["planifie", "Planifiées"], ["resolu", "Terminées"], ["tous", "Toutes"]].map(([k, t]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${t}</button>`).join("")}</div>
+  const aFacturer = (x) => x.facture && x.facture.prise_en_charge === "payant" && (x.facture.statut || "a_facturer") !== "paye";
+  const l = L.sav.filter((x) => filtre === "facturer" ? aFacturer(x) : F[filtre].includes(x.statut)).sort((a, b) => rang(a) - rang(b) || new Date(b.created_at) - new Date(a.created_at));
+  z.innerHTML = `<div class="rangee" style="justify-content:space-between;margin-bottom:12px"><div class="puces" style="display:flex;gap:8px;flex-wrap:wrap">${[["a_traiter", "À traiter"], ["planifie", "Planifiées"], ["resolu", "Terminées"], ["facturer", "À facturer"], ["tous", "Toutes"]].map(([k, t]) => `<button class="puce" data-f="${k}" aria-pressed="${filtre === k}">${t}${k === "facturer" && L.sav.filter(aFacturer).length ? " (" + L.sav.filter(aFacturer).length + ")" : ""}</button>`).join("")}</div><button class="btn jaune" id="nouvelle">+ Nouvelle demande SAV</button></div>
     <div class="liste">${l.map((s) => `<button class="item" data-id="${s.id}" data-p="${s.priorite}"><span><b>${esc(s.nom || s.installation?.client_nom || s.telephone || "Client")}</b> <span class="meta">${esc(s.commune || s.installation?.commune || "")}</span></span>
       <span>${s.priorite === "urgent" ? `<span class="badge urgent">Urgent</span>` : `<span class="badge">${PRIO[s.priorite]}</span>`}</span>
-      <span class="meta">${esc(s.numero)} · ${dateC(s.created_at)} · ${esc((s.diagnostic?.resume || s.description).slice(0, 110))}</span>
-      <span class="meta">${s.statut === "planifie" ? "📅 " + dateH(s.creneau) : STATUT[s.statut]}</span></button>`).join("") || `<p class="vide">Aucune demande ici.</p>`}</div>`;
+      <span class="meta">${esc(s.numero)} · ${dateC(s.created_at)}${s.canal && s.canal !== "qr" ? " · " + esc(CANAL[s.canal] || "") : ""} · ${esc((s.diagnostic?.resume || s.description).slice(0, 110))}</span>
+      <span class="meta">${s.statut === "planifie" ? "📅 " + dateH(s.creneau) : STATUT[s.statut]}${s.facture && s.facture.prise_en_charge === "payant" ? " · 💶 " + eur(s.facture.total) + " " + (FSTAT[s.facture.statut || "a_facturer"] || "").toLowerCase() : ""}</span></button>`).join("") || `<p class="vide">Aucune demande ici.</p>`}</div>`;
+  document.getElementById("nouvelle").onclick = nouvelleDemande;
   z.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { filtre = b.dataset.f; vueDemandes(); }));
   z.querySelectorAll("[data-id]").forEach((b) => (b.onclick = () => { ouvert = b.dataset.id; history.replaceState(null, "", "?s=" + ouvert); rendre(); scrollTo(0, 0); }));
+}
+
+/* ---------- Nouvelle demande prise à la main (appel, SMS, WhatsApp, sur place) ---------- */
+function nouvelleDemande() {
+  document.body.classList.add("edition");
+  const z = document.getElementById("zone");
+  z.innerHTML = `<p><button class="btn petit" id="ret">← Toutes les demandes</button></p><section class="carte"><h2>Nouvelle demande SAV</h2>
+    <p class="meta">Pour un client qui appelle, envoie un SMS ou passe au magasin. Elle suit ensuite le même chemin qu'une demande faite par QR code.</p>
+    <div class="grille2"><label class="ch">Client déjà installé<select id="m-inst"><option value="">Aucun (pas de fiche installation)</option>${L.inst.map((i) => `<option value="${i.id}">${esc(i.client_nom)}${i.commune ? " · " + esc(i.commune) : ""}</option>`).join("")}</select></label>
+    <label class="ch">Comment nous a-t-il contactés ?<select id="m-canal">${["appel", "sms", "whatsapp", "email", "sur_place"].map((k) => `<option value="${k}">${CANAL[k]}</option>`).join("")}</select></label>
+    <label class="ch">Nom du client<input id="m-nom"></label><label class="ch">Téléphone<input id="m-tel" type="tel"></label>
+    <label class="ch">E-mail (obligatoire)<input id="m-email" type="email"></label><label class="ch">Commune<input id="m-com"></label>
+    <label class="ch" style="grid-column:1/-1">Adresse<input id="m-adr"></label></div>
+    <label class="ch" style="margin-top:10px">Ce que dit le client<textarea id="m-desc" rows="4" placeholder="Ex. : l'onduleur affiche une erreur depuis l'orage, plus de production…"></textarea></label>
+    <div class="rangee" style="margin-top:10px"><label class="ch">Priorité<select id="m-prio"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="faible">Faible</option></select></label>
+      <label class="ch" style="flex-direction:row;display:flex;align-items:center;gap:8px"><input type="checkbox" id="m-coupure" style="width:20px;height:20px"> Plus de courant du tout</label>
+      <label class="ch" style="flex-direction:row;display:flex;align-items:center;gap:8px"><input type="checkbox" id="m-danger" style="width:20px;height:20px"> Odeur, chaleur ou fumée</label></div>
+    <div class="rangee" style="margin-top:14px"><button class="btn teal" id="m-ok">Créer la demande</button></div></section>`;
+  document.getElementById("ret").onclick = () => { document.body.classList.remove("edition"); vueDemandes(); };
+  document.getElementById("m-inst").onchange = (e) => { const i = L.inst.find((x) => x.id === e.target.value); if (!i) return;
+    [["m-nom", i.client_nom], ["m-tel", i.telephone], ["m-email", i.email], ["m-com", i.commune], ["m-adr", i.adresse]].forEach(([id, v]) => { if (v) document.getElementById(id).value = v; }); };
+  document.getElementById("m-ok").onclick = async (e) => {
+    const g = (id) => document.getElementById(id).value.trim();
+    if (!g("m-nom")) return info("Indiquez le nom du client", true);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g("m-email"))) return info("L'e-mail du client est obligatoire (rapport, facture)", true);
+    if (g("m-desc").length < 3) return info("Décrivez le problème en quelques mots", true);
+    const coupure = document.getElementById("m-coupure").checked, danger = document.getElementById("m-danger").checked;
+    e.target.disabled = true;
+    const { data, error } = await sb.from("sav").insert({ installation_id: g("m-inst") || null, canal: g("m-canal"), nom: g("m-nom"), telephone: g("m-tel") || null, email: g("m-email").toLowerCase(),
+      commune: g("m-com") || null, adresse: g("m-adr") || null, description: g("m-desc"), priorite: coupure || danger ? "urgent" : g("m-prio"), reponses: { coupure, danger } }).select("id").single();
+    e.target.disabled = false;
+    if (error) return info("Erreur : " + error.message, true);
+    info("Demande créée"); await charger(); ouvert = data.id; history.replaceState(null, "", "?s=" + ouvert); rendre(); scrollTo(0, 0);
+  };
 }
 
 async function lienPhoto(chemin) { const { data } = await sb.storage.from("sav").createSignedUrl(chemin, 3600); return data?.signedUrl || ""; }
@@ -207,7 +249,7 @@ async function vueDemande(s) {
   const checklist = R.checklist || [...CHECKLIST, ...(d.a_verifier || [])].map((t) => ({ texte: t, fait: false }));
   z.innerHTML = `<p><button class="btn petit" id="ret">← Toutes les demandes</button></p>
   <section class="carte"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><h2>${esc(s.nom || i.client_nom || "Client")} <span class="meta">${esc(s.numero)}</span></h2>
-    <p class="meta">${esc(s.commune || i.commune || "")} · reçue le ${dateH(s.created_at)}</p></div>
+    <p class="meta">${esc([s.adresse || i.adresse, s.commune || i.commune].filter(Boolean).join(", "))} · reçue le ${dateH(s.created_at)}${s.canal ? " · par " + esc((CANAL[s.canal] || "").toLowerCase()) : ""}</p></div>
     <label class="ch">Priorité<select id="prio">${Object.entries(PRIO).map(([k, t]) => `<option value="${k}" ${s.priorite === k ? "selected" : ""}>${t}</option>`).join("")}</select></label></div>
     <div class="rangee" style="margin-top:8px">${tel ? `<a class="btn teal petit" href="tel:${esc(tel.replace(/\s/g, ""))}">📞 Appeler ${esc(tel)}</a>` : ""}${s.email ? `<a class="btn petit" href="mailto:${esc(s.email)}">✉️ ${esc(s.email)}</a>` : ""}${i.portail ? `<a class="btn petit" target="_blank" rel="noopener" href="${esc(PORTAILS[i.portail] || "#")}">Voir sur ${esc(i.portail)}</a>` : ""}</div>
     ${mat ? `<p class="meta" style="margin-top:10px"><b>Installation :</b> ${esc(mat)}${i.date_pose ? " · posée le " + dateC(i.date_pose) : ""}</p>` : `<p class="meta" style="margin-top:10px">Demande sans QR code : pas d'installation reliée.</p>`}
@@ -227,10 +269,12 @@ async function vueDemande(s) {
       </div></div>` : ""}
   </section>
   <section class="carte"><h2>Planifier</h2><div class="rangee">
-    <label class="ch">Date et heure<input type="datetime-local" id="cr" value="${s.creneau ? new Date(new Date(s.creneau).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}"></label>
+    <label class="ch">Jour<input type="date" id="cr" value="${s.creneau ? new Date(s.creneau).toLocaleDateString("en-CA") : ""}"></label>
+    <label class="ch">Heure<select id="cr-h">${Array.from({ length: 25 }, (_, i) => { const h = 7 + Math.floor(i / 2), m = i % 2 ? "30" : "00", v = String(h).padStart(2, "0") + ":" + m; const cur = s.creneau ? new Date(s.creneau).toTimeString().slice(0, 5) : "08:00"; return `<option ${cur === v ? "selected" : ""}>${v}</option>`; }).join("")}</select></label>
     <label class="ch">Technicien<select id="tech"><option value="">Choisir…</option>${L.equipe.map((m) => `<option value="${esc(m.email)}" ${s.technicien_email === m.email ? "selected" : ""}>${esc(m.nom)}</option>`).join("")}<option value="__autre" ${s.technicien && !s.technicien_email ? "selected" : ""}>${s.technicien && !s.technicien_email ? esc(s.technicien) : "Autre (hors application)"}</option></select></label>
     ${L.equipe.length ? "" : `<p class="meta" style="flex-basis:100%">Ajoutez vos techniciens dans <a href="terrain.html?v=equipe">Équipe terrain</a> : ils verront leurs interventions sur leur téléphone.</p>`}
     <button class="btn teal petit" id="plan">Enregistrer le créneau</button><button class="btn petit" id="prev" ${s.creneau ? "" : "disabled"}>Prévenir le client par e-mail</button></div></section>
+  <section class="carte" id="facturation"></section>
   <section class="carte"><h2>Intervention</h2><p class="meta">À remplir sur place, depuis le téléphone.</p>
     <div class="check">${checklist.map((c, k) => `<label><input type="checkbox" data-k="${k}" ${c.fait ? "checked" : ""}>${esc(c.texte)}</label>`).join("")}</div>
     <h3>Ce qui a été fait</h3><label class="ch"><textarea id="notes" rows="4" placeholder="Pièces changées, réglages, conseils donnés…">${esc(R.notes || "")}</textarea></label>
@@ -242,6 +286,8 @@ async function vueDemande(s) {
     ${s.rapport_envoye_le ? `<p class="meta">Rapport envoyé le ${dateH(s.rapport_envoye_le)}.</p>` : ""}
     <div class="zone-danger"><button class="btn petit danger" id="suppr">🗑 Supprimer cette demande</button></div></section>`;
   document.getElementById("ret").onclick = () => { ouvert = null; history.replaceState(null, "", location.pathname); rendre(); };
+  blocFacturation(s);
+  window.Calendrier && Calendrier.amenager(z);
   // Photos du client et de l'intervention
   for (const c of s.photos || []) { const u = await lienPhoto(c); if (u) document.getElementById("ph").insertAdjacentHTML("beforeend", `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Photo du client"></a>`); }
   const photosRapport = [...(R.photos || [])];
@@ -285,7 +331,8 @@ async function vueDemande(s) {
   };
   document.getElementById("prio").onchange = async (e) => { await sb.from("sav").update({ priorite: e.target.value }).eq("id", s.id); s.priorite = e.target.value; info("Priorité changée"); };
   document.getElementById("plan").onclick = async () => {
-    const v = document.getElementById("cr").value; if (!v) return info("Choisissez la date et l'heure", true);
+    const j = document.getElementById("cr").value; if (!j) return info("Choisissez le jour de l'intervention", true);
+    const v = j + "T" + document.getElementById("cr-h").value;
     const t = document.getElementById("tech").value, m = L.equipe.find((x) => x.email === t);
     const champs = { creneau: new Date(v).toISOString(), technicien: m ? m.nom : (t === "__autre" ? s.technicien : null), technicien_email: m ? m.email : null, statut: s.statut === "resolu" ? "resolu" : "planifie" };
     const { error } = await sb.from("sav").update(champs).eq("id", s.id); if (error) return info("Erreur : " + error.message, true);
@@ -293,6 +340,40 @@ async function vueDemande(s) {
   };
   document.getElementById("prev").onclick = async (e) => { e.target.disabled = true; const { data, error } = await sb.functions.invoke("sav", { body: { action: "confirmer_creneau", sav_id: s.id } });
     e.target.disabled = false; if (error || !data?.ok) return info(data?.erreur || error?.message || "Envoi impossible", true); info("Client prévenu par e-mail"); };
+}
+
+/* ---------- Facturation du SAV : déplacement, intervention, pièces, ou prise en charge ---------- */
+function blocFacturation(s) {
+  const z = document.getElementById("facturation"); if (!z) return;
+  const F = { prise_en_charge: "payant", lignes: [], statut: "a_facturer", ...(s.facture || {}) };
+  if (!s.facture) F.lignes = [{ libelle: "Frais de déplacement", montant: L.tarifs.deplacement }, { libelle: "Intervention", montant: L.tarifs.intervention }];
+  const total = () => F.prise_en_charge === "payant" ? Math.round(F.lignes.reduce((a, l) => a + (Number(l.montant) || 0), 0) * 100) / 100 : 0;
+  const dessiner = () => {
+    z.innerHTML = `<h2>Facturation</h2><div class="rangee">${Object.entries(PEC).map(([k, t]) => `<label class="ch" style="display:flex;flex-direction:row;align-items:center;gap:8px;font-size:14px;color:var(--encre)"><input type="radio" name="pec" value="${k}" ${F.prise_en_charge === k ? "checked" : ""} style="width:20px;height:20px">${t}</label>`).join("")}</div>
+      ${F.prise_en_charge === "payant" ? `<div style="display:grid;gap:6px;margin-top:10px">${F.lignes.map((l, i) => `<div class="rangee" style="flex-wrap:nowrap"><input data-l="${i}" data-c="libelle" value="${esc(l.libelle)}" style="flex:1;min-width:0;border:1.5px solid var(--trait);border-radius:12px;padding:10px"><input data-l="${i}" data-c="montant" inputmode="decimal" value="${l.montant ?? ""}" style="width:110px;border:1.5px solid var(--trait);border-radius:12px;padding:10px;text-align:right" aria-label="Montant TTC"><button class="x" data-del="${i}" aria-label="Retirer">✕</button></div>`).join("")}</div>
+      <div class="rangee" style="margin-top:8px"><button class="btn petit" id="f-piece">+ Pièce</button><button class="btn petit" id="f-autre">+ Autre ligne</button><span style="flex:1"></span><b style="font-size:1.3rem">Total ${eur(total())} TTC</b></div>
+      <div class="rangee" style="margin-top:10px"><label class="ch">Où en est le paiement<select id="f-statut">${Object.entries(FSTAT).map(([k, t]) => `<option value="${k}" ${F.statut === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+      <button class="btn teal petit" id="f-ok">Enregistrer</button><button class="btn petit" id="f-tarifs" title="Tarifs proposés par défaut">⚙ Tarifs par défaut</button></div>
+      <p class="meta">Le montant apparaît dans le rapport d'intervention envoyé au client. La facture officielle se fera dans Dolibarr dès qu'il sera branché.</p>`
+      : `<p class="meta" style="margin-top:8px">Rien à facturer au client : ce sera indiqué dans son rapport d'intervention.</p><div class="rangee"><button class="btn teal petit" id="f-ok">Enregistrer</button></div>`}`;
+    z.querySelectorAll('input[name="pec"]').forEach((r) => (r.onchange = () => { F.prise_en_charge = r.value; dessiner(); }));
+    z.querySelectorAll("[data-l]").forEach((el) => (el.onchange = () => { const l = F.lignes[+el.dataset.l]; l[el.dataset.c] = el.dataset.c === "montant" ? Number(String(el.value).replace(",", ".")) || 0 : el.value.trim(); dessiner(); }));
+    z.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { F.lignes.splice(+b.dataset.del, 1); dessiner(); }));
+    document.getElementById("f-piece")?.addEventListener("click", () => { F.lignes.push({ libelle: "Pièce : ", montant: 0 }); dessiner(); });
+    document.getElementById("f-autre")?.addEventListener("click", () => { F.lignes.push({ libelle: "", montant: 0 }); dessiner(); });
+    document.getElementById("f-tarifs")?.addEventListener("click", async () => {
+      const d = prompt("Frais de déplacement par défaut (€ TTC) :", L.tarifs.deplacement); if (d === null) return;
+      const iv = prompt("Intervention par défaut (€ TTC) :", L.tarifs.intervention); if (iv === null) return;
+      L.tarifs = { deplacement: Number(String(d).replace(",", ".")) || 0, intervention: Number(String(iv).replace(",", ".")) || 0 };
+      await sb.from("reglages").upsert({ cle: "sav_tarifs", valeur: L.tarifs }); info("Tarifs par défaut enregistrés");
+    });
+    document.getElementById("f-ok").onclick = async () => {
+      const fac = { prise_en_charge: F.prise_en_charge, lignes: F.prise_en_charge === "payant" ? F.lignes.filter((l) => l.libelle || l.montant) : [], total: total(), statut: F.prise_en_charge === "payant" ? (document.getElementById("f-statut")?.value || "a_facturer") : "paye" };
+      const { error } = await sb.from("sav").update({ facture: fac, updated_at: new Date().toISOString() }).eq("id", s.id);
+      if (error) return info("Erreur : " + error.message, true); s.facture = fac; info("Facturation enregistrée");
+    };
+  };
+  dessiner();
 }
 
 /* ---------- Installations et QR codes ---------- */
@@ -322,7 +403,7 @@ function vueUneInstallation(i) {
     z.innerHTML = `<p><button class="btn petit" id="ret">← Toutes les installations</button></p><section class="carte"><div class="grille2"><div>
       <h2>${i ? esc(i.client_nom) : "Nouvelle installation"}</h2>
       <div class="grille2"><label class="ch">Client<input id="f-nom" value="${esc(v.client_nom || "")}"></label><label class="ch">Téléphone<input id="f-tel" value="${esc(v.telephone || "")}"></label>
-      <label class="ch">E-mail<input id="f-email" value="${esc(v.email || "")}"></label><label class="ch">Commune<input id="f-com" value="${esc(v.commune || "")}"></label>
+      <label class="ch">E-mail (obligatoire)<input id="f-email" type="email" value="${esc(v.email || "")}"></label><label class="ch">Commune<input id="f-com" value="${esc(v.commune || "")}"></label>
       <label class="ch">Adresse<input id="f-adr" value="${esc(v.adresse || "")}"></label><label class="ch">Date de pose<input type="date" id="f-date" value="${esc(v.date_pose || "")}"></label>
       <label class="ch">Puissance (kWc)<input id="f-kwc" inputmode="decimal" value="${esc(v.puissance_kwc ?? "")}"></label><label class="ch">Suivi à distance<select id="f-port"><option value="">Aucun</option>${Object.keys(PORTAILS).map((p) => `<option ${v.portail === p ? "selected" : ""}>${p}</option>`).join("")}</select></label></div></div>
       <div style="text-align:center">${i ? `<div class="qr">${svgQR(i.code)}</div><p class="meta">Code ${esc(i.code)}</p><button class="btn petit" id="imp">🖨️ Imprimer l'étiquette</button>` : `<p class="meta">Le QR code apparaît après l'enregistrement.</p>`}</div></div>
@@ -344,7 +425,7 @@ function vueUneInstallation(i) {
     document.getElementById("ajout").onclick = () => { mat.push({ type: "Onduleur" }); dessiner(); };
     document.getElementById("ok").onclick = async () => {
       const g = (id) => document.getElementById(id).value.trim();
-      if (!g("f-nom")) return info("Indiquez le nom du client", true);
+      if (!g("f-nom")) return info("Indiquez le nom du client", true); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g("f-email"))) return info("L'e-mail du client est obligatoire (rapports SAV)", true);
       const champs = { client_nom: g("f-nom"), telephone: g("f-tel") || null, email: g("f-email").toLowerCase() || null, commune: g("f-com") || null, adresse: g("f-adr") || null,
         date_pose: g("f-date") || null, puissance_kwc: g("f-kwc") ? Number(g("f-kwc").replace(",", ".")) : null, portail: g("f-port") || null, notes: g("f-notes") || null, materiel: mat.filter((m) => m.marque || m.modele || m.numero_serie) };
       const r = i ? await sb.from("installations").update(champs).eq("id", i.id).select("*").single() : await sb.from("installations").insert(champs).select("*").single();
