@@ -131,6 +131,7 @@ main{padding-top:24px}
 </header>
 <main id="app"><p class="vide">Chargement…</p></main>
 <script src="calendrier.js"></script>
+<script src="checklist.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
@@ -164,7 +165,8 @@ async function charger() {
   L.sav = s.data || []; L.inst = i.data || [];
   const { data: eqT } = await sb.from("equipe_terrain").select("email,nom,metier,actif").eq("actif", true).order("nom");
   L.equipe = (eqT || []).filter((m) => m.metier !== "poseur");
-  const { data: rg } = await sb.from("reglages").select("valeur").eq("cle", "sav_tarifs").maybeSingle(); if (rg?.valeur) L.tarifs = { ...L.tarifs, ...rg.valeur };
+  const { data: rgs } = await sb.from("reglages").select("cle,valeur").in("cle", ["sav_tarifs", "sav_checklist"]);
+  (rgs || []).forEach((r) => { if (r.cle === "sav_tarifs") L.tarifs = { ...L.tarifs, ...r.valeur }; if (r.cle === "sav_checklist" && Array.isArray(r.valeur)) L.checkDefaut = r.valeur; });
 }
 const rang = (x) => ({ urgent: 0, normal: 1, faible: 2 }[x.priorite] ?? 1);
 
@@ -246,7 +248,7 @@ async function vueDemande(s) {
   const z = document.getElementById("zone"), i = s.installation || {}, d = s.diagnostic || {}, R = s.rapport || {};
   const tel = s.telephone || i.telephone;
   const mat = (i.materiel || []).map((m) => [m.type, m.marque, m.modele, m.numero_serie ? "n° " + m.numero_serie : ""].filter(Boolean).join(" ")).join(" · ");
-  const checklist = R.checklist || [...CHECKLIST, ...(d.a_verifier || [])].map((t) => ({ texte: t, fait: false }));
+  const checklist = (R.checklist || [...(L.checkDefaut || CHECKLIST), ...(d.a_verifier || [])].map((t) => ({ texte: t, fait: false }))).map((c) => ({ ...c }));
   z.innerHTML = `<p><button class="btn petit" id="ret">← Toutes les demandes</button></p>
   <section class="carte"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><h2>${esc(s.nom || i.client_nom || "Client")} <span class="meta">${esc(s.numero)}</span></h2>
     <p class="meta">${esc([s.adresse || i.adresse, s.commune || i.commune].filter(Boolean).join(", "))} · reçue le ${dateH(s.created_at)}${s.canal ? " · par " + esc((CANAL[s.canal] || "").toLowerCase()) : ""}</p></div>
@@ -276,7 +278,7 @@ async function vueDemande(s) {
     <button class="btn teal petit" id="plan">Enregistrer le créneau</button><button class="btn petit" id="prev" ${s.creneau ? "" : "disabled"}>Prévenir le client par e-mail</button></div></section>
   <section class="carte" id="facturation"></section>
   <section class="carte"><h2>Intervention</h2><p class="meta">À remplir sur place, depuis le téléphone.</p>
-    <div class="check">${checklist.map((c, k) => `<label><input type="checkbox" data-k="${k}" ${c.fait ? "checked" : ""}>${esc(c.texte)}</label>`).join("")}</div>
+    <div id="checklist"></div><p style="margin:6px 0 0"><button class="btn petit" type="button" id="cl-defaut">⚙ Modifier la liste par défaut</button></p>
     <h3>Ce qui a été fait</h3><label class="ch"><textarea id="notes" rows="4" placeholder="Pièces changées, réglages, conseils donnés…">${esc(R.notes || "")}</textarea></label>
     <h3>Photos</h3><div class="photos" id="rph"></div><p class="fichier"><label class="btn petit">📷 Ajouter une photo<input type="file" id="rphoto" accept="image/*" capture="environment" multiple></label></p>
     <h3>Signature du client</h3><canvas class="sig" id="sig"></canvas>
@@ -287,6 +289,15 @@ async function vueDemande(s) {
     <div class="zone-danger"><button class="btn petit danger" id="suppr">🗑 Supprimer cette demande</button></div></section>`;
   document.getElementById("ret").onclick = () => { ouvert = null; history.replaceState(null, "", location.pathname); rendre(); };
   blocFacturation(s);
+  const lireCheck = Checklist.monter(document.getElementById("checklist"), checklist);
+  document.getElementById("cl-defaut").onclick = async () => {
+    const actuel = (L.checkDefaut || CHECKLIST).join("\n");
+    const v = prompt("Liste de contrôles proposée pour chaque nouvelle intervention (un point par ligne) :", actuel);
+    if (v === null) return;
+    const liste = v.split(/\n|;/).map((x) => x.trim()).filter(Boolean).slice(0, 30);
+    const { error } = await sb.from("reglages").update({ valeur: liste }).eq("cle", "sav_checklist");
+    if (error) return info("Erreur : " + error.message, true); L.checkDefaut = liste; info("Liste par défaut enregistrée (pour les prochaines interventions)");
+  };
   window.Calendrier && Calendrier.amenager(z);
   // Photos du client et de l'intervention
   for (const c of s.photos || []) { const u = await lienPhoto(c); if (u) document.getElementById("ph").insertAdjacentHTML("beforeend", `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Photo du client"></a>`); }
@@ -310,7 +321,7 @@ async function vueDemande(s) {
   cv.onpointermove = (e) => { if (!trace) return; ctx.lineTo(...pos(e)); ctx.stroke(); };
   cv.onpointerup = () => (trace = false);
   document.getElementById("effacer").onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); signe = false; };
-  const lireRapport = (fini) => ({ checklist: checklist.map((c, k) => ({ texte: c.texte, fait: document.querySelector(`[data-k="${k}"]`).checked })), notes: document.getElementById("notes").value.trim(),
+  const lireRapport = (fini) => ({ checklist: lireCheck(), notes: document.getElementById("notes").value.trim(),
     photos: photosRapport, signe_par: document.getElementById("signe").value.trim() || null, signature: signe ? cv.toDataURL("image/png") : null, termine_le: fini ? new Date().toISOString() : (R.termine_le || null) });
   async function sauverRapport(fini) {
     const rapport = lireRapport(fini); const champs = { rapport, updated_at: new Date().toISOString() };
@@ -365,7 +376,7 @@ function blocFacturation(s) {
       const d = prompt("Frais de déplacement par défaut (€ TTC) :", L.tarifs.deplacement); if (d === null) return;
       const iv = prompt("Intervention par défaut (€ TTC) :", L.tarifs.intervention); if (iv === null) return;
       L.tarifs = { deplacement: Number(String(d).replace(",", ".")) || 0, intervention: Number(String(iv).replace(",", ".")) || 0 };
-      await sb.from("reglages").upsert({ cle: "sav_tarifs", valeur: L.tarifs }); info("Tarifs par défaut enregistrés");
+      const { error } = await sb.from("reglages").update({ valeur: L.tarifs }).eq("cle", "sav_tarifs"); if (error) return info("Erreur : " + error.message, true); info("Tarifs par défaut enregistrés");
     });
     document.getElementById("f-ok").onclick = async () => {
       const fac = { prise_en_charge: F.prise_en_charge, lignes: F.prise_en_charge === "payant" ? F.lignes.filter((l) => l.libelle || l.montant) : [], total: total(), statut: F.prise_en_charge === "payant" ? (document.getElementById("f-statut")?.value || "a_facturer") : "paye" };

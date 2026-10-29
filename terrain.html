@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icone-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="QG Cedyan">
+<meta name="apple-mobile-web-app-title" content="ENR Pose">
 
 <title>Terrain · ENR Pose</title>
 <style>
@@ -87,6 +87,7 @@ dialog{border:0;border-radius:22px;padding:20px;width:min(94vw,420px)}dialog::ba
   <p class="meta" id="mdp-msg"></p><div class="actions"><button type="button" class="btn" id="mdp-plus-tard">Plus tard</button><button class="btn teal">Enregistrer</button></div></form></dialog>
 
 <script src="mdp.js"></script>
+<script src="checklist.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (() => {
@@ -160,6 +161,7 @@ async function demarrer() {
 }
 async function charger() {
   const t = [];
+  if (MOI.metier !== "poseur") t.push(sb.from("reglages").select("valeur").eq("cle", "sav_checklist").maybeSingle().then((r) => { if (Array.isArray(r.data?.valeur)) L.checkDefaut = r.data.valeur; }));
   if (MOI.metier !== "poseur") t.push(sb.from("sav").select("*, installation:installations(*)").in("statut", ["planifie", "en_cours", "resolu"]).not("technicien_email", "is", null).order("creneau").limit(300).then((r) => (L.sav = r.data || [])));
   if (MOI.metier !== "technicien") t.push(sb.from("chantiers").select("*").not("etape", "in", "(annule)").order("date_pose", { nullsFirst: false }).limit(300).then((r) => (L.ch = (r.data || []).filter((c) => (c.poseurs || []).length || !MOI.bureau))));
   if (MOI.bureau) t.push(sb.from("equipe_terrain").select("*").order("nom").then((r) => (L.equipe = r.data || [])));
@@ -192,7 +194,7 @@ function signature(cv, existante) {
 }
 async function ficheSav(s) {
   const i = s.installation || {}, d = s.diagnostic || {}, R = s.rapport || {}, tel = s.telephone || i.telephone, adresse = [i.adresse, i.commune || s.commune].filter(Boolean).join(", ");
-  const checklist = R.checklist || [...CHECK_SAV, ...(d.a_verifier || [])].map((t) => ({ texte: t, fait: false }));
+  const checklist = (R.checklist || [...(L.checkDefaut || CHECK_SAV), ...(d.a_verifier || [])].map((t) => ({ texte: t, fait: false }))).map((c) => ({ ...c }));
   const photos = [...(R.photos || [])];
   const mat = (i.materiel || []).map((m) => [m.type, m.marque, m.modele].filter(Boolean).join(" ") + (m.numero_serie ? " (n° " + m.numero_serie + ")" : "")).filter(Boolean);
   app.innerHTML = `<button class="btn" id="ret" style="min-height:44px;margin-bottom:10px">← Mes interventions</button>
@@ -205,7 +207,7 @@ async function ficheSav(s) {
     <div class="photos" id="ph" style="margin-top:8px"></div>
     ${d.resume ? `<h3>Pré-diagnostic</h3><div class="diag"><p><b>${esc(d.resume)}</b></p>${d.cause_probable ? `<p>🔎 ${esc(d.cause_probable)}</p>` : ""}${(d.pieces || []).length ? `<p>🧰 À emporter : ${esc(d.pieces.join(", "))}</p>` : ""}</div>` : ""}
     ${mat.length ? `<h3>Matériel installé</h3><ul class="liste-mat">${mat.map((m) => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}</section>
-  <section class="carte"><h2>Sur place</h2><div class="check">${checklist.map((c, k) => `<label><input type="checkbox" data-k="${k}" ${c.fait ? "checked" : ""}>${esc(c.texte)}</label>`).join("")}</div>
+  <section class="carte"><h2>Sur place</h2><div id="checklist"></div>
     <h3>Ce qui a été fait</h3><textarea id="notes" placeholder="Pièces changées, réglages, conseils…">${esc(R.notes || "")}</textarea>
     <h3>Photos</h3><div class="photos" id="rph"></div><p class="fichier"><label class="btn">📷 Ajouter une photo<input type="file" id="rphoto" accept="image/*"></label></p>
     <h3>Signature du client</h3><canvas class="sig" id="sig"></canvas>
@@ -218,7 +220,8 @@ async function ficheSav(s) {
   dessiner();
   const sig = signature(document.getElementById("sig"), R.signature);
   document.getElementById("effacer").onclick = sig.effacer;
-  const lire = (fini) => ({ checklist: checklist.map((c, k) => ({ texte: c.texte, fait: document.querySelector(`[data-k="${k}"]`).checked })), notes: document.getElementById("notes").value.trim(), photos,
+  const lireCheck = Checklist.monter(document.getElementById("checklist"), checklist);
+  const lire = (fini) => ({ checklist: lireCheck(), notes: document.getElementById("notes").value.trim(), photos,
     signe_par: document.getElementById("signe").value.trim() || null, signature: sig.image(), termine_le: fini ? new Date().toISOString() : (R.termine_le || null), par: MOI.nom });
   const sauver = async (fini) => { const ch = { rapport: lire(fini), updated_at: new Date().toISOString() }; if (fini) ch.statut = "resolu"; else if (s.statut === "planifie") ch.statut = "en_cours";
     const { error } = await sb.from("sav").update(ch).eq("id", s.id); if (error) { info("Erreur : " + error.message, true); return false; } Object.assign(s, ch); info(fini ? "Intervention terminée 👍" : "Enregistré"); return true; };
